@@ -1,0 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/hack-font@3.3.0/build/web/hack-subset.css');
+
+.content code:not(.code-block code) {
+    font-family: 'Hack';
+    direction: ltr;
+  }
+
+.cl {
+    font-family: 'Hack';
+}
+
+html[lang="fa"] pre {
+    direction: ltr;
+    overflow-x: auto; /* or overflow: auto; if you need vertical scroll too */
+  }
+
+html[lang="fa"] .hextra-card-tag{
+    right: initial !important;
+    left: 5px;
+}
+
+html[lang="fa"] {
+    font-family: 'Vazirmatn', Times, serif;
+}
