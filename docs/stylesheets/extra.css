@@ -1,0 +1,23 @@
+/* Dynamic logo switching based on theme */
+[data-md-color-scheme="default"] .md-header__button.md-logo img {
+  content: url("../assets/logos/white.png");
+}
+
+[data-md-color-scheme="slate"] .md-header__button.md-logo img {
+  content: url("../assets/logos/white.png");
+}
+
+/* Also apply to any other logo instances */
+[data-md-color-scheme="default"] .md-logo img {
+  content: url("../assets/logos/white.png");
+}
+
+[data-md-color-scheme="slate"] .md-logo img {
+  content: url("../assets/logos/white.png");
+}
+
+/* Optional: Add some styling to the logo */
+.md-logo img {
+  width: auto;
+  height: 64px; /* Adjust as needed */
+}
