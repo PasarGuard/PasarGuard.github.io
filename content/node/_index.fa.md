@@ -3,6 +3,7 @@ title: Node
 type: docs
 sidebar:
   open: true
+language: fa
 ---
 
 # PasarGuard Node Documentation

@@ -1,3 +1,7 @@
+---
+language: fa
+---
+
 # Installation
 
 ## One Click
