@@ -1,4 +1,7 @@
 ---
+title: کتابخانه‌ها
+type: docs
+weight: 5
 language: fa
 ---
 

@@ -1,3 +1,10 @@
+---
+title: API
+type: docs
+weight: 4
+language: zh
+---
+
 PasarGuard Node supports two types of connection protocols: **gRPC** and **REST API**.  
 We recommend using **gRPC**, with REST always available as a fallback option (in case there is a problem with gRPC).
 

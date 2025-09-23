@@ -1,6 +1,7 @@
 ---
-title: Node
+title: نود
 type: docs
+language: fa
 sidebar:
   open: true
 language: fa

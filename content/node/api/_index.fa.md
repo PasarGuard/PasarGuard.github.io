@@ -1,4 +1,7 @@
 ---
+title: API
+type: docs
+weight: 4
 language: fa
 ---
 

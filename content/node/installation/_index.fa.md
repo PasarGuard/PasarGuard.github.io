@@ -1,4 +1,7 @@
 ---
+title: نصب
+type: docs
+weight: 2
 language: fa
 ---
 

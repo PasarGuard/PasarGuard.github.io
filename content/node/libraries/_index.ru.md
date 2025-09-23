@@ -1,3 +1,10 @@
+---
+title: Библиотеки
+type: docs
+weight: 5
+language: ru
+---
+
 # Official libraries
 
 We create some library for you so make your job easier

@@ -1,4 +1,11 @@
-# Installation
+---
+title: Установка
+type: docs
+weight: 2
+language: ru
+---
+
+# Установка
 
 ## One Click
 

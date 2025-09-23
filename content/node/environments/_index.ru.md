@@ -1,3 +1,10 @@
+---
+title: Среды
+type: docs
+weight: 3
+language: ru
+---
+
 > You can set the settings below using environment variables or by placing them in a `.env` file.
 
 | Variable                | Description                                                                                                      |

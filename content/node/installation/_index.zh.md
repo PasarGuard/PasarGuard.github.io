@@ -1,4 +1,11 @@
-# Installation
+---
+title: 安装
+type: docs
+weight: 2
+language: zh
+---
+
+# 安装
 
 ## One Click
 

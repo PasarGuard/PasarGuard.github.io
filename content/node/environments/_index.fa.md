@@ -1,4 +1,7 @@
 ---
+title: متغیر ها
+type: docs
+weight: 3
 language: fa
 ---
 

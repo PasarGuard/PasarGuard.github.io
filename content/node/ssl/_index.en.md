@@ -2,6 +2,7 @@
 title: SSL
 type: docs
 weight: 6
+language: en
 ---
 
 You can use SSL certificates issued by `Let's Encrypt` or other certificate authorities.  

@@ -2,6 +2,7 @@
 title: Installation
 type: docs
 weight: 2
+language: en
 ---
 
 # Installation

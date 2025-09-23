@@ -1,3 +1,10 @@
+---
+title: Обзор
+type: docs
+weight: 1
+language: ru
+---
+
 # Node
 
 <p align="center">

@@ -57,7 +57,7 @@ menu:
 
     - identifier: Contact
       name: Contact
-      url: "https://t.me/Pasar_Guard"
+      url: "https://t.me/PasargaurdGP"
       weight: 3
     
     - name: Search
@@ -73,7 +73,7 @@ menu:
     
     - name: Telegram
       weight: 6
-      url: "https://t.me/PasarGuard"
+      url: "https://t.me/Pasar_Guard"
       params:
         icon: telegram
 

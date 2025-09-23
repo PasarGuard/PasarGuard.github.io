@@ -2,6 +2,7 @@
 title: Environments
 type: docs
 weight: 3
+language: en
 ---
 
 > You can set the settings below using environment variables or by placing them in a `.env` file.

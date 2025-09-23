@@ -1,4 +1,7 @@
 ---
+title: نمای کلی
+type: docs
+weight: 1
 language: fa
 ---
 

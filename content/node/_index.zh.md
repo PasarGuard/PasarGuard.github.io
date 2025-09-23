@@ -1,6 +1,7 @@
 ---
-title: Node
+title: 节点
 type: docs
+language: zh
 sidebar:
   open: true
 ---

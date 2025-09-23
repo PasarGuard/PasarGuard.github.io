@@ -2,6 +2,7 @@
 title: 欢迎来到 PasarGuard
 type: docs
 layout: hextra-home
+language: zh
 ---
 
 {{< hextra/hero-headline >}}

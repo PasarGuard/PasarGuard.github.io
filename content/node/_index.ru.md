@@ -1,6 +1,7 @@
 ---
-title: Node
+title: Узел
 type: docs
+language: ru
 sidebar:
   open: true
 ---

@@ -1,3 +1,10 @@
+---
+title: 库
+type: docs
+weight: 5
+language: zh
+---
+
 # Official libraries
 
 We create some library for you so make your job easier

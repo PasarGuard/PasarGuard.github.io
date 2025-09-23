@@ -1,6 +1,7 @@
 ---
 title: Node
 type: docs
+language: en
 sidebar:
   open: true
 ---

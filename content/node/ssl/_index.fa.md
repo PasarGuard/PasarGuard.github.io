@@ -1,4 +1,7 @@
 ---
+title: SSL
+type: docs
+weight: 6
 language: fa
 ---
 

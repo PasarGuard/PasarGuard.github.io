@@ -1,3 +1,10 @@
+---
+title: SSL
+type: docs
+weight: 6
+language: zh
+---
+
 You can use SSL certificates issued by `Let's Encrypt` or other certificate authorities.  
 Make sure to set both `SSL_CERT_FILE` and `SSL_KEY_FILE` environment variables.
 Use `fullchain` for `SSL_CERT_FILE` and `cert` as `server_ca` in client side.

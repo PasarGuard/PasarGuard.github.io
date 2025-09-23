@@ -2,6 +2,7 @@
 title: API
 type: docs
 weight: 4
+language: en
 ---
 
 PasarGuard Node supports two types of connection protocols: **gRPC** and **REST API**.  
