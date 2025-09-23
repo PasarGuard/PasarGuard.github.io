@@ -179,3 +179,13 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Hugo build directory
+public/
+resources/
+
+# Hextra template directory (no longer needed after setup)
+hextra-starter-template/
+
+# Hugo lock file
+hugo_stats.json

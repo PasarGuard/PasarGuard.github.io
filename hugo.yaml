@@ -1,0 +1,103 @@
+# Hugo configuration file for PasarGuard Documentation
+title: PasarGuard Documentation
+baseURL: "https://pasarguard.github.io"
+
+# import hextra as module
+module:
+  imports:
+    - path: github.com/imfing/hextra
+
+# Enable multilingual support
+defaultContentLanguage: en
+defaultContentLanguageInSubdir: false
+
+languages:
+  en:
+    languageName: English
+    weight: 1
+    title: PasarGuard Documentation
+  fa:
+    languageName: فارسی
+    weight: 2
+    title: مستندات پاسارگارد
+    languageDirection: rtl
+  ru:
+    languageName: Русский
+    weight: 3
+    title: Документация PasarGuard
+  zh:
+    languageName: 中文
+    weight: 4
+    title: PasarGuard 文档
+
+markup:
+  # allow raw html
+  goldmark:
+    renderer:
+      unsafe: true
+
+  # enable hextra syntax highlight
+  highlight:
+    noClasses: false
+
+# Global menu configuration
+menu:
+  main:
+    - name: Node
+      pageRef: /node
+      weight: 1
+    - name: API
+      pageRef: /node/api
+      weight: 2
+    - name: GitHub
+      weight: 3
+      url: "https://github.com/PasarGuard/panel"
+      params:
+        icon: github
+    - name: Search
+      weight: 4
+      params:
+        type: search
+
+params:
+  navbar:
+    displayTitle: true
+    displayLogo: true
+    logo:
+      path: assets/logos/white.png
+      dark: assets/logos/white.png
+      light: assets/logos/black.png
+
+  footer:
+    displayCopyright: true
+    displayPoweredBy: false
+
+  editURL:
+    enable: true
+    base: "https://github.com/PasarGuard/PasarGuard.github.io/edit/main/content"
+
+  search:
+    enable: true
+    type: flexsearch
+
+  theme:
+    # light | dark | system
+    default: system
+    displayToggle: true
+
+# Build configuration
+build:
+  writeStats: true
+
+# Security configuration
+security:
+  enableInlineShortcodes: false
+  funcs:
+    getenv:
+      - ^HUGO_
+      - ^WC_
+  http:
+    methods:
+      - (?i)GET|POST
+    urls:
+      - .*
