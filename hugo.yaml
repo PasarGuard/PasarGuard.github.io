@@ -1,4 +1,4 @@
-# Hugo configuration file for PasarGuard Documentation
+# Hugo configuration file
 title: PasarGuard Documentation
 baseURL: "https://pasarguard.github.io"
 
@@ -7,10 +7,17 @@ module:
   imports:
     - path: github.com/imfing/hextra
 
-# Enable multilingual support
-defaultContentLanguage: en
-defaultContentLanguageInSubdir: false
+markup:
+  # allow raw html
+  goldmark:
+    renderer:
+      unsafe: true
 
+  # enable hextra syntax highlight
+  highlight:
+    noClasses: false
+
+defaultContentLanguage: fa
 languages:
   en:
     languageName: English
@@ -30,11 +37,6 @@ languages:
     weight: 4
     title: PasarGuard 文档
 
-markup:
-  # allow raw html
-  goldmark:
-    renderer:
-      unsafe: true
 
   # enable hextra syntax highlight
   highlight:
@@ -43,33 +45,49 @@ markup:
 # Global menu configuration
 menu:
   main:
-    - name: Node
-      pageRef: /node
-      weight: 1
-    - name: API
-      pageRef: /node/api
+    - identifier: About
+      name: About
+      pageRef: /
       weight: 2
-    - name: GitHub
+
+    - identifier: Home
+      name: Home
+      pageRef: /
+      weight: 1
+
+    - identifier: Contact
+      name: Contact
+      url: "https://t.me/Marzneshins"
       weight: 3
-      url: "https://github.com/PasarGuard/panel"
-      params:
-        icon: github
+    
     - name: Search
       weight: 4
       params:
         type: search
+      
+    - name: GitHub
+      weight: 5
+      url: "https://github.com/PasarGuard"
+      params:
+        icon: github
+    
+    - name: Telegram
+      weight: 6
+      url: "https://t.me/PasarGuard"
+      params:
+        icon: telegram
 
 params:
   navbar:
     displayTitle: true
-    displayLogo: true
+    displayLogo: false
     logo:
       path: assets/logos/white.png
       dark: assets/logos/white.png
       light: assets/logos/black.png
 
   footer:
-    displayCopyright: true
+    displayCopyright: false
     displayPoweredBy: false
 
   editURL:
@@ -84,20 +102,3 @@ params:
     # light | dark | system
     default: system
     displayToggle: true
-
-# Build configuration
-build:
-  writeStats: true
-
-# Security configuration
-security:
-  enableInlineShortcodes: false
-  funcs:
-    getenv:
-      - ^HUGO_
-      - ^WC_
-  http:
-    methods:
-      - (?i)GET|POST
-    urls:
-      - .*
