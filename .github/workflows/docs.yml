@@ -47,11 +47,6 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Copy logos to docs assets
-        run: |
-          mkdir -p docs/assets/logos
-          cp -r logos/* docs/assets/logos/
-
       - name: Build documentation
         run: uv run mkdocs build --strict
 
