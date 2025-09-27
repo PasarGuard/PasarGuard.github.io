@@ -1,0 +1,6 @@
+title: Getting Started
+icon: lucide:rocket
+navigation.redirect: /getting-started/introduction
+sidebar:
+  style: group
+collapse: false

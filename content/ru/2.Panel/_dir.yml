@@ -1,0 +1,6 @@
+title: Panel
+icon: lucide:layout-panel-left
+navigation.redirect: /frameworks/vue
+sidebar:
+  style: group
+collapse: false

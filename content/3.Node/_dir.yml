@@ -1,0 +1,6 @@
+title: Node
+icon: lucide:plug-2
+navigation.redirect: /frameworks/vue
+sidebar:
+  style: group
+collapse: false
