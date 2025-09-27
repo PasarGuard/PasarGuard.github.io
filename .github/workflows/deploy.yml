@@ -28,19 +28,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: pnpm
+          cache: 'npm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -49,7 +44,7 @@ jobs:
           static_site_generator: nuxt
 
       - name: Generate static site with Nuxt
-        run: pnpm run generate
+        run: npm run generate
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
