@@ -3,6 +3,11 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   extends: ['shadcn-docs-nuxt'],
   
+  // Site configuration for OG Images absolute URLs
+  site: {
+    url: 'https://pasarguard.github.io',
+  },
+  
   // Add modules
   modules: [
     '@nuxt/fonts'

@@ -43,7 +43,7 @@ jobs:
           # Automatically inject router.base to Nuxt configuration
           static_site_generator: nuxt
           
-      - name: Build with Nuxt
+      - name: Generate static site with Nuxt
         run: npm run generate
         
       - name: Upload artifact
