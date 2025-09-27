@@ -10,13 +10,18 @@ export default defineNuxtConfig({
   
   // Add modules
   modules: [
-    '@nuxt/fonts'
+    '@nuxt/fonts',
+    '@nuxtjs/i18n'
   ],
   
   // Enable static site generation for GitHub Pages
   nitro: {
     prerender: {
-      routes: ['/sitemap.xml']
+      routes: ['/sitemap.xml'],
+      // Ignore 404 errors for missing content during prerendering
+      ignore: ['/api/_content/query/**'],
+      // Continue on error to complete the build
+      failOnError: false
     }
   },
   
@@ -47,29 +52,25 @@ export default defineNuxtConfig({
     }
   },
   
+  // Configure i18n for multi-language support
   i18n: {
-    defaultLocale: 'fa' as any,
+    defaultLocale: 'fa',
     locales: [
       {
         code: 'fa',
-        name: 'Persian',
+        name: 'فارسی',
         language: 'fa-IR'
       },
       {
-        code: 'en',
+        code: 'en', 
         name: 'English',
         language: 'en-US'
       },
       {
         code: 'ru',
-        name: 'Russian',
+        name: 'Русский', 
         language: 'ru-RU'
-      },
-      {
-        code: 'zh',
-        name: 'Chinese',
-        language: 'zh-CN'
-      },
+      }
     ],
   },
   compatibilityDate: '2024-07-06',

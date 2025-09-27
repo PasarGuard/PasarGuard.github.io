@@ -1,6 +1,6 @@
 title: Node
 icon: lucide:plug-2
-navigation.redirect: /frameworks/vue
+navigation.redirect: /en/node/install
 sidebar:
   style: group
 collapse: false

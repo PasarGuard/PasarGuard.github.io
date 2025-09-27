@@ -1,6 +1,6 @@
 title: CLI
 icon: lucide:square-terminal
-navigation.redirect: /frameworks/vue
+navigation.redirect: /ru/cli/install
 sidebar:
   style: default
 collapse: false
