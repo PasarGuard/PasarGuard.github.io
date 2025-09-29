@@ -14,12 +14,12 @@ jobs:
         with:
           bun-version: latest
       - run: bun install
-      - run: bun run build
+      - run: bun run build:static
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          publish-dir: ./.next
-          path: ./.next
+          publish-dir: ./out
+          path: ./out
   # Deployment job
   deploy:
     # Add a dependency to the build job

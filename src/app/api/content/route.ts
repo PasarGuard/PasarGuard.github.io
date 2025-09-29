@@ -3,6 +3,8 @@ import { readFile } from 'fs/promises';
 import { join } from 'path';
 import matter from 'gray-matter';
 
+export const dynamic = 'force-static';
+
 const languageContentMap = {
   en: 'content/translations/en',
   fa: 'content/translations/fa',
@@ -10,10 +12,10 @@ const languageContentMap = {
   zh: 'content/translations/zh',
 };
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const slug = searchParams.get('slug');
-  const locale = searchParams.get('locale') || 'en';
+export async function GET() {
+  // For static export, return a default response
+  const slug = 'index';
+  const locale = 'en';
 
   if (!slug) {
     return NextResponse.json({ error: 'Slug is required' }, { status: 400 });

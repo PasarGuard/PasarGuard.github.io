@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-static';
+
 // Disable search API to prevent language support errors
-export async function GET(request: NextRequest) {
+export async function GET() {
   // Return empty search results to prevent errors
   return NextResponse.json({
     hits: [],
