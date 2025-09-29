@@ -1,0 +1,9 @@
+{
+  "title": "Миграция",
+  "description": "Руководства по миграции для PasarGuard",
+  "pages": [
+    "index",
+    "marzban"
+  ],
+  "icon": "ArrowRightLeft"
+}

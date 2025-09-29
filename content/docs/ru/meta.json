@@ -4,9 +4,9 @@
   "pages": [
     "index",
     "...getting-started",
-    "...panel",
+    "panel",
     "...node",
     "...cli",
-    "...migration"
+    "migration"
   ]
 }

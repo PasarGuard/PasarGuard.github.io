@@ -1,39 +1,40 @@
 ---
-title: Installation
-description: Installation instructions for PasarGuard.
+title: 安装
+description: PasarGuard 安装说明。
+icon: Download
 ---
 
-<Steps>
-### Install PasarGuard
+
+### 安装 PasarGuard
 
 <Alert type="warning">
-  The following commands will install the pre release versions (alpha/beta)
+  以下命令将安装预发布版本（alpha/beta）
 </Alert>
 
 <Tabs items={['SQLite', 'MySQL', 'MariaDB', 'PostgreSQL']}>
   <Tab value="SQLite">
-    ### SQLite Installation
+    ### SQLite 安装
 
     ```bash
     sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --pre-release
     ```
   </Tab>
   <Tab value="MySQL">
-    ### MySQL Installation
+    ### MySQL 安装
 
     ```bash
     sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mysql --pre-release
     ```
   </Tab>
   <Tab value="MariaDB">
-    ### MariaDB Installation
+    ### MariaDB 安装
 
     ```bash
     sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mariadb --pre-release
     ```
   </Tab>
   <Tab value="PostgreSQL">
-    ### PostgreSQL Installation
+    ### PostgreSQL 安装
 
     ```bash
     sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database postgresql --pre-release
@@ -41,40 +42,40 @@ description: Installation instructions for PasarGuard.
   </Tab>
 </Tabs>
 
-### Post Installation
+### 安装后
 
-Once the installation is complete:
+安装完成后：
 
--   You will see the logs that you can stop watching them by closing the terminal or pressing `Ctrl+C`
--   The PasarGuard files will be located at `/opt/pasarguard`
--   The configuration file can be found at `/opt/pasarguard/.env` (refer to [configurations](#configuration) section to see variables)
--   The data files will be placed at `/var/lib/pasarguard`
--   For security reasons, the PasarGuard dashboard is not accessible via IP address. Therefore, you must [obtain SSL certificate](https://PasarGuard.github.io/PasarGuard/en/examples/issue-ssl-certificate) and access your PasarGuard dashboard by opening a web browser and navigating to `https://YOUR_DOMAIN:8000/dashboard/` (replace YOUR_DOMAIN with your actual domain)
--   You can also use SSH port forwarding to access the PasarGuard dashboard locally without a domain. Replace `user@serverip` with your actual SSH username and server IP and Run the command below:
+-   您将看到日志，可以通过关闭终端或按 `Ctrl+C` 停止查看
+-   PasarGuard 文件将位于 `/opt/pasarguard`
+-   配置文件可以在 `/opt/pasarguard/.env` 找到（请参考[配置](#configuration)部分查看变量）
+-   数据文件将放置在 `/var/lib/pasarguard`
+-   出于安全考虑，PasarGuard 仪表板无法通过 IP 地址访问。因此，您必须[获取 SSL 证书](https://PasarGuard.github.io/PasarGuard/en/examples/issue-ssl-certificate)并通过打开网页浏览器并导航到 `https://YOUR_DOMAIN:8000/dashboard/` 来访问您的 PasarGuard 仪表板（将 YOUR_DOMAIN 替换为您的实际域名）
+-   您也可以使用 SSH 端口转发在没有域名的情况下本地访问 PasarGuard 仪表板。将 `user@serverip` 替换为您的实际 SSH 用户名和服务器 IP，然后运行以下命令：
 
 ```bash
 ssh -L 8000:localhost:8000 user@serverip
 ```
 
-Finally, you can enter the following link in your browser to access your PasarGuard dashboard:
+最后，您可以在浏览器中输入以下链接来访问您的 PasarGuard 仪表板：
 
 http://localhost:8000/dashboard/
 
-You will lose access to the dashboard as soon as you close the SSH terminal. Therefore, this method is recommended only for testing purposes.
+一旦您关闭 SSH 终端，您将失去对仪表板的访问权限。因此，此方法仅推荐用于测试目的。
 
-### Create Admin User
+### 创建管理员用户
 
-Next, you need to create a sudo admin for logging into the PasarGuard dashboard by the following command
+接下来，您需要通过以下命令创建一个 sudo 管理员来登录 PasarGuard 仪表板
 
 ```bash
 pasarguard cli admin create --sudo
 ```
 
-That's it! You can login to your dashboard using these credentials
+就是这样！您可以使用这些凭据登录到您的仪表板
 
-To see the help message of the PasarGuard script, run the following command
+要查看 PasarGuard 脚本的帮助消息，请运行以下命令
 
 ```bash
 pasarguard --help
 ```
-</Steps>
+

@@ -1,0 +1,8 @@
+{
+  "title": "面板",
+  "description": "PasarGuard 面板管理",
+  "pages": [
+    "installation"
+  ],
+  "icon": "Monitor"
+}

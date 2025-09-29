@@ -151,6 +151,16 @@ button:has([data-lucide="sun"]):has([data-lucide="moon"]) {
   display: none !important;
 }
 
+/* Hide Fumadocs default language switcher */
+button[aria-label="Choose a language"] {
+  display: none !important;
+}
+
+/* Alternative selector for fumadocs language switcher */
+button:has([data-lucide="languages"]) {
+  display: none !important;
+}
+
 /* RTL optimizations */
 [dir="rtl"] {
   text-align: right;
@@ -160,6 +170,10 @@ button:has([data-lucide="sun"]):has([data-lucide="moon"]) {
   right: 0;
   left: auto;
 }
+
+  [dir="rtl"] button[aria-label*="copy"] {
+    direction: ltr !important;
+  }
 
 [dir="rtl"] .main-content {
   margin-right: 0;
@@ -244,6 +258,16 @@ button:has([data-lucide="sun"]):has([data-lucide="moon"]) {
   display: block !important;
 }
 
+[dir="rtl"] h1 a.peer,
+[dir="rtl"] h2 a.peer,
+[dir="rtl"] h3 a.peer,
+[dir="rtl"] h4 a.peer,
+[dir="rtl"] h5 a.peer,
+[dir="rtl"] h6 a.peer {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
 /* Ensure sidebar text is visible and properly aligned */
 [dir="rtl"] .fd-sidebar .fd-nav-item a span {
   text-align: right !important;
@@ -269,15 +293,6 @@ button:has([data-lucide="sun"]):has([data-lucide="moon"]) {
   opacity: 1 !important;
 }
 
-/* Language switcher RTL adjustments */
-[dir="rtl"] .language-switcher {
-  text-align: right;
-}
-
-[dir="rtl"] .language-switcher .dropdown {
-  right: 0;
-  left: auto;
-}
 
 /* RTL text class */
 .rtl-text {
@@ -490,6 +505,18 @@ code,
   unicode-bidi: bidi-override;
 }
 
+/* Ensure anchor tags (links) are LTR */
+.prose a {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+[dir="rtl"] .prose a {
+  direction: ltr !important;
+  text-align: left !important;
+  unicode-bidi: embed;
+}
+
 /* Target common language classes specifically */
 [class*="language-"] {
   direction: ltr !important;
@@ -547,3 +574,432 @@ code,
   margin: 0 !important;
   line-height: 1.2 !important;
 }
+
+/* RTL chevron rotation for sidebar dropdown arrows - exclude copy buttons */
+[dir="rtl"] button[aria-expanded]:not([data-copy]):not([data-checked]):not([aria-label*="copy"]):not([aria-label*="Copy"]):not([title*="copy"]):not([title*="Copy"]):not(:has([data-lucide="copy"])) img:last-child,
+[dir="rtl"] button[aria-expanded]:not([data-copy]):not([data-checked]):not([aria-label*="copy"]):not([aria-label*="Copy"]):not([title*="copy"]):not([title*="Copy"]):not(:has([data-lucide="copy"])) svg:last-child {
+  transform: rotate(180deg) !important;
+}
+
+/* More specific selectors for fumadocs chevron - exclude copy buttons */
+[dir="rtl"] button[aria-expanded="true"]:not([data-copy]):not([data-checked]):not([aria-label*="copy"]):not([aria-label*="Copy"]):not([title*="copy"]):not([title*="Copy"]):not(:has([data-lucide="copy"])) img:last-child,
+[dir="rtl"] button[aria-expanded="true"]:not([data-copy]):not([data-checked]):not([aria-label*="copy"]):not([aria-label*="Copy"]):not([title*="copy"]):not([title*="Copy"]):not(:has([data-lucide="copy"])) svg:last-child {
+  transform: rotate(180deg) !important;
+}
+
+[dir="rtl"] button[aria-expanded="false"]:not([data-copy]):not([data-checked]):not([aria-label*="copy"]):not([aria-label*="Copy"]):not([title*="copy"]):not([title*="Copy"]):not(:has([data-lucide="copy"])) img:last-child,
+[dir="rtl"] button[aria-expanded="false"]:not([data-copy]):not([data-checked]):not([aria-label*="copy"]):not([aria-label*="Copy"]):not([title*="copy"]):not([title*="Copy"]):not(:has([data-lucide="copy"])) svg:last-child {
+  transform: rotate(180deg) !important;
+}
+
+/* Target the specific chevron icon in sidebar navigation - exclude copy buttons */
+[dir="rtl"] button:not([data-copy]):not([data-checked]):not([aria-label*="copy"]):not([aria-label*="Copy"]):not([title*="copy"]):not([title*="Copy"]):not(:has([data-lucide="copy"])) img[data-lucide="chevron-right"],
+[dir="rtl"] button:not([data-copy]):not([data-checked]):not([aria-label*="copy"]):not([aria-label*="Copy"]):not([title*="copy"]):not([title*="Copy"]):not(:has([data-lucide="copy"])) svg[data-lucide="chevron-right"] {
+  transform: rotate(180deg) !important;
+}
+
+/* Alternative selector for chevron icons - exclude copy buttons */
+[dir="rtl"] button:not([data-copy]):not([data-checked]):not([aria-label*="copy"]):not([aria-label*="Copy"]):not([title*="copy"]):not([title*="Copy"]):not(:has([data-lucide="copy"])):has(img[data-lucide="chevron-right"]),
+[dir="rtl"] button:not([data-copy]):not([data-checked]):not([aria-label*="copy"]):not([aria-label*="Copy"]):not([title*="copy"]):not([title*="Copy"]):not(:has([data-lucide="copy"])):has(svg[data-lucide="chevron-right"]) {
+  img:last-child,
+  svg:last-child {
+    transform: rotate(180deg) !important;
+  }
+}
+
+/* General RTL chevron rotation for any dropdown arrow - exclude copy buttons */
+[dir="rtl"] button:not([data-copy]):not([data-checked]):not([aria-label*="copy"]):not([aria-label*="Copy"]):not([title*="copy"]):not([title*="Copy"]):not(:has([data-lucide="copy"])) img:last-child,
+[dir="rtl"] button:not([data-copy]):not([data-checked]):not([aria-label*="copy"]):not([aria-label*="Copy"]):not([title*="copy"]):not([title*="Copy"]):not(:has([data-lucide="copy"])) svg:last-child {
+  transform: rotate(180deg) !important;
+}
+
+/* Target fumadocs specific classes - exclude copy buttons */
+[dir="rtl"] .fd-sidebar button:not([data-copy]):not([data-checked]):not([aria-label*="copy"]):not([aria-label*="Copy"]):not([title*="copy"]):not([title*="Copy"]):not(:has([data-lucide="copy"])) img:last-child,
+[dir="rtl"] .fd-sidebar button:not([data-copy]):not([data-checked]):not([aria-label*="copy"]):not([aria-label*="Copy"]):not([title*="copy"]):not([title*="Copy"]):not(:has([data-lucide="copy"])) svg:last-child {
+  transform: rotate(180deg) !important;
+}
+
+/* Fix copy button in RTL layouts */
+[dir="rtl"] [data-copy],
+[dir="rtl"] [data-checked],
+[dir="rtl"] button[aria-label*="copy"],
+[dir="rtl"] button[aria-label*="Copy"],
+[dir="rtl"] button[title*="copy"],
+[dir="rtl"] button[title*="Copy"] {
+  position: absolute !important;
+  direction: ltr !important;
+  text-align: center !important;
+  cursor: pointer !important;
+}
+
+/* General copy button cursor pointer */
+[data-copy],
+[data-checked],
+button[aria-label*="copy"],
+button[aria-label*="Copy"],
+button[title*="copy"],
+button[title*="Copy"],
+button:has([data-lucide="copy"]),
+button:has(svg[data-lucide="copy"]) {
+  cursor: pointer !important;
+}
+
+/* RTL code block copy button positioning */
+[dir="rtl"] pre:has([data-copy]),
+[dir="rtl"] pre:has([data-checked]),
+[dir="rtl"] pre:has(button[aria-label*="copy"]),
+[dir="rtl"] pre:has(button[aria-label*="Copy"]) {
+  position: relative !important;
+}
+
+[dir="rtl"] pre [data-copy],
+[dir="rtl"] pre [data-checked],
+[dir="rtl"] pre button[aria-label*="copy"],
+[dir="rtl"] pre button[aria-label*="Copy"] {
+  position: absolute !important;
+  right: 0.5rem !important;
+  left: auto !important;
+  top: 0.5rem !important;
+  direction: ltr !important;
+  text-align: center !important;
+  cursor: pointer !important;
+  z-index: 10 !important;
+}
+
+/* Ensure copy button text/icons are properly aligned in RTL */
+[dir="rtl"] [data-copy] *,
+[dir="rtl"] [data-checked] *,
+[dir="rtl"] button[aria-label*="copy"] *,
+[dir="rtl"] button[aria-label*="Copy"] * {
+  direction: ltr !important;
+  text-align: center !important;
+}
+
+/* Additional RTL fixes for fumadocs copy button */
+[dir="rtl"] .prose pre:has(button) {
+  position: relative !important;
+}
+
+[dir="rtl"] .prose pre button {
+  position: absolute !important;
+  right: 0.5rem !important;
+  left: auto !important;
+  top: 0.5rem !important;
+  cursor: pointer !important;
+  z-index: 10 !important;
+  direction: ltr !important;
+  text-align: center !important;
+}
+
+/* Fix for any copy button in code blocks */
+[dir="rtl"] pre button[data-lucide="copy"],
+[dir="rtl"] pre button:has([data-lucide="copy"]),
+[dir="rtl"] pre button:has(svg[data-lucide="copy"]) {
+  position: absolute !important;
+  right: 0.5rem !important;
+  left: auto !important;
+  top: 0.5rem !important;
+  cursor: pointer !important;
+  z-index: 10 !important;
+  direction: ltr !important;
+  text-align: center !important;
+}
+
+/* Ensure all interactive elements have pointer cursor */
+button, 
+[role="button"], 
+[data-copy],
+[aria-label*="copy"],
+[title*="copy"] {
+  cursor: pointer !important;
+}
+
+/* Responsive table styles */
+.prose table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: auto !important;
+  border-collapse: collapse !important;
+  overflow-x: auto !important;
+  display: block !important;
+  white-space: nowrap !important;
+}
+
+.prose table thead,
+.prose table tbody,
+.prose table tr {
+  display: table !important;
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+.prose table th,
+.prose table td {
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto !important;
+  padding: 0.75rem !important;
+  border: 1px solid hsl(var(--border)) !important;
+  vertical-align: top !important;
+  min-width: 0 !important;
+}
+
+/* Responsive table wrapper */
+.prose table {
+  overflow-x: auto !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Table container for better responsive behavior */
+.prose > div:has(table) {
+  overflow-x: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Code block width limits */
+.prose pre {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  white-space: pre !important;
+  word-wrap: normal !important;
+  word-break: normal !important;
+}
+
+.prose pre code {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  white-space: pre !important;
+  word-wrap: normal !important;
+  word-break: normal !important;
+}
+
+/* Code block container improvements */
+.prose > div:has(pre) {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  position: relative !important;
+}
+
+/* Better code block scrolling */
+.prose pre::-webkit-scrollbar {
+  height: 8px !important;
+}
+
+.prose pre::-webkit-scrollbar-track {
+  background: hsl(var(--muted)) !important;
+  border-radius: 4px !important;
+}
+
+.prose pre::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground)) !important;
+  border-radius: 4px !important;
+}
+
+.prose pre::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground)) !important;
+}
+
+/* Responsive code blocks in containers */
+.prose > div:has(pre) {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+}
+
+/* Grid container responsive fixes */
+.prose .grid {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  display: grid !important;
+  gap: 1rem !important;
+}
+
+.prose .grid > div {
+  min-width: 0 !important;
+  overflow-x: auto !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+}
+
+/* Responsive fixes for comparison tables */
+.prose .grid[class*="md:grid-cols-2"] {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 1rem !important;
+}
+
+@media (min-width: 768px) {
+  .prose .grid[class*="md:grid-cols-2"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Ensure tables don't break layout */
+.prose table {
+  margin: 1rem 0 !important;
+  font-size: 0.875rem !important;
+}
+
+/* Mobile-first table responsiveness */
+@media (max-width: 768px) {
+  .prose table {
+    font-size: 0.75rem !important;
+  }
+  
+  .prose table th,
+  .prose table td {
+    padding: 0.5rem !important;
+  }
+  
+  /* Stack table columns on very small screens */
+  .prose table,
+  .prose thead,
+  .prose tbody,
+  .prose th,
+  .prose td,
+  .prose tr {
+    display: block !important;
+  }
+  
+  .prose thead tr {
+    position: absolute !important;
+    top: -9999px !important;
+    left: -9999px !important;
+  }
+  
+  .prose tr {
+    border: 1px solid hsl(var(--border)) !important;
+    margin-bottom: 0.5rem !important;
+    padding: 0.5rem !important;
+  }
+  
+  .prose td {
+    border: none !important;
+    border-bottom: 1px solid hsl(var(--border)) !important;
+    position: relative !important;
+    padding-left: 50% !important;
+    text-align: left !important;
+  }
+  
+  .prose td:before {
+    content: attr(data-label) ": " !important;
+    position: absolute !important;
+    left: 6px !important;
+    width: 45% !important;
+    padding-right: 10px !important;
+    white-space: nowrap !important;
+    font-weight: bold !important;
+  }
+}
+
+/* Additional table improvements for better readability */
+.prose table th {
+  background-color: hsl(var(--muted)) !important;
+  font-weight: 600 !important;
+  text-align: left !important;
+}
+
+.prose table tr:nth-child(even) {
+  background-color: hsl(var(--muted) / 0.5) !important;
+}
+
+.prose table tr:hover {
+  background-color: hsl(var(--accent) / 0.5) !important;
+}
+
+
+/* RTL-specific button positioning fixes */
+[dir="rtl"] button {
+  cursor: pointer !important;
+}
+
+/* Fix for fumadocs specific copy button classes */
+[dir="rtl"] .fd-copy,
+[dir="rtl"] [class*="copy"],
+[dir="rtl"] [class*="Copy"] {
+  position: absolute !important;
+  cursor: pointer !important;
+  z-index: 10 !important;
+  direction: ltr !important;
+  text-align: center !important;
+}
+
+/* Ensure copy buttons are NOT rotated in RTL */
+[dir="rtl"] [data-copy],
+[dir="rtl"] [data-copy] *,
+[dir="rtl"] [data-checked],
+[dir="rtl"] [data-checked] *,
+[dir="rtl"] button[aria-label*="copy"],
+[dir="rtl"] button[aria-label*="copy"] *,
+[dir="rtl"] button[aria-label*="Copy"],
+[dir="rtl"] button[aria-label*="Copy"] *,
+[dir="rtl"] button[title*="copy"],
+[dir="rtl"] button[title*="copy"] *,
+[dir="rtl"] button[title*="Copy"],
+[dir="rtl"] button[title*="Copy"] *,
+[dir="rtl"] button:has([data-lucide="copy"]),
+[dir="rtl"] button:has([data-lucide="copy"]) *,
+[dir="rtl"] button:has(svg[data-lucide="copy"]),
+[dir="rtl"] button:has(svg[data-lucide="copy"]) *,
+[dir="rtl"] .fd-copy,
+[dir="rtl"] .fd-copy *,
+[dir="rtl"] [class*="copy"],
+[dir="rtl"] [class*="copy"] *,
+[dir="rtl"] [class*="Copy"],
+[dir="rtl"] [class*="Copy"] * {
+  transform: none !important;
+  right: 0;
+}
+
+/* Specific fix for copy button icons (including thick/check icons) */
+[dir="rtl"] [data-copy] img,
+[dir="rtl"] [data-copy] svg,
+[dir="rtl"] [data-checked] img,
+[dir="rtl"] [data-checked] svg,
+[dir="rtl"] button[aria-label*="copy"] img,
+[dir="rtl"] button[aria-label*="copy"] svg,
+[dir="rtl"] button[aria-label*="Copy"] img,
+[dir="rtl"] button[aria-label*="Copy"] svg,
+[dir="rtl"] button[title*="copy"] img,
+[dir="rtl"] button[title*="copy"] svg,
+[dir="rtl"] button[title*="Copy"] img,
+[dir="rtl"] button[title*="Copy"] svg,
+[dir="rtl"] button:has([data-lucide="copy"]) img,
+[dir="rtl"] button:has([data-lucide="copy"]) svg,
+[dir="rtl"] button:has(svg[data-lucide="copy"]) img,
+[dir="rtl"] button:has(svg[data-lucide="copy"]) svg {
+  transform: none !important;
+}
+
+/* Target any button with multiple images in RTL - exclude copy buttons */
+[dir="rtl"] button:not([data-copy]):not([data-checked]):not([aria-label*="copy"]):not([aria-label*="Copy"]):not([title*="copy"]):not([title*="Copy"]):not(:has([data-lucide="copy"])):has(img) img:last-child,
+[dir="rtl"] button:not([data-copy]):not([data-checked]):not([aria-label*="copy"]):not([aria-label*="Copy"]):not([title*="copy"]):not([title*="Copy"]):not(:has([data-lucide="copy"])):has(svg) svg:last-child {
+  transform: rotate(180deg) !important;
+}
+
+/* Ultra-specific selector for sidebar navigation buttons */
+[dir="rtl"] .fd-sidebar button[aria-expanded] img:last-child,
+[dir="rtl"] .fd-sidebar button[aria-expanded] svg:last-child {
+  transform: rotate(180deg) !important;
+}
+
+/* Very broad RTL chevron rotation - catch all possible selectors */
+/* [dir="rtl"] * img:last-child,
+[dir="rtl"] * svg:last-child {
+  transform: rotate(180deg) !important;
+} */
+
+/* Target any element with multiple images in RTL */
+/* [dir="rtl"] button:has(img) img:last-child,
+[dir="rtl"] button:has(svg) svg:last-child {
+  transform: rotate(180deg) !important;
+} */
+
+/* Target any element with aria-expanded in RTL */
+/* [dir="rtl"] [aria-expanded] img:last-child,
+[dir="rtl"] [aria-expanded] svg:last-child {
+  transform: rotate(180deg) !important;
+} */

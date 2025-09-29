@@ -1,0 +1,8 @@
+{
+  "title": "Панель",
+  "description": "Управление панелью PasarGuard",
+  "pages": [
+    "installation"
+  ],
+  "icon": "Monitor"
+}

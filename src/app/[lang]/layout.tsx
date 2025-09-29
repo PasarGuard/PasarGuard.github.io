@@ -1,6 +1,7 @@
 import './global.css';
 import { RootProvider } from 'fumadocs-ui/provider';
 import { defineI18nUI } from 'fumadocs-ui/i18n';
+import { ThemeProvider } from 'next-themes';
 import { i18n } from '@/lib/i18n';
 import { Inter } from 'next/font/google';
 import { Vazirmatn } from 'next/font/google';
@@ -54,10 +55,17 @@ export default async function Layout({
       className={`${inter.variable} ${vazirMatn.variable}`}
       suppressHydrationWarning
     >
-      <body className={`flex flex-col min-h-screen ${isRTL ? 'font-vazir' : 'font-inter'}`}>
-        <RootProvider i18n={provider(lang)}>
-          {children}
-        </RootProvider>
+      <body className={`flex flex-col min-h-screen ${inter.variable} ${vazirMatn.variable} ${isRTL ? 'font-vazir' : 'font-inter'}`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <RootProvider i18n={provider(lang)}>
+            {children}
+          </RootProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

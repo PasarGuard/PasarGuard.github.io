@@ -1,0 +1,19 @@
+{
+  "appName": "PasarGuard",
+  "appDescription": "抗审查的GUI集成解决方案",
+  "version": "V1 第一版",
+  "documentation": "文档",
+  "github": "GitHub",
+  "panel": {
+    "title": "面板",
+    "description": "探索具有最大定制功能的最佳VPN面板"
+  },
+  "node": {
+    "title": "节点",
+    "description": "发现PasarGuard节点和其他功能"
+  },
+  "commands": {
+    "title": "命令",
+    "description": "用于启动、分析、构建和预览应用程序的命令列表"
+  }
+}

@@ -1,39 +1,40 @@
 ---
-title: Installation
-description: Installation instructions for PasarGuard.
+title: Установка
+description: Инструкции по установке PasarGuard.
+icon: Download
 ---
 
-<Steps>
-### Install PasarGuard
+
+### Установка PasarGuard
 
 <Alert type="warning">
-  The following commands will install the pre release versions (alpha/beta)
+  Следующие команды установят предварительные версии (альфа/бета)
 </Alert>
 
 <Tabs items={['SQLite', 'MySQL', 'MariaDB', 'PostgreSQL']}>
   <Tab value="SQLite">
-    ### SQLite Installation
+    ### Установка SQLite
 
     ```bash
     sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --pre-release
     ```
   </Tab>
   <Tab value="MySQL">
-    ### MySQL Installation
+    ### Установка MySQL
 
     ```bash
     sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mysql --pre-release
     ```
   </Tab>
   <Tab value="MariaDB">
-    ### MariaDB Installation
+    ### Установка MariaDB
 
     ```bash
     sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mariadb --pre-release
     ```
   </Tab>
   <Tab value="PostgreSQL">
-    ### PostgreSQL Installation
+    ### Установка PostgreSQL
 
     ```bash
     sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database postgresql --pre-release
@@ -41,40 +42,40 @@ description: Installation instructions for PasarGuard.
   </Tab>
 </Tabs>
 
-### Post Installation
+### После установки
 
-Once the installation is complete:
+После завершения установки:
 
--   You will see the logs that you can stop watching them by closing the terminal or pressing `Ctrl+C`
--   The PasarGuard files will be located at `/opt/pasarguard`
--   The configuration file can be found at `/opt/pasarguard/.env` (refer to [configurations](#configuration) section to see variables)
--   The data files will be placed at `/var/lib/pasarguard`
--   For security reasons, the PasarGuard dashboard is not accessible via IP address. Therefore, you must [obtain SSL certificate](https://PasarGuard.github.io/PasarGuard/en/examples/issue-ssl-certificate) and access your PasarGuard dashboard by opening a web browser and navigating to `https://YOUR_DOMAIN:8000/dashboard/` (replace YOUR_DOMAIN with your actual domain)
--   You can also use SSH port forwarding to access the PasarGuard dashboard locally without a domain. Replace `user@serverip` with your actual SSH username and server IP and Run the command below:
+-   Вы увидите логи, которые можете прекратить просматривать, закрыв терминал или нажав `Ctrl+C`
+-   Файлы PasarGuard будут расположены в `/opt/pasarguard`
+-   Файл конфигурации можно найти в `/opt/pasarguard/.env` (обратитесь к разделу [конфигурации](#configuration) для просмотра переменных)
+-   Файлы данных будут размещены в `/var/lib/pasarguard`
+-   По соображениям безопасности, панель управления PasarGuard недоступна по IP-адресу. Поэтому вы должны [получить SSL-сертификат](https://PasarGuard.github.io/PasarGuard/en/examples/issue-ssl-certificate) и получить доступ к панели управления PasarGuard, открыв веб-браузер и перейдя по адресу `https://YOUR_DOMAIN:8000/dashboard/` (замените YOUR_DOMAIN на ваш фактический домен)
+-   Вы также можете использовать SSH port forwarding для доступа к панели управления PasarGuard локально без домена. Замените `user@serverip` на ваше фактическое имя пользователя SSH и IP-адрес сервера и выполните команду ниже:
 
 ```bash
 ssh -L 8000:localhost:8000 user@serverip
 ```
 
-Finally, you can enter the following link in your browser to access your PasarGuard dashboard:
+Наконец, вы можете ввести следующую ссылку в вашем браузере для доступа к панели управления PasarGuard:
 
 http://localhost:8000/dashboard/
 
-You will lose access to the dashboard as soon as you close the SSH terminal. Therefore, this method is recommended only for testing purposes.
+Вы потеряете доступ к панели управления, как только закроете SSH терминал. Поэтому этот метод рекомендуется только для целей тестирования.
 
-### Create Admin User
+### Создание пользователя администратора
 
-Next, you need to create a sudo admin for logging into the PasarGuard dashboard by the following command
+Далее вам нужно создать sudo администратора для входа в панель управления PasarGuard с помощью следующей команды
 
 ```bash
 pasarguard cli admin create --sudo
 ```
 
-That's it! You can login to your dashboard using these credentials
+Всё! Вы можете войти в панель управления, используя эти учетные данные
 
-To see the help message of the PasarGuard script, run the following command
+Чтобы увидеть справочное сообщение скрипта PasarGuard, выполните следующую команду
 
 ```bash
 pasarguard --help
 ```
-</Steps>
+

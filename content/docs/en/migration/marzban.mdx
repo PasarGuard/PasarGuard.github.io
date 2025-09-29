@@ -1,0 +1,317 @@
+---
+title: Marzban to PasarGuard
+icon: ArrowRightLeft
+---
+
+<Alert type="warning">
+This guide is for Marzban versions `beta-3` and below.
+</Alert>
+
+This guide will help you migrate your data, settings, and user accounts from Marzban to PasarGuard without losing anything.
+
+## Prerequisites
+
+> ⚠️ **Important**: Always have a complete backup of your data before starting the migration process.
+
+- Make sure you have root access to your server.
+- Have a backup of your current Marzban installation.
+- Check that Docker and Docker Compose are installed.
+
+## Migration Steps
+
+### 1. Stop Marzban Services
+
+First, stop all running Marzban containers:
+
+#### Stop Service Commands
+
+```bash
+cd /opt/marzban
+docker compose down
+```
+
+### 2. Rename Main Directory
+
+Change the main Marzban directory name to PasarGuard:
+
+#### Directory Rename Command
+
+```bash
+sudo mv /opt/marzban /opt/pasarguard
+```
+
+### 3. Rename Data Directory
+
+Change the data directory name as well:
+
+#### Data Directory Rename Command
+
+```bash
+sudo mv /var/lib/marzban /var/lib/pasarguard
+```
+
+### 4. Rename MySQL Directory (if using)
+
+If you're using MySQL and have a dedicated directory for Marzban database:
+
+#### MySQL Directory Rename Command
+
+```bash
+sudo mv /var/lib/mysql/marzban /var/lib/mysql/pasarguard
+```
+
+### 5. Update Environment Variables
+
+Go to the new PasarGuard directory and update the environment file:
+
+```bash
+cd /opt/pasarguard
+```
+
+Update all paths referenced in the `.env` file with a simple command:
+
+```bash
+sudo sed -i 's|/var/lib/marzban|/var/lib/pasarguard|g' .env
+```
+
+<Alert type="warning">
+If you're using an older version (0.8.4 or below), you also need to change the SQL driver:
+</Alert>
+
+<Tabs items={['SQLite', 'MySQL']}>
+  <Tab value="SQLite">
+    ### SQLite Driver Update
+
+    ❌ Old
+    ```bash
+    SQLALCHEMY_DATABASE_URL = "sqlite:///db.sqlite3"
+    ```
+    ✅ New
+    ```bash
+    SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///db.sqlite3"
+    ```
+  </Tab>
+  <Tab value="MySQL">
+    ### MySQL Driver Update
+
+    ❌ Old
+    ```bash
+    SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:DB_PASSWORD@127.0.0.1/pasarguard"
+    ```
+    ✅ New
+    ```bash
+    SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://root:DB_PASSWORD@127.0.0.1/pasarguard"
+    ```
+  </Tab>
+</Tabs>
+
+### 6. Update Docker Compose File
+
+Update the `docker-compose.yml` file to reflect the new paths. You need to manually edit this file:
+
+```bash
+sudo nano docker-compose.yml
+```
+
+#### Docker Compose Changes
+
+Here's a comparison showing the necessary changes:
+
+<div className="grid md:grid-cols-2 gap-4">
+
+<div className="space-y-2">
+
+**❌ Before (Marzban)**
+```yaml
+services:
+  marzban:
+    image: gozargah/marzban:latest
+    restart: always
+    env_file: .env
+    network_mode: host
+    volumes:
+      - /var/lib/marzban:/var/lib/marzban
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:lts
+    restart: always
+    env_file: .env
+    network_mode: host
+    command: --bind-address=127.0.0.1 --mysqlx-bind-address=127.0.0.1 --disable-log-bin
+    environment:
+      MYSQL_DATABASE: marzban
+    volumes:
+      - /var/lib/mysql/marzban:/var/lib/mysql
+```
+
+</div>
+
+<div className="space-y-2">
+
+**✅ After (PasarGuard)**
+```yaml
+services:
+  pasarguard:
+    image: pasarguard/panel:latest
+    restart: always
+    env_file: .env
+    network_mode: host
+    volumes:
+      - /var/lib/pasarguard:/var/lib/pasarguard
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:lts
+    restart: always
+    env_file: .env
+    network_mode: host
+    command: --bind-address=127.0.0.1 --mysqlx-bind-address=127.0.0.1 --disable-log-bin
+    environment:
+      MYSQL_DATABASE: marzban
+    volumes:
+      - /var/lib/mysql/pasarguard:/var/lib/mysql
+```
+
+</div>
+
+</div>
+
+#### Key Changes Summary:
+
+<div className="overflow-x-auto">
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Before</th>
+<th>After</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Section"><strong>Service Name</strong></td>
+<td data-label="Before"><code>marzban</code></td>
+<td data-label="After"><code>pasarguard</code></td>
+</tr>
+<tr>
+<td data-label="Section"><strong>Docker Image</strong></td>
+<td data-label="Before"><code>gozargah/marzban:latest</code></td>
+<td data-label="After"><code>pasarguard/panel:latest</code></td>
+</tr>
+<tr>
+<td data-label="Section"><strong>App Volume</strong></td>
+<td data-label="Before"><code>/var/lib/marzban:/var/lib/marzban</code></td>
+<td data-label="After"><code>/var/lib/pasarguard:/var/lib/pasarguard</code></td>
+</tr>
+<tr>
+<td data-label="Section"><strong>MySQL Volume</strong></td>
+<td data-label="Before"><code>/var/lib/mysql/marzban:/var/lib/mysql</code></td>
+<td data-label="After"><code>/var/lib/mysql/pasarguard:/var/lib/mysql</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+### 7. Update File Permissions
+
+Make sure you have the necessary permissions for the new directories:
+
+#### Permission Update Commands
+
+```bash
+sudo chown -R $USER:$USER /opt/pasarguard
+sudo chmod -R 755 /opt/pasarguard
+```
+
+### 8. Install PasarGuard Management Script
+
+Install the PasarGuard management script for easier management:
+
+#### Script Installation Command
+
+```bash
+sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install-script
+```
+
+This script provides useful commands for managing your PasarGuard installation.
+
+### 9. Start PasarGuard
+
+Now start PasarGuard with the new configuration:
+
+#### Startup Command
+
+```bash
+pasarguard up
+```
+
+### 10. Verify Migration
+
+Check that all services are running properly:
+
+#### Verification Commands
+
+```bash
+pasarguard status
+```
+
+Open your panel URL to make sure everything is working correctly.
+
+## Troubleshooting
+
+### Common Issues
+
+> 💡 **Tip**: Most issues can be resolved by checking file permissions and path configurations.
+
+**1. Permission Denied**
+Make sure you're running commands with appropriate permissions (sudo when needed).
+
+**2. Database Connection Issues**
+If you're using MySQL, check that database paths and login information are properly updated.
+
+**3. Port Conflicts**
+Make sure no other services are using the same ports.
+
+**4. Missing Environment Variables**
+Double-check that all environment variables in the `.env` file are properly updated.
+
+### Rollback
+
+> ⚠️ **Emergency Rollback**: If you encounter serious issues and need to revert to the previous version
+
+```bash
+# Stop PasarGuard
+cd /opt/pasarguard
+docker compose down
+
+# Restore original directories
+sudo mv /opt/pasarguard /opt/marzban
+sudo mv /var/lib/pasarguard /var/lib/marzban
+sudo mv /var/lib/mysql/pasarguard /var/lib/mysql/marzban  # if using
+
+# Restore original docker-compose.yml and .env files from backup
+# Then start Marzban
+marzban up
+```
+
+## Post-Migration
+
+After successful migration:
+
+- **📊 Update Monitoring**: If you have monitoring tools, connect them to the new paths.
+- **💾 Update Backups**: Make sure your backup scripts are updated to backup from the new directories.
+- **🧪 Test All Features**: Thoroughly test all panel features to ensure everything is working correctly.
+
+## Support
+
+🔗 **Links**
+
+- **Discussion Group**: [Telegram](https://t.me/PasarGuardGP)
+- **Issues**: If you encounter any problems during migration, create an issue.
+
+---
+
+> **📝 Note**: This guide assumes a standard Marzban installation. Custom configurations may require additional steps.

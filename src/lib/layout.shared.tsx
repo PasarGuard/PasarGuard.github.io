@@ -1,6 +1,8 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
-import { CompactControls } from '@/components/CompactControls';
+import { ThemeLogo } from '@/components/ThemeLogo';
+import { HeaderControls } from '@/components/HeaderControls';
 import { i18n } from '@/lib/i18n';
+import { loadTranslations } from '@/lib/translations';
 
 /**
  * Shared layout configurations
@@ -9,24 +11,30 @@ import { i18n } from '@/lib/i18n';
  * Home Layout: app/(home)/layout.tsx
  * Docs Layout: app/docs/layout.tsx
  */
-export function baseOptions(locale: string): BaseLayoutProps {
+export function baseOptions(locale: string, showControls: boolean = false): BaseLayoutProps {
+  const translations = loadTranslations(locale);
+  const isRTL = ['fa', 'ar'].includes(locale);
+
   return {
     i18n,
     nav: {
       title: (
-        <>
-          <svg
-            width="24"
-            height="24"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-label="Logo"
-          >
-            <circle cx={12} cy={12} r={12} fill="currentColor" />
-          </svg>
-          My App
-        </>
+        <div className="flex items-center gap-2 group">
+          <ThemeLogo
+            width={24}
+            height={24}
+            className="transition-transform duration-200 group-hover:scale-105"
+          />
+          <span className="font-semibold text-lg tracking-tight transition-colors duration-200 group-hover:text-primary">
+            {translations.appName}
+          </span>
+        </div>
       ),
-      children: null,
+      children: showControls ? (
+        <div className='px-4'>
+          <HeaderControls currentLang={locale} isRTL={isRTL} />
+        </div>
+      ) : undefined,
     },
     // see https://fumadocs.dev/docs/ui/navigation/links
     links: [],

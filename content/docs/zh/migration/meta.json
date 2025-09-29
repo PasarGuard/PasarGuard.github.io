@@ -1,0 +1,9 @@
+{
+  "title": "迁移",
+  "description": "PasarGuard迁移指南",
+  "pages": [
+    "index",
+    "marzban"
+  ],
+  "icon": "ArrowRightLeft"
+}

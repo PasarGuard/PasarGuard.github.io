@@ -1,0 +1,19 @@
+{
+  "appName": "پاسارگارد",
+  "appDescription": "مقاوم در برابر سانسور GUI راه حل یکپارچه",
+  "version": "V1 نسخه اول",
+  "documentation": "مستندات",
+  "github": "GitHub",
+  "panel": {
+    "title": "پنل",
+    "description": "موجود را با بیشترین قابلیت سفارشی سازی ممکن کاوش کنید VPN بهترین پنل"
+  },
+  "node": {
+    "title": "نود",
+    "description": "و موارد دیگر را کشف کنید PasarGuard نود"
+  },
+  "commands": {
+    "title": "دستورات",
+    "description": "برای راه اندازی ،تحلیل ساخت و پیش نمایش برنامه شما Nuxt CLI لیست دستورات"
+  }
+}

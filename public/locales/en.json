@@ -1,0 +1,19 @@
+{
+  "appName": "PasarGuard",
+  "appDescription": "Censorship-resistant GUI integrated solution",
+  "version": "V1 First Version",
+  "documentation": "Documentation",
+  "github": "GitHub",
+  "panel": {
+    "title": "Panel",
+    "description": "Explore the best VPN panel with maximum customization capabilities"
+  },
+  "node": {
+    "title": "Node",
+    "description": "Discover PasarGuard Node and other features"
+  },
+  "commands": {
+    "title": "Commands",
+    "description": "List of commands for launching, analyzing, building, and previewing your application"
+  }
+}

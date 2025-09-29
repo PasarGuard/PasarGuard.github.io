@@ -61,14 +61,47 @@ export function generateTOCFromContent(content: string) {
   const toc: Array<{ depth: number; url: string; title: string }> = [];
   const urlCounts: Record<string, number> = {}; // Track URL usage to ensure uniqueness
   
+  let insideTabs = false;
+  let tabDepth = 0; // Track nested tab levels
+  
   lines.forEach((line, index) => {
     const trimmedLine = line.trim();
     
-    // Match headings (##, ###, etc.)
+    // Track if we're inside a Tabs component - handle various formats
+    if (trimmedLine.includes('<Tabs') || 
+        trimmedLine.includes('<Tab ') || 
+        trimmedLine.includes('<Tab>') ||
+        trimmedLine.includes('import { Tabs') ||
+        trimmedLine.includes('import { Tab')) {
+      insideTabs = true;
+      tabDepth++;
+    }
+    
+    // Track closing tabs
+    if (trimmedLine.includes('</Tabs>') || 
+        trimmedLine.includes('</Tab>')) {
+      tabDepth--;
+      if (tabDepth <= 0) {
+        insideTabs = false;
+        tabDepth = 0;
+      }
+    }
+    
+    // Skip headings inside tabs - they shouldn't be in TOC
+    if (insideTabs) {
+      return;
+    }
+    
+    // Match headings (##, ###, etc.) only outside of tabs
     const headingMatch = trimmedLine.match(/^(#{2,6})\s+(.+)$/);
     if (headingMatch) {
       const depth = headingMatch[1].length;
       const title = headingMatch[2];
+      
+      // Skip if this looks like a tab title (common patterns)
+      if (title.includes('Install') && title.includes('PasarGuard')) {
+        return;
+      }
       
       // Generate URL anchor from title with better handling for non-English text
       let baseUrl = title
