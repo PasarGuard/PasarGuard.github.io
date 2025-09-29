@@ -1,11 +1,15 @@
+'use client';
+
 import Link from 'next/link';
 import { Github, Heart } from 'lucide-react';
+import { useTranslations } from '@/lib/use-translations';
 
 interface FooterProps {
   lang: string;
 }
 
 export function Footer({ lang }: FooterProps) {
+  const { t } = useTranslations();
   const currentYear = new Date().getFullYear();
   
   return (
@@ -26,7 +30,7 @@ export function Footer({ lang }: FooterProps) {
               className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <Github className="h-4 w-4" />
-              GitHub
+              {t('github')}
             </Link>
             <Link
               href="https://github.com/PasarGuard/panel/releases"
@@ -40,7 +44,7 @@ export function Footer({ lang }: FooterProps) {
               href={`/${lang}/docs`}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              Documentation
+              {t('documentation')}
             </Link>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { getPageImage, source } from '@/lib/source';
+import { source } from '@/lib/source';
 import {
   DocsBody,
   DocsDescription,
@@ -76,8 +76,5 @@ export async function generateMetadata(props: {
   return {
     title: pageTitle,
     description: pageDescription,
-    openGraph: {
-      images: getPageImage(page).url,
-    },
   };
 }

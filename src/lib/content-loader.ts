@@ -11,7 +11,9 @@ const languageContentMap = {
 
 export async function loadContentForLanguage(slug: string[], locale: string) {
   const contentPath = languageContentMap[locale as keyof typeof languageContentMap] || languageContentMap.en;
-  const filePath = join(process.cwd(), contentPath, `${slug.join('/') || 'index'}.mdx`);
+  // Handle index pages - if slug is empty or ends with a known index path, use index.mdx
+  const slugPath = slug.join('/');
+  const filePath = join(process.cwd(), contentPath, `${slugPath || 'index'}.mdx`);
   
   try {
     const fileContent = await readFile(filePath, 'utf-8');
@@ -24,10 +26,6 @@ export async function loadContentForLanguage(slug: string[], locale: string) {
       exists: true,
     };
   } catch (error) {
-    // Debug logging for fa locale
-    if (locale === 'fa') {
-      console.log('FA Content Load Error:', error);
-    }
     
     // Fall back to English if language-specific content doesn't exist
     if (locale !== 'en') {
