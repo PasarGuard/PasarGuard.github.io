@@ -1,0 +1,12 @@
+{
+  "title": "مستندات PasarGuard",
+  "description": "راهنمای کامل مدیریت پروکسی PasarGuard",
+  "pages": [
+    "index",
+    "...getting-started",
+    "...panel",
+    "...node",
+    "...cli",
+    "...migration"
+  ]
+}

@@ -13,27 +13,27 @@ import { loadContentForLanguage, generateTOCFromContent } from '@/lib/content-lo
 import { TranslatedMDX } from '@/components/TranslatedMDX';
 
 export default async function Page(props: {
-  params: Promise<{ locale: string; slug?: string[] }>;
+  params: Promise<{ lang: string; slug?: string[] }>;
 }) {
   const params = await props.params;
-  const locale = params.locale || 'en';
-  
-  const page = source.getPage(params.slug);
+  const lang = params.lang;
+
+  const page = source.getPage(params.slug, lang);
   if (!page) notFound();
 
   // Load language-specific content for display
-  const languageContent = await loadContentForLanguage(params.slug || [], locale);
-  
+  const languageContent = await loadContentForLanguage(params.slug || [], lang);
+
   // Use language-specific content if available, otherwise fall back to original
   const pageTitle = languageContent.title || page.data.title;
   const pageDescription = languageContent.description || page.data.description;
-  
+
   // Generate TOC from translated content if available, otherwise use original
-  const translatedTOC = languageContent.exists && languageContent.content 
+  const translatedTOC = languageContent.exists && languageContent.content
     ? generateTOCFromContent(languageContent.content)
     : page.data.toc;
-  
-  // Use original MDX component - we'll handle content translation in a different way
+
+  // Use original MDX component - Fumadocs handles i18n automatically
   const MDX = page.data.body;
 
   return (
@@ -41,16 +41,12 @@ export default async function Page(props: {
       <DocsTitle>{pageTitle}</DocsTitle>
       <DocsDescription>{pageDescription}</DocsDescription>
       <DocsBody>
-        {languageContent.exists && languageContent.content ? (
-          <TranslatedMDX content={languageContent.content} page={page} />
-        ) : (
-          <MDX
-            components={getMDXComponents({
-              // this allows you to link to other pages with relative file paths
-              a: createRelativeLink(source, page),
-            })}
-          />
-        )}
+        <MDX
+          components={getMDXComponents({
+            // this allows you to link to other pages with relative file paths
+            a: createRelativeLink(source, page),
+          })}
+        />
       </DocsBody>
     </DocsPage>
   );
@@ -61,16 +57,16 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata(props: {
-  params: Promise<{ locale: string; slug?: string[] }>;
+  params: Promise<{ lang: string; slug?: string[] }>;
 }): Promise<Metadata> {
   const params = await props.params;
-  const locale = params.locale || 'en';
-  const page = source.getPage(params.slug);
+  const lang = params.lang;
+  const page = source.getPage(params.slug, lang);
   if (!page) notFound();
 
   // Load language-specific content for metadata
-  const languageContent = await loadContentForLanguage(params.slug || [], locale);
-  
+  const languageContent = await loadContentForLanguage(params.slug || [], lang);
+
   // Use translated title and description for SSR
   const pageTitle = languageContent.title || page.data.title;
   const pageDescription = languageContent.description || page.data.description;

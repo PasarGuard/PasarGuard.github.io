@@ -1,0 +1,12 @@
+{
+  "title": "PasarGuard 文档",
+  "description": "PasarGuard 代理管理完整指南",
+  "pages": [
+    "index",
+    "...getting-started",
+    "...panel",
+    "...node",
+    "...cli",
+    "...migration"
+  ]
+}

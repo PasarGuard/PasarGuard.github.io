@@ -417,32 +417,32 @@ button:has([data-lucide="sun"]):has([data-lucide="moon"]) {
   }
 }
 
-/* Translate "On this page" text based on locale */
-[lang="fa"] h3:has(svg) {
+/* Translate "On this page" text based on locale - target TOC title specifically */
+[lang="fa"] h3.inline-flex.items-center:has(svg) {
   font-size: 0;
 }
 
-[lang="fa"] h3:has(svg)::after {
+[lang="fa"] h3.inline-flex.items-center:has(svg)::after {
   content: "در این صفحه";
   font-size: 0.875rem;
   font-weight: 500;
 }
 
-[lang="ru"] h3:has(svg) {
+[lang="ru"] h3.inline-flex.items-center:has(svg) {
   font-size: 0;
 }
 
-[lang="ru"] h3:has(svg)::before {
+[lang="ru"] h3.inline-flex.items-center:has(svg)::before {
   content: "На этой странице";
   font-size: 0.875rem;
   font-weight: 500;
 }
 
-[lang="zh"] h3:has(svg) {
+[lang="zh"] h3.inline-flex.items-center:has(svg) {
   font-size: 0;
 }
 
-[lang="zh"] h3:has(svg)::before {
+[lang="zh"] h3.inline-flex.items-center:has(svg)::before {
   content: "在此页面上";
   font-size: 0.875rem;
   font-weight: 500;

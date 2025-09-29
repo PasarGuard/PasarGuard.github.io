@@ -1,0 +1,80 @@
+---
+title: Installation
+description: Installation instructions for PasarGuard.
+---
+
+<Steps>
+### Install PasarGuard
+
+<Alert type="warning">
+  The following commands will install the pre release versions (alpha/beta)
+</Alert>
+
+<Tabs items={['SQLite', 'MySQL', 'MariaDB', 'PostgreSQL']}>
+  <Tab value="SQLite">
+    ### SQLite Installation
+
+    ```bash
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --pre-release
+    ```
+  </Tab>
+  <Tab value="MySQL">
+    ### MySQL Installation
+
+    ```bash
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mysql --pre-release
+    ```
+  </Tab>
+  <Tab value="MariaDB">
+    ### MariaDB Installation
+
+    ```bash
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mariadb --pre-release
+    ```
+  </Tab>
+  <Tab value="PostgreSQL">
+    ### PostgreSQL Installation
+
+    ```bash
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database postgresql --pre-release
+    ```
+  </Tab>
+</Tabs>
+
+### Post Installation
+
+Once the installation is complete:
+
+-   You will see the logs that you can stop watching them by closing the terminal or pressing `Ctrl+C`
+-   The PasarGuard files will be located at `/opt/pasarguard`
+-   The configuration file can be found at `/opt/pasarguard/.env` (refer to [configurations](#configuration) section to see variables)
+-   The data files will be placed at `/var/lib/pasarguard`
+-   For security reasons, the PasarGuard dashboard is not accessible via IP address. Therefore, you must [obtain SSL certificate](https://PasarGuard.github.io/PasarGuard/en/examples/issue-ssl-certificate) and access your PasarGuard dashboard by opening a web browser and navigating to `https://YOUR_DOMAIN:8000/dashboard/` (replace YOUR_DOMAIN with your actual domain)
+-   You can also use SSH port forwarding to access the PasarGuard dashboard locally without a domain. Replace `user@serverip` with your actual SSH username and server IP and Run the command below:
+
+```bash
+ssh -L 8000:localhost:8000 user@serverip
+```
+
+Finally, you can enter the following link in your browser to access your PasarGuard dashboard:
+
+http://localhost:8000/dashboard/
+
+You will lose access to the dashboard as soon as you close the SSH terminal. Therefore, this method is recommended only for testing purposes.
+
+### Create Admin User
+
+Next, you need to create a sudo admin for logging into the PasarGuard dashboard by the following command
+
+```bash
+pasarguard cli admin create --sudo
+```
+
+That's it! You can login to your dashboard using these credentials
+
+To see the help message of the PasarGuard script, run the following command
+
+```bash
+pasarguard --help
+```
+</Steps>
