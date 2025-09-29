@@ -760,6 +760,125 @@ button,
   max-width: 100% !important;
 }
 
+/* Modern Custom Scrollbar Styles */
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--scrollbar-track));
+  border-radius: 4px;
+  box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, hsl(var(--scrollbar-thumb)), hsl(var(--scrollbar-thumb-hover)));
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid hsl(var(--scrollbar-track));
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, hsl(var(--scrollbar-thumb-hover)), hsl(var(--scrollbar-thumb-active)));
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transform: scale(1.05);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: hsl(var(--scrollbar-thumb-active));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transform: scale(0.95);
+}
+
+::-webkit-scrollbar-corner {
+  background: hsl(var(--scrollbar-track));
+}
+
+/* Firefox scrollbar styles */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--scrollbar-thumb)) hsl(var(--scrollbar-track));
+}
+
+/* Smooth scrolling for all elements */
+html {
+  scroll-behavior: smooth;
+}
+
+* {
+  scroll-behavior: smooth;
+}
+
+/* Enhanced scrollbar for sidebar */
+.fd-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.fd-sidebar::-webkit-scrollbar-track {
+  background: hsl(var(--sidebar-background));
+  border-radius: 3px;
+}
+
+.fd-sidebar::-webkit-scrollbar-thumb {
+  background: hsl(var(--sidebar-accent));
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.fd-sidebar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--sidebar-primary));
+}
+
+/* Enhanced scrollbar for main content */
+main::-webkit-scrollbar,
+.fd-main::-webkit-scrollbar {
+  width: 8px;
+}
+
+main::-webkit-scrollbar-track,
+.fd-main::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+  border-radius: 4px;
+}
+
+main::-webkit-scrollbar-thumb,
+.fd-main::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, hsl(var(--scrollbar-thumb)), hsl(var(--scrollbar-thumb-hover)));
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+main::-webkit-scrollbar-thumb:hover,
+.fd-main::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, hsl(var(--scrollbar-thumb-hover)), hsl(var(--scrollbar-thumb-active)));
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Enhanced scrollbar for tables */
+.prose table::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.prose table::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 3px;
+}
+
+.prose table::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground));
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.prose table::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground));
+}
+
 /* Code block width limits */
 .prose pre {
   max-width: 100% !important;
@@ -784,23 +903,33 @@ button,
   position: relative !important;
 }
 
-/* Better code block scrolling */
+/* Enhanced code block scrolling with modern styling */
 .prose pre::-webkit-scrollbar {
   height: 8px !important;
+  width: 8px !important;
 }
 
 .prose pre::-webkit-scrollbar-track {
-  background: hsl(var(--muted)) !important;
+  background: hsl(var(--scrollbar-track)) !important;
   border-radius: 4px !important;
 }
 
 .prose pre::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground)) !important;
+  background: hsl(var(--scrollbar-thumb)) !important;
   border-radius: 4px !important;
+  transition: all 0.2s ease !important;
 }
 
 .prose pre::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--foreground)) !important;
+  background: hsl(var(--scrollbar-thumb-hover)) !important;
+}
+
+.prose pre::-webkit-scrollbar-thumb:active {
+  background: hsl(var(--scrollbar-thumb-active)) !important;
+}
+
+.prose pre::-webkit-scrollbar-corner {
+  background: hsl(var(--scrollbar-track)) !important;
 }
 
 /* Responsive code blocks in containers */

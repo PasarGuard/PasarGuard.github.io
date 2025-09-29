@@ -103,12 +103,15 @@ export function generateTOCFromContent(content: string) {
         return;
       }
       
-      // Generate URL anchor from title with better handling for non-English text
+      // Generate URL anchor from title with proper Unicode support
       let baseUrl = title
         .toLowerCase()
-        .replace(/[^\w\s-]/g, '') // Remove special characters
+        .normalize('NFD') // Normalize to decomposed form
+        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+        .replace(/[^\p{L}\p{N}\s-]/gu, '') // Keep only letters, numbers, spaces, and hyphens (Unicode-aware)
         .replace(/\s+/g, '-') // Replace spaces with hyphens
         .replace(/-+/g, '-') // Replace multiple hyphens with single
+        .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
         .trim();
       
       // If the URL is empty or just hyphens, use a fallback
