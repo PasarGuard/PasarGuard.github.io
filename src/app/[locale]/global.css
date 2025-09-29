@@ -466,14 +466,12 @@ code,
   text-align: left !important;
   line-height: 1.5 !important;
   margin: 0 !important;
-  padding: 1rem !important;
 }
 
 /* Fix extra spacing in RTL code blocks */
 [dir="rtl"] pre {
   margin: 0 !important;
-  padding: 1rem !important;
-  line-height: 1.5 !important;
+  line-height: 1.2 !important;
   white-space: pre !important;
   overflow-x: auto !important;
 }
@@ -481,7 +479,7 @@ code,
 [dir="rtl"] pre code {
   margin: 0 !important;
   padding: 0 !important;
-  line-height: 1.5 !important;
+  line-height: 1.2 !important;
   white-space: pre !important;
 }
 
@@ -509,8 +507,7 @@ code,
 /* Additional fixes for RTL code block spacing */
 [dir="rtl"] .prose pre {
   margin: 0 !important;
-  padding: 1rem !important;
-  line-height: 1.5 !important;
+  line-height: 1.2 !important;
   white-space: pre !important;
   overflow-x: auto !important;
 }
@@ -518,7 +515,7 @@ code,
 [dir="rtl"] .prose pre code {
   margin: 0 !important;
   padding: 0 !important;
-  line-height: 1.5 !important;
+  line-height: 1.2 !important;
   white-space: pre !important;
   display: block !important;
 }
@@ -526,8 +523,7 @@ code,
 /* Fix for TranslatedMDX code blocks in RTL */
 [dir="rtl"] .prose pre[dir="ltr"] {
   margin: 0 !important;
-  padding: 1rem !important;
-  line-height: 1.5 !important;
+  line-height: 1.2 !important;
   white-space: pre !important;
   overflow-x: auto !important;
 }
@@ -535,7 +531,19 @@ code,
 [dir="rtl"] .prose pre[dir="ltr"] code {
   margin: 0 !important;
   padding: 0 !important;
-  line-height: 1.5 !important;
+  line-height: 1.2 !important;
   white-space: pre !important;
   display: block !important;
+}
+
+/* Ultra-specific override for RTL code blocks */
+[dir="rtl"] .prose pre[style*="padding: 0.25rem"] {
+  margin: 0 !important;
+  line-height: 1.2 !important;
+}
+
+[dir="rtl"] .prose pre[style*="padding: 0.25rem"] code {
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1.2 !important;
 }

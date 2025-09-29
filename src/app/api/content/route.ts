@@ -1,43 +1,69 @@
-import { getPreferredLanguage } from '@/lib/language-utils';
-import { loadContentForLanguage } from '@/lib/content-loader';
+import { NextRequest, NextResponse } from 'next/server';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
+import matter from 'gray-matter';
 
-export const revalidate = false;
+const languageContentMap = {
+  en: 'content/translations/en',
+  fa: 'content/translations/fa',
+  ru: 'content/translations/ru', 
+  zh: 'content/translations/zh',
+};
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const slug = searchParams.get('slug') || '';
-  const language = getPreferredLanguage(request);
+  const slug = searchParams.get('slug');
+  const locale = searchParams.get('locale') || 'en';
+
+  if (!slug) {
+    return NextResponse.json({ error: 'Slug is required' }, { status: 400 });
+  }
+
+  const slugArray = slug.split('/').filter(Boolean);
+  const contentPath = languageContentMap[locale as keyof typeof languageContentMap] || languageContentMap.en;
+  const filePath = join(process.cwd(), contentPath, `${slugArray.join('/') || 'index'}.mdx`);
   
   try {
-    const slugArray = slug ? slug.split('/') : [];
-    const content = await loadContentForLanguage(slugArray, language);
+    const fileContent = await readFile(filePath, 'utf-8');
+    const { data: frontmatter, content } = matter(fileContent);
     
-    return new Response(JSON.stringify({
-      success: true,
-      language,
-      content: {
-        title: content.title,
-        description: content.description,
-        content: content.content,
-        exists: content.exists,
-      },
-    }), {
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Content-Language': language,
-      },
+    return NextResponse.json({
+      title: frontmatter.title,
+      description: frontmatter.description,
+      content: content,
+      exists: true,
     });
   } catch (error) {
-    return new Response(JSON.stringify({
-      success: false,
-      error: 'Failed to load content',
-      language,
-    }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Content-Language': language,
-      },
+    // Fall back to English if language-specific content doesn't exist
+    if (locale !== 'en') {
+      const englishContentPath = languageContentMap.en;
+      const englishFilePath = join(process.cwd(), englishContentPath, `${slugArray.join('/') || 'index'}.mdx`);
+      
+      try {
+        const fileContent = await readFile(englishFilePath, 'utf-8');
+        const { data: frontmatter, content } = matter(fileContent);
+        
+        return NextResponse.json({
+          title: frontmatter.title,
+          description: frontmatter.description,
+          content: content,
+          exists: true,
+        });
+      } catch (englishError) {
+        return NextResponse.json({
+          title: 'Page Not Found',
+          description: 'Content not found',
+          content: '# Page Not Found\n\nThis content is not available in the selected language.',
+          exists: false,
+        });
+      }
+    }
+    
+    return NextResponse.json({
+      title: 'Page Not Found',
+      description: 'Content not found',
+      content: '# Page Not Found\n\nThis content is not available in the selected language.',
+      exists: false,
     });
   }
 }

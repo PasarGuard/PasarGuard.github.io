@@ -15,11 +15,8 @@ export async function createTranslatedPageTree(locale: string = 'en') {
         
         const translatedContent = await loadContentForLanguage(slug, locale);
         
-        // Update URL to include locale prefix
-        // For English, keep original URL (no locale prefix)
-        // For other locales, add locale prefix
-        const updatedUrl = locale === 'en' ? node.url : `/${locale}${node.url}`;
-        
+        // Update URL to include locale prefix for all locales
+        const updatedUrl = `/${locale}${node.url}`;
         
         return {
           ...node,
@@ -31,7 +28,7 @@ export async function createTranslatedPageTree(locale: string = 'en') {
         };
       } catch (error) {
         // Fallback to original node if translation fails, but still update URL
-        const updatedUrl = locale === 'en' ? node.url : `/${locale}${node.url}`;
+        const updatedUrl = `/${locale}${node.url}`;
         return {
           ...node,
           url: updatedUrl,

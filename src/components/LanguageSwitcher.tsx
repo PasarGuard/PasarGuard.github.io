@@ -13,26 +13,49 @@ import { Languages as LanguagesIcon } from 'lucide-react';
 
 const supportedLangs = ['en', 'fa', 'zh', 'ru'];
 
+// Helper function to get locale from pathname (can be used on both server and client)
+function getLocaleFromPathname(pathname: string): string {
+  const segments = pathname.split('/');
+  const locale = segments[1];
+  if (supportedLangs.includes(locale)) {
+    return locale;
+  }
+  // If no locale in path, it's English
+  return 'en';
+}
+
 export function LanguageSwitcher() {
   const router = useRouter();
   const pathname = usePathname();
-  const [currentLocale, setCurrentLocale] = useState('en');
+  const [currentLocale, setCurrentLocale] = useState(() => getLocaleFromPathname(pathname));
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     // Extract current locale from pathname
-    const segments = pathname.split('/');
-    const locale = segments[1];
-    if (supportedLangs.includes(locale)) {
-      setCurrentLocale(locale);
-    } else {
-      // If no locale in path, check if it's a root path (English)
-      if (pathname === '/' || pathname.startsWith('/docs') || pathname.startsWith('/api')) {
-        setCurrentLocale('en');
-      } else {
-        setCurrentLocale('en');
-      }
-    }
+    const locale = getLocaleFromPathname(pathname);
+    setCurrentLocale(locale);
   }, [pathname]);
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon">
+            <LanguagesIcon className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" side="top">
+          <DropdownMenuItem>System</DropdownMenuItem>
+          <DropdownMenuItem>English</DropdownMenuItem>
+          <DropdownMenuItem>فارسی</DropdownMenuItem>
+          <DropdownMenuItem>简体中文</DropdownMenuItem>
+          <DropdownMenuItem>Русский</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
 
   const changeLanguage = async (lang: string) => {
     if (lang === 'system') {

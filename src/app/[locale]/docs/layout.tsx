@@ -13,11 +13,8 @@ export default async function Layout({
 }) {
   const { locale } = await params;
   
-  // Use locale from URL, but fallback to Accept-Language header
-  const headersList = await headers();
-  const request = new Request('http://localhost', { headers: headersList });
-  const headerLocale = getPreferredLanguage(request);
-  const finalLocale = locale || headerLocale;
+  // Use locale from URL parameter, which should be consistent between server and client
+  const finalLocale = locale || 'en';
   
   const translatedTree = await createTranslatedPageTree(finalLocale);
   return (

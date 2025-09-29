@@ -3,7 +3,7 @@ import { join } from 'path';
 import matter from 'gray-matter';
 
 const languageContentMap = {
-  en: 'content/docs',
+  en: 'content/translations/en',
   fa: 'content/translations/fa',
   ru: 'content/translations/ru', 
   zh: 'content/translations/zh',
