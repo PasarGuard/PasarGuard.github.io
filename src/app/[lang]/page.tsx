@@ -13,6 +13,12 @@ import { Metadata } from 'next';
 
 const validLanguages = ['en', 'fa', 'ru', 'zh'];
 
+export async function generateStaticParams() {
+  return validLanguages.map((lang) => ({
+    lang: lang,
+  }));
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params;
   

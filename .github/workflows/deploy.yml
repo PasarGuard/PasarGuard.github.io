@@ -18,7 +18,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: out/
+          publish-dir: ./.next
+          path: ./.next
   # Deployment job
   deploy:
     # Add a dependency to the build job
