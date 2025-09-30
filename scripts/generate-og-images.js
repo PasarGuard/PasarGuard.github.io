@@ -270,7 +270,7 @@ async function getAllPages() {
   });
   
   // Find all MDX files in content directory and create unique pages
-  const mdxFiles = await glob('../content/docs/en/**/*.mdx', { cwd: __dirname });
+  const mdxFiles = await glob('../content/en/**/*.mdx', { cwd: __dirname });
   const processedPages = new Set(); // To avoid duplicates
   
   console.log(`Found ${mdxFiles.length} MDX files to process`);
@@ -311,7 +311,7 @@ async function getAllPages() {
         // Process all individual files (no duplicate checking needed)
         
         const filename = `${slug.join('-')}.png`;
-        const pagePath = `/docs/${slug.join('/')}`;
+        const pagePath = `/${slug.join('/')}`;
         
         // Debug: console.log(`Adding page: ${filename} -> ${pagePath}`);
         

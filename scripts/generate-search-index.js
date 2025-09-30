@@ -56,7 +56,7 @@ async function generateSearchIndex() {
   const index = [];
   
   for (const lang of languages) {
-    const contentPath = join(process.cwd(), 'content', 'docs', lang);
+    const contentPath = join(process.cwd(), 'content', lang);
     
     try {
       // Read all MDX files recursively
@@ -70,7 +70,7 @@ async function generateSearchIndex() {
           // Generate URL from file path
           const relativePath = file.replace(contentPath, '').replace(/\\/g, '/');
           const slug = relativePath.replace(/^\//, '').replace(/\.mdx$/, '');
-          const url = `/${lang}/docs/${slug}`;
+          const url = `/${lang}/${slug}`;
           
           index.push({
             title: frontmatter.title || 'Untitled',

@@ -3,10 +3,10 @@ import { join } from 'path';
 import matter from 'gray-matter';
 
 const languageContentMap = {
-  en: 'content/docs/en',
-  fa: 'content/docs/fa',
-  ru: 'content/docs/ru',
-  zh: 'content/docs/zh',
+  en: 'content/en',
+  fa: 'content/fa',
+  ru: 'content/ru',
+  zh: 'content/zh',
 };
 
 export async function loadContentForLanguage(slug: string[], locale: string) {

@@ -30,7 +30,7 @@ const iconHandler = (icon: string | undefined) => {
   return IconComponent ? createElement(IconComponent, { className: "h-4 w-4" }) : createElement(Home, { className: "h-4 w-4" });
 };
 
-// See https://fumadocs.vercel.app/docs/headless/source-api for more info
+// See https://fumadocs.vercel.app/headless/source-api for more info
 export const source = loader({
   baseUrl: '/',
   source: docs.toFumadocsSource(),

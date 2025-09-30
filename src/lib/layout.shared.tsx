@@ -11,7 +11,7 @@ import { CustomSearch } from '@/components/CustomSearch';
  *
  * you can customise layouts individually from:
  * Home Layout: app/(home)/layout.tsx
- * Docs Layout: app/docs/layout.tsx
+ * Docs Layout: app/layout.tsx
  */
 export function baseOptions(locale: string, showControls: boolean = false): BaseLayoutProps {
   const translations = loadTranslations(locale);
@@ -52,7 +52,7 @@ export function baseOptions(locale: string, showControls: boolean = false): Base
         lg: <CustomSearch locale={locale} />
       }
     },
-    // see https://fumadocs.dev/docs/ui/navigation/links
+    // see https://fumadocs.dev/ui/navigation/links
     links: [],
   };
 }
