@@ -3,6 +3,7 @@ import { baseOptions } from '@/lib/layout.shared';
 import { source } from '@/lib/source';
 import { CompactControls } from '@/components/CompactControls';
 import { GithubInfo } from 'fumadocs-ui/components/github-info';
+import { CustomSearch } from '@/components/CustomSearch';
 
 export default async function Layout({
   children,
@@ -20,6 +21,13 @@ export default async function Layout({
     <DocsLayout
       tree={tree}
       {...baseOptions(lang)}
+      searchToggle={{
+        enabled: true,
+        components: {
+          sm: <CustomSearch locale={lang} />,
+          lg: <CustomSearch locale={lang} />
+        }
+      }}
       sidebar={{
         footer: (
           <div className="flex flex-col gap-3 w-full p-2 sm:p-3">
@@ -41,7 +49,7 @@ export default async function Layout({
         ),
       }}
     >
-      {children}
-    </DocsLayout>
+  { children }
+    </DocsLayout >
   );
 }

@@ -18,4 +18,18 @@ export interface Translations {
     title: string;
     description: string;
   };
+  search: {
+    placeholder: string;
+    button: string;
+    title: string;
+    noResults: string;
+    noResultsDescription: string;
+    searching: string;
+    instructions: string;
+    shortcuts: {
+      search: string;
+      navigate: string;
+      select: string;
+    };
+  }
 }

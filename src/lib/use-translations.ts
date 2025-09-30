@@ -60,6 +60,20 @@ export function useTranslations(): { t: (key: string) => string; locale: string 
               commands: {
                 title: 'Commands',
                 description: 'List of commands for launching, analyzing, building, and previewing your application'
+              },
+              search: {
+                placeholder: 'Search documentation...',
+                button: 'Search',
+                title: 'Search Documentation',
+                noResults: 'No results found',
+                noResultsDescription: 'Try a different search term',
+                searching: 'Searching...',
+                instructions: 'Type to search across all pages',
+                shortcuts: {
+                  search: 'to search',
+                  navigate: 'to navigate',
+                  select: 'to select'
+                }
               }
             };
             setTranslations(fallbackTranslations);
@@ -83,6 +97,20 @@ export function useTranslations(): { t: (key: string) => string; locale: string 
             commands: {
               title: 'Commands',
               description: 'List of commands for launching, analyzing, building, and previewing your application'
+            },
+            search: {
+              placeholder: 'Search documentation...',
+              button: 'Search',
+              title: 'Search Documentation',
+              noResults: 'No results found',
+              noResultsDescription: 'Try a different search term',
+              searching: 'Searching...',
+              instructions: 'Type to search across all pages',
+              shortcuts: {
+                search: 'to search',
+                navigate: 'to navigate',
+                select: 'to select'
+              }
             }
           };
           setTranslations(fallbackTranslations);

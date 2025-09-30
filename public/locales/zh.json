@@ -15,5 +15,19 @@
   "commands": {
     "title": "命令",
     "description": "用于启动、分析、构建和预览应用程序的命令列表"
+  },
+  "search": {
+    "placeholder": "搜索文档...",
+    "button": "搜索",
+    "title": "搜索文档",
+    "noResults": "未找到结果",
+    "noResultsDescription": "尝试不同的搜索词",
+    "searching": "搜索中...",
+    "instructions": "输入内容搜索所有页面",
+    "shortcuts": {
+      "search": "搜索",
+      "navigate": "导航",
+      "select": "选择"
+    }
   }
 }

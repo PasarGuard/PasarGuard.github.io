@@ -19,6 +19,20 @@ export interface Translations {
     title: string;
     description: string;
   };
+  search: {
+    placeholder: string;
+    button: string;
+    title: string;
+    noResults: string;
+    noResultsDescription: string;
+    searching: string;
+    instructions: string;
+    shortcuts: {
+      search: string;
+      navigate: string;
+      select: string;
+    };
+  };
 }
 
 export function loadTranslations(locale: string): Translations {
@@ -46,6 +60,20 @@ export function loadTranslations(locale: string): Translations {
       commands: {
         title: 'Commands',
         description: 'List of commands for launching, analyzing, building, and previewing your application'
+      },
+      search: {
+        placeholder: 'Search documentation...',
+        button: 'Search',
+        title: 'Search Documentation',
+        noResults: 'No results found',
+        noResultsDescription: 'Try a different search term',
+        searching: 'Searching...',
+        instructions: 'Type to search across all pages',
+        shortcuts: {
+          search: 'to search',
+          navigate: 'to navigate',
+          select: 'to select'
+        }
       }
     };
   }

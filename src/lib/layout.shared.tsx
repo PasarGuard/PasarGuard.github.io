@@ -3,6 +3,7 @@ import { ThemeLogo } from '@/components/ThemeLogo';
 import { HeaderControls } from '@/components/HeaderControls';
 import { i18n } from '@/lib/i18n';
 import { loadTranslations } from '@/lib/translations';
+import { CustomSearch } from '@/components/CustomSearch';
 
 /**
  * Shared layout configurations
@@ -35,6 +36,13 @@ export function baseOptions(locale: string, showControls: boolean = false): Base
           <HeaderControls currentLang={locale} isRTL={isRTL} />
         </div>
       ) : undefined,
+    },
+    searchToggle: {
+      enabled: true,
+      components: {
+        sm: <CustomSearch locale={locale} />,
+        lg: <CustomSearch locale={locale} />
+      }
     },
     // see https://fumadocs.dev/docs/ui/navigation/links
     links: [],

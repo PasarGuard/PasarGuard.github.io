@@ -27,6 +27,7 @@ export default async function LangLayout({
   // Determine if the locale is RTL
   const isRTL = ['fa', 'ar'].includes(lang);
   
+  
   return (
     <html 
       lang={lang} 
