@@ -10,6 +10,7 @@ import { ArrowRight, Github, Box, Network, Terminal } from 'lucide-react';
 import { Footer } from '@/components/Footer';
 import { HeaderControls } from '@/components/HeaderControls';
 import { Metadata } from 'next';
+import { getOGImagePath } from '@/lib/og-image-utils';
 
 const validLanguages = ['en', 'fa', 'ru', 'zh'];
 
@@ -43,7 +44,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
         siteName: 'PasarGuard',
         images: [
           {
-            url: '/static/logo.png',
+            url: getOGImagePath('en'),
             width: 1200,
             height: 630,
             alt: translations.appName,
@@ -54,7 +55,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
         card: 'summary_large_image',
         title: translations.appName,
         description: translations.appDescription,
-        images: ['/static/logo.png'],
+        images: [getOGImagePath('en')],
       },
     };
   }
@@ -79,7 +80,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
       siteName: 'PasarGuard',
       images: [
         {
-          url: '/static/logo.png',
+          url: getOGImagePath(lang),
           width: 1200,
           height: 630,
           alt: translations.appName,
@@ -90,7 +91,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
       card: 'summary_large_image',
       title: translations.appName,
       description: translations.appDescription,
-      images: ['/static/logo.png'],
+      images: [getOGImagePath(lang)],
     },
     alternates: {
       canonical: `/${lang}`,

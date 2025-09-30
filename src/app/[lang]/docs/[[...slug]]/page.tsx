@@ -10,6 +10,7 @@ import { getMDXComponents } from '@/mdx-components';
 import type { Metadata } from 'next';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
 import { generateTOCFromContent } from '@/lib/content-loader';
+import { getOGImagePath } from '@/lib/og-image-utils';
 
 export default async function Page(props: {
   params: Promise<{ lang: string; slug?: string[] }>;
@@ -95,7 +96,7 @@ export async function generateMetadata(props: {
       siteName: 'PasarGuard Documentation',
       images: [
         {
-          url: '/static/logo.png',
+          url: getOGImagePath(lang, params.slug),
           width: 1200,
           height: 630,
           alt: pageTitle,
@@ -106,7 +107,7 @@ export async function generateMetadata(props: {
       card: 'summary_large_image',
       title: pageTitle,
       description: pageDescription,
-      images: ['/static/logo.png'],
+      images: [getOGImagePath(lang, params.slug)],
     },
     alternates: {
       canonical: canonicalUrl,

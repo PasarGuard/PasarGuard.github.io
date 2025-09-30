@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://pasarguard.github.io'),
   title: {
     default: 'PasarGuard - Unified GUI Censorship Resistant Solution',
-    template: '%s | PasarGuard'
+    template: '%s | PasarGuard Documentation'
   },
   description: 'PasarGuard is a proxy management tool that provides a simple and easy-to-use user interface for managing hundreds of proxy accounts powered by Xray-core.',
   keywords: ['proxy', 'vpn', 'censorship', 'xray', 'v2ray', 'shadowsocks', 'trojan', 'vless', 'vmess'],
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     description: 'PasarGuard is a proxy management tool that provides a simple and easy-to-use user interface for managing hundreds of proxy accounts powered by Xray-core.',
     images: [
       {
-        url: '/static/logo.png',
+        url: '/static/logo-dark.png',
         width: 1200,
         height: 630,
         alt: 'PasarGuard - Unified GUI Censorship Resistant Solution',
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'PasarGuard - Unified GUI Censorship Resistant Solution',
     description: 'PasarGuard is a proxy management tool that provides a simple and easy-to-use user interface for managing hundreds of proxy accounts powered by Xray-core.',
-    images: ['/static/logo.png'],
+    images: ['/static/logo-dark.png'],
     creator: '@pasarguard',
   },
   alternates: {
