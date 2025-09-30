@@ -27,6 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
     // Default to English if invalid language
     const translations = loadTranslations('en');
     return {
+      metadataBase: new URL('https://pasarguard.github.io'),
       title: translations.appName,
       description: translations.appDescription,
       icons: {
@@ -38,6 +39,8 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
         title: translations.appName,
         description: translations.appDescription,
         type: 'website',
+        url: '/en',
+        siteName: 'PasarGuard',
         images: [
           {
             url: '/static/logo.png',
@@ -59,6 +62,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   const translations = loadTranslations(lang);
   
   return {
+    metadataBase: new URL('https://pasarguard.github.io'),
     title: translations.appName,
     description: translations.appDescription,
     icons: {
@@ -71,6 +75,8 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
       description: translations.appDescription,
       type: 'website',
       locale: lang,
+      url: `/${lang}`,
+      siteName: 'PasarGuard',
       images: [
         {
           url: '/static/logo.png',

@@ -72,9 +72,50 @@ export async function generateMetadata(props: {
   // Use the page data directly from the source system
   const pageTitle = page.data.title;
   const pageDescription = page.data.description;
+  
+  // Generate the canonical URL for this page
+  const slug = params.slug ? `/${params.slug.join('/')}` : '';
+  const canonicalUrl = `/${lang}/docs${slug}`;
 
   return {
+    metadataBase: new URL('https://pasarguard.github.io'),
     title: pageTitle,
     description: pageDescription,
+    icons: {
+      icon: '/static/favicon.ico',
+      shortcut: '/static/favicon.ico',
+      apple: '/static/favicon.ico',
+    },
+    openGraph: {
+      title: pageTitle,
+      description: pageDescription,
+      type: 'article',
+      locale: lang,
+      url: canonicalUrl,
+      siteName: 'PasarGuard Documentation',
+      images: [
+        {
+          url: '/static/logo.png',
+          width: 1200,
+          height: 630,
+          alt: pageTitle,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: pageTitle,
+      description: pageDescription,
+      images: ['/static/logo.png'],
+    },
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        'en': `/en/docs${slug}`,
+        'fa': `/fa/docs${slug}`,
+        'ru': `/ru/docs${slug}`,
+        'zh': `/zh/docs${slug}`,
+      },
+    },
   };
 }
