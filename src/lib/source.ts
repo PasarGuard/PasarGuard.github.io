@@ -32,7 +32,7 @@ const iconHandler = (icon: string | undefined) => {
 
 // See https://fumadocs.vercel.app/docs/headless/source-api for more info
 export const source = loader({
-  baseUrl: '/docs',
+  baseUrl: '/',
   source: docs.toFumadocsSource(),
   i18n,
   icon: iconHandler,

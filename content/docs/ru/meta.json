@@ -2,11 +2,8 @@
   "title": "Документация PasarGuard",
   "description": "Полное руководство по управлению прокси PasarGuard",
   "pages": [
-    "index",
-    "...getting-started",
+    "...introduction",
     "panel",
-    "...node",
-    "...cli",
     "migration"
   ]
 }

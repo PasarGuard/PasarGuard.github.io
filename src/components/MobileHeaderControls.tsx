@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Globe, Sun, Moon, Monitor, ChevronDown } from 'lucide-react';
+import { Globe, Sun, Moon, Monitor, Menu, X } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useCallback, useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
@@ -15,16 +15,17 @@ const languages = [
   { code: 'zh', name: '中文', flag: '🇨🇳' },
 ];
 
-interface HeaderControlsProps {
+interface MobileHeaderControlsProps {
   currentLang: string;
   isRTL?: boolean;
 }
 
-export function HeaderControls({ currentLang, isRTL = false }: HeaderControlsProps) {
+export function MobileHeaderControls({ currentLang, isRTL = false }: MobileHeaderControlsProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -36,6 +37,7 @@ export function HeaderControls({ currentLang, isRTL = false }: HeaderControlsPro
       segments[1] = newLang;
       const newPath = segments.join('/');
       router.push(newPath);
+      setIsOpen(false);
     },
     [router, pathname],
   );
@@ -43,6 +45,7 @@ export function HeaderControls({ currentLang, isRTL = false }: HeaderControlsPro
   const toggleTheme = useCallback(
     (newTheme: 'light' | 'dark' | 'system') => {
       setTheme(newTheme);
+      setIsOpen(false);
     },
     [setTheme],
   );
@@ -51,134 +54,100 @@ export function HeaderControls({ currentLang, isRTL = false }: HeaderControlsPro
 
   if (!mounted) {
     return (
-      <div className={cn(
-        "flex items-center gap-1 sm:gap-2",
-        isRTL ? 'flex-row-reverse' : 'flex-row'
-      )}>
-        <div className="h-8 w-16 bg-muted animate-pulse rounded-md" />
+      <div className="flex items-center gap-1">
         <div className="h-8 w-8 bg-muted animate-pulse rounded-md" />
       </div>
     );
   }
 
   return (
-    <div 
-      className={cn(
-        "flex items-center gap-1 sm:gap-2",
-        isRTL ? 'flex-row-reverse' : 'flex-row'
-      )}
-      dir={isRTL ? 'rtl' : 'ltr'}
-    >
-      {/* Language Switcher - Compact on mobile */}
-      <DropdownMenu>
+    <div className="flex items-center gap-1" dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Mobile Menu Button */}
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button 
             variant="outline" 
-            size="sm" 
-            className={cn(
-              "h-8 px-2 sm:px-3 gap-1 sm:gap-2 transition-colors duration-200",
-              "min-w-[32px] sm:min-w-[80px] justify-center sm:justify-start",
-              "hover:bg-accent/50 border-border/50"
-            )}
+            size="icon"
+            className="h-8 w-8 hover:bg-accent/50 border-border/50"
+            aria-label="Open menu"
           >
-            <span className="text-sm">{currentLanguage.flag}</span>
-            <span className="hidden sm:inline text-xs font-medium truncate max-w-[50px]">
-              {currentLanguage.name}
-            </span>
-            <ChevronDown className="h-3 w-3 opacity-50 hidden sm:block" />
-            <span className="sr-only">Change language</span>
+            <Menu className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
           align={isRTL ? "end" : "start"} 
           side="bottom" 
-          className="w-48 min-w-[180px]"
+          className="w-56 min-w-[200px] p-2"
         >
+          {/* Language Section */}
+          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Language
+          </div>
           {languages.map((language) => (
             <DropdownMenuItem
               key={language.code}
               onClick={() => switchLanguage(language.code)}
               className={cn(
                 "cursor-pointer transition-colors duration-150 hover:bg-accent/50",
-                "flex items-center gap-2",
+                "flex items-center gap-3 px-2 py-2 rounded-md",
                 currentLang === language.code && "bg-accent text-accent-foreground"
               )}
             >
-              <span className="text-sm">{language.flag}</span>
-              <span className="text-sm font-medium">{language.name}</span>
+              <span className="text-base">{language.flag}</span>
+              <span className="text-sm font-medium flex-1">{language.name}</span>
               {currentLang === language.code && (
-                <div className="ml-auto h-2 w-2 rounded-full bg-primary" />
+                <div className="h-2 w-2 rounded-full bg-primary" />
               )}
             </DropdownMenuItem>
           ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
 
-      {/* Theme Toggle - Icon only on mobile */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className={cn(
-              "h-8 w-8 sm:w-auto sm:px-3 gap-1 sm:gap-2 transition-colors duration-200",
-              "justify-center hover:bg-accent/50 border-border/50"
-            )}
-          >
-            <Sun className="h-4 w-4 dark:hidden transition-all duration-300" />
-            <Moon className="h-4 w-4 hidden dark:block transition-all duration-300" />
-            <span className="hidden sm:inline text-xs font-medium">
-              {theme === 'system' ? 'System' : theme === 'dark' ? 'Dark' : 'Light'}
-            </span>
-            <ChevronDown className="h-3 w-3 opacity-50 hidden sm:block" />
-            <span className="sr-only">Toggle theme</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent 
-          align={isRTL ? "end" : "start"} 
-          side="bottom" 
-          className="w-40"
-        >
+          {/* Divider */}
+          <div className="border-t border-border my-2" />
+
+          {/* Theme Section */}
+          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Theme
+          </div>
           <DropdownMenuItem 
             onClick={() => toggleTheme('light')} 
             className={cn(
               "cursor-pointer transition-colors duration-150 hover:bg-accent/50",
-              "flex items-center gap-2",
+              "flex items-center gap-3 px-2 py-2 rounded-md",
               theme === 'light' && "bg-accent text-accent-foreground"
             )}
           >
             <Sun className="h-4 w-4" />
-            <span className="font-medium">Light</span>
+            <span className="text-sm font-medium flex-1">Light</span>
             {theme === 'light' && (
-              <div className="ml-auto h-2 w-2 rounded-full bg-primary" />
+              <div className="h-2 w-2 rounded-full bg-primary" />
             )}
           </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={() => toggleTheme('dark')} 
             className={cn(
               "cursor-pointer transition-colors duration-150 hover:bg-accent/50",
-              "flex items-center gap-2",
+              "flex items-center gap-3 px-2 py-2 rounded-md",
               theme === 'dark' && "bg-accent text-accent-foreground"
             )}
           >
             <Moon className="h-4 w-4" />
-            <span className="font-medium">Dark</span>
+            <span className="text-sm font-medium flex-1">Dark</span>
             {theme === 'dark' && (
-              <div className="ml-auto h-2 w-2 rounded-full bg-primary" />
+              <div className="h-2 w-2 rounded-full bg-primary" />
             )}
           </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={() => toggleTheme('system')} 
             className={cn(
               "cursor-pointer transition-colors duration-150 hover:bg-accent/50",
-              "flex items-center gap-2",
+              "flex items-center gap-3 px-2 py-2 rounded-md",
               theme === 'system' && "bg-accent text-accent-foreground"
             )}
           >
             <Monitor className="h-4 w-4" />
-            <span className="font-medium">System</span>
+            <span className="text-sm font-medium flex-1">System</span>
             {theme === 'system' && (
-              <div className="ml-auto h-2 w-2 rounded-full bg-primary" />
+              <div className="h-2 w-2 rounded-full bg-primary" />
             )}
           </DropdownMenuItem>
         </DropdownMenuContent>

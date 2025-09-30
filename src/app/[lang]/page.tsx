@@ -1,14 +1,12 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { HomeLayout } from 'fumadocs-ui/layouts/home';
-import { baseOptions } from '@/lib/layout.shared';
 import { loadTranslations } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Github, Box, Network, Terminal } from 'lucide-react';
 import { Footer } from '@/components/Footer';
-import { HeaderControls } from '@/components/HeaderControls';
+import { CustomHeader } from '@/components/CustomHeader';
 import { Metadata } from 'next';
 import { getOGImagePath } from '@/lib/og-image-utils';
 
@@ -118,15 +116,13 @@ export default async function LocaleHomePage({ params }: { params: Promise<{ lan
   const isRTL = ['fa', 'ar'].includes(lang);
   
   return (
-    <HomeLayout {...baseOptions(lang, true)}>
-      <main className="min-h-screen bg-background">
-        {/* Header Controls */}
-        <div className="absolute top-4 right-4 z-10">
-          <HeaderControls currentLang={lang} isRTL={isRTL} />
-        </div>
-        
+    <div className="min-h-screen bg-background">
+      {/* Custom Header */}
+      <CustomHeader lang={lang} isRTL={isRTL} translations={translations} />
+      
+      <main className="min-h-screen">
         {/* Hero Section */}
-        <div className="flex flex-col items-center justify-center min-h-screen px-4 text-center">
+        <div className="flex py-12 sm:py-10 flex-col items-center justify-center min-h-screen px-4 text-center">
           {/* Version Badge */}
           <div className="mb-6">
             <Link 
@@ -156,7 +152,7 @@ export default async function LocaleHomePage({ params }: { params: Promise<{ lan
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 mb-20">
             <Button asChild size="lg" className="px-8 py-3 text-lg font-semibold">
-              <Link href={`/${lang}/docs`}>
+              <Link href={`/${lang}/introduction`}>
                 {translations.documentation}
               </Link>
             </Button>
@@ -223,6 +219,6 @@ export default async function LocaleHomePage({ params }: { params: Promise<{ lan
         {/* Footer */}
         <Footer lang={lang} />
       </main>
-    </HomeLayout>
+    </div>
   );
 }

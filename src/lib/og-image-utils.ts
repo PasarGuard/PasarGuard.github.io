@@ -10,7 +10,7 @@ export function getOGImagePath(lang: string, slug?: string[]): string {
     return `${baseUrl}/og-images/home.png`;
   }
   
-  if (slug.length === 1 && slug[0] === 'docs') {
+  if (slug.length === 1 && slug[0] === 'index') {
     // Docs index page
     return `${baseUrl}/og-images/docs.png`;
   }

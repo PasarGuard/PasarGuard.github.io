@@ -5,6 +5,7 @@ import { Search, X, Command } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslations } from '@/lib/use-translations';
 import { search } from '@/lib/static-search';
+import { Button } from '@/components/ui/button';
 
 interface SearchResult {
   title: string;
@@ -17,9 +18,10 @@ interface SearchResult {
 
 interface CustomSearchProps {
   locale: string;
+  isMobile?: boolean;
 }
 
-export function CustomSearch({ locale }: CustomSearchProps) {
+export function CustomSearch({ locale, isMobile }: CustomSearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -155,29 +157,40 @@ export function CustomSearch({ locale }: CustomSearchProps) {
 
   return (
     <div ref={searchRef} className="relative">
-      {/* Search Button - Fumadocs Style */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className={cn(
-          "flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground",
-          "hover:text-foreground transition-colors duration-200",
-          "border border-border rounded-md bg-background/50 hover:bg-background",
-          "hover:border-border/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-          "min-w-[200px] justify-start",
-          isRTL && "flex-row-reverse"
-        )}
-        aria-label={t('search.button')}
-        dir={isRTL ? 'rtl' : 'ltr'}
-      >
-        <Search className="h-4 w-4 flex-shrink-0" />
-        <span className={cn("flex-1", isRTL ? "text-right" : "text-left")}>
-          {t('search.placeholder')}
-        </span>
-        <div className={cn("flex items-center gap-1 text-xs text-muted-foreground", isRTL && "flex-row-reverse")}>
-          <Command className="h-3 w-3" />
-          <span>K</span>
-        </div>
-      </button>
+      {/* Search Button */}
+      {isMobile ? (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setIsOpen(true)}
+          aria-label={t('search.button')}
+          className="h-8 w-8 hover:bg-accent/50 border-border/50"
+        >
+          <Search className="h-4 w-4" />
+        </Button>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsOpen(true)}
+          className={cn(
+            "h-8 px-3 gap-2 text-sm text-muted-foreground hover:text-foreground",
+            "hover:bg-accent/50 border-border/50 min-w-[200px] justify-start",
+            isRTL && "flex-row-reverse"
+          )}
+          aria-label={t('search.button')}
+          dir={isRTL ? 'rtl' : 'ltr'}
+        >
+          <Search className="h-4 w-4 flex-shrink-0" />
+          <span className={cn("flex-1 text-left", isRTL && "text-right")}>
+            {t('search.placeholder')}
+          </span>
+          <div className={cn("flex items-center gap-1 text-xs text-muted-foreground", isRTL && "flex-row-reverse")}>
+            <Command className="h-3 w-3" />
+            <span>K</span>
+          </div>
+        </Button>
+      )}
 
       {/* Search Modal - Fumadocs Style */}
       {isOpen && (

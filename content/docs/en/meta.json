@@ -2,11 +2,8 @@
   "title": "PasarGuard Documentation",
   "description": "Complete guide to PasarGuard proxy management",
   "pages": [
-    "index",
-    "...getting-started",
+    "...introduction",
     "panel",
-    "...node",
-    "...cli",
     "migration"
   ]
 }

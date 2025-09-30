@@ -301,7 +301,7 @@ button:has([data-lucide="languages"]) {
 }
 
 /* More specific RTL overrides for fumadocs sidebar */
-[dir="rtl"] a[href*="/fa/docs"] {
+[dir="rtl"] a[href*="/fa/"] {
   text-align: right !important;
   direction: rtl !important;
 }

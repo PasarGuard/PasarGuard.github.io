@@ -41,7 +41,7 @@ export function Footer({ lang }: FooterProps) {
               Releases
             </Link>
             <Link
-              href={`/${lang}/docs`}
+              href={`/${lang}`}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               {t('documentation')}

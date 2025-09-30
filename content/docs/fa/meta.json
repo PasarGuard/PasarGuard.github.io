@@ -2,11 +2,8 @@
   "title": "مستندات PasarGuard",
   "description": "راهنمای کامل مدیریت پروکسی PasarGuard",
   "pages": [
-    "index",
-    "...getting-started",
+    "...introduction",
     "panel",
-    "...node",
-    "...cli",
     "migration"
   ]
 }

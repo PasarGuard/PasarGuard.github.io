@@ -76,7 +76,7 @@ export async function generateMetadata(props: {
   
   // Generate the canonical URL for this page
   const slug = params.slug ? `/${params.slug.join('/')}` : '';
-  const canonicalUrl = `/${lang}/docs${slug}`;
+  const canonicalUrl = `/${lang}${slug}`;
 
   return {
     metadataBase: new URL('https://pasarguard.github.io'),
@@ -112,10 +112,10 @@ export async function generateMetadata(props: {
     alternates: {
       canonical: canonicalUrl,
       languages: {
-        'en': `/en/docs${slug}`,
-        'fa': `/fa/docs${slug}`,
-        'ru': `/ru/docs${slug}`,
-        'zh': `/zh/docs${slug}`,
+        'en': `/en${slug}`,
+        'fa': `/fa${slug}`,
+        'ru': `/ru${slug}`,
+        'zh': `/zh${slug}`,
       },
     },
   };

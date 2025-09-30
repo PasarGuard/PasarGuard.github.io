@@ -1,6 +1,7 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import { ThemeLogo } from '@/components/ThemeLogo';
 import { HeaderControls } from '@/components/HeaderControls';
+import { MobileHeaderControls } from '@/components/MobileHeaderControls';
 import { i18n } from '@/lib/i18n';
 import { loadTranslations } from '@/lib/translations';
 import { CustomSearch } from '@/components/CustomSearch';
@@ -32,15 +33,22 @@ export function baseOptions(locale: string, showControls: boolean = false): Base
         </div>
       ),
       children: showControls ? (
-        <div className='px-4'>
-          <HeaderControls currentLang={locale} isRTL={isRTL} />
+        <div className="flex items-center justify-end px-2 sm:px-4">
+          {/* Mobile: Single menu button */}
+          <div className="block sm:hidden">
+            <MobileHeaderControls currentLang={locale} isRTL={isRTL} />
+          </div>
+          {/* Desktop: Separate controls */}
+          <div className="hidden sm:block">
+            <HeaderControls currentLang={locale} isRTL={isRTL} />
+          </div>
         </div>
       ) : undefined,
     },
     searchToggle: {
       enabled: true,
       components: {
-        sm: <CustomSearch locale={locale} />,
+        sm: <CustomSearch isMobile locale={locale} />,
         lg: <CustomSearch locale={locale} />
       }
     },
