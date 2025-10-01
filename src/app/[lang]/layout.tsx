@@ -1,6 +1,7 @@
 import { RootProvider } from 'fumadocs-ui/provider';
 import { NextProvider } from 'fumadocs-core/framework/next';
-import { ThemeProvider } from 'next-themes';
+import { ThemeProvider as NextThemeProvider } from 'next-themes';
+import { ThemeProvider } from '@/components/theme-provider';
 import { Inter } from 'next/font/google';
 import { Vazirmatn } from 'next/font/google';
 import { i18n } from '@/lib/i18n';
@@ -36,18 +37,20 @@ export default async function LangLayout({
       suppressHydrationWarning
     >
       <body className={`flex flex-col min-h-screen ${inter.variable} ${vazirMatn.variable} ${isRTL ? 'font-vazir' : 'font-inter'}`}>
-        <ThemeProvider
+        <NextThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          <NextProvider>
-            <RootProvider i18n={{ ...i18n, locale: lang }}>
-              {children}
-            </RootProvider>
-          </NextProvider>
-        </ThemeProvider>
+          <ThemeProvider>
+            <NextProvider>
+              <RootProvider i18n={{ ...i18n, locale: lang }}>
+                {children}
+              </RootProvider>
+            </NextProvider>
+          </ThemeProvider>
+        </NextThemeProvider>
       </body>
     </html>
   );

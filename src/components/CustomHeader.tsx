@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { ThemeLogo } from '@/components/ThemeLogo';
-import { HeaderControls } from '@/components/HeaderControls';
-import { MobileHeaderControls } from '@/components/MobileHeaderControls';
+import { CompactControls } from '@/components/CompactControls';
+import { CustomSearch } from '@/components/CustomSearch';
 import { cn } from '@/lib/utils';
 import { Translations } from '@/lib/translations';
 
@@ -37,17 +37,21 @@ export function CustomHeader({ lang, isRTL = false, translations }: CustomHeader
 
         {/* Header Controls */}
         <div className={cn(
-          "flex items-center",
+          "flex items-center gap-2",
           isRTL ? 'flex-row-reverse' : 'flex-row'
         )}>
-          {/* Mobile: Single menu button */}
-          <div className="block sm:hidden">
-            <MobileHeaderControls currentLang={lang} isRTL={isRTL} />
-          </div>
-          {/* Desktop: Separate controls */}
+          {/* Search */}
           <div className="hidden sm:block">
-            <HeaderControls currentLang={lang} isRTL={isRTL} />
+            <CustomSearch locale={lang} />
           </div>
+          
+          {/* Mobile Search */}
+          <div className="block sm:hidden">
+            <CustomSearch isMobile locale={lang} />
+          </div>
+          
+          {/* Controls */}
+          <CompactControls />
         </div>
       </div>
     </header>

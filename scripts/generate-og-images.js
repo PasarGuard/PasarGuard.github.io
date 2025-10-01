@@ -262,15 +262,15 @@ async function getAllPages() {
   });
   
   pages.push({
-    filename: 'docs.png',
+    filename: 'introduction.png',
     title: 'Documentation',
     description: 'Complete guide to PasarGuard',
     type: 'article',
-    path: '/docs'
+    path: '/introduction'
   });
   
   // Find all MDX files in content directory and create unique pages
-  const mdxFiles = await glob('../content/en/**/*.mdx', { cwd: __dirname });
+  const mdxFiles = await glob('../content/docs/en/**/*.mdx', { cwd: __dirname });
   const processedPages = new Set(); // To avoid duplicates
   
   console.log(`Found ${mdxFiles.length} MDX files to process`);

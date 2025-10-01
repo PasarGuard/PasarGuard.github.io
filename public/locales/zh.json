@@ -29,5 +29,11 @@
       "navigate": "导航",
       "select": "选择"
     }
+  },
+  "theme": {
+    "toggle": "切换主题",
+    "light": "浅色",
+    "dark": "深色",
+    "system": "系统"
   }
 }

@@ -24,7 +24,7 @@ export default async function Layout({
       searchToggle={{
         enabled: true,
         components: {
-          sm: <CustomSearch locale={lang} />,
+          sm: <CustomSearch isMobile locale={lang} />,
           lg: <CustomSearch locale={lang} />
         }
       }}
@@ -42,9 +42,7 @@ export default async function Layout({
             </div>
 
             {/* Controls - Always visible, responsive design */}
-            <div className="flex items-center justify-center sm:justify-end">
-              <CompactControls />
-            </div>
+            <CompactControls />
           </div>
         ),
       }}

@@ -29,5 +29,11 @@
       "navigate": "to navigate",
       "select": "to select"
     }
+  },
+  "theme": {
+    "toggle": "Toggle theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
   }
 }

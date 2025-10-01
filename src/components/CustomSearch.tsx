@@ -160,11 +160,11 @@ export function CustomSearch({ locale, isMobile }: CustomSearchProps) {
       {/* Search Button */}
       {isMobile ? (
         <Button
-          variant="outline"
+          variant="ghost"
           size="icon"
           onClick={() => setIsOpen(true)}
           aria-label={t('search.button')}
-          className="h-8 w-8 hover:bg-accent/50 border-border/50"
+          className={cn("h-8 w-8 hover:bg-accent/50 border-border/50", isRTL && "rotate-180")}
         >
           <Search className="h-4 w-4" />
         </Button>

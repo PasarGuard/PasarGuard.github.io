@@ -2,29 +2,6 @@ const { readFile, writeFile, mkdir } = require('fs/promises');
 const { join } = require('path');
 const matter = require('gray-matter');
 
-// Simple search function (same as in the API route)
-function searchContent(query, index) {
-  if (!query.trim()) return [];
-  
-  const searchTerms = query.toLowerCase().split(/\s+/).filter(term => term.length > 0);
-  
-  return index
-    .map(item => {
-      const searchableText = `${item.title} ${item.description} ${item.content}`.toLowerCase();
-      const score = searchTerms.reduce((score, term) => {
-        if (item.title.toLowerCase().includes(term)) return score + 3;
-        if (item.description.toLowerCase().includes(term)) return score + 2;
-        if (item.content.toLowerCase().includes(term)) return score + 1;
-        return score;
-      }, 0);
-      
-      return { ...item, score };
-    })
-    .filter(item => item.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 20); // Limit to 20 results
-}
-
 // Helper function to get all MDX files recursively
 async function getAllMdxFiles(dir) {
   const files = [];
@@ -56,7 +33,7 @@ async function generateSearchIndex() {
   const index = [];
   
   for (const lang of languages) {
-    const contentPath = join(process.cwd(), 'content', lang);
+    const contentPath = join(process.cwd(), 'content', 'docs', lang);
     
     try {
       // Read all MDX files recursively
@@ -69,7 +46,13 @@ async function generateSearchIndex() {
           
           // Generate URL from file path
           const relativePath = file.replace(contentPath, '').replace(/\\/g, '/');
-          const slug = relativePath.replace(/^\//, '').replace(/\.mdx$/, '');
+          let slug = relativePath.replace(/^\//, '').replace(/\.mdx$/, '');
+          
+          // Remove 'index' from the end of the slug for cleaner URLs
+          if (slug.endsWith('/index')) {
+            slug = slug.replace(/\/index$/, '');
+          }
+          
           const url = `/${lang}/${slug}`;
           
           index.push({

@@ -2,179 +2,146 @@
 
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Languages as LanguagesIcon, Monitor, Moon, Sun, ChevronDown } from 'lucide-react'
+import { Languages as LanguagesIcon, Monitor, Moon, Sun } from 'lucide-react'
 import { useCallback } from 'react'
-import { useTheme } from 'next-themes'
+import { Theme, useTheme } from '@/components/theme-provider'
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { useTranslations } from '@/lib/use-translations'
+import { cn } from '@/lib/utils'
 
-const languages = [
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'fa', name: 'فارسی', flag: '🇮🇷' },
-  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
-  { code: 'zh', name: '中文', flag: '🇨🇳' },
-];
-
-export function CompactControls() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [currentLocale, setCurrentLocale] = useState('en');
-  const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
-
-  useEffect(() => {
-    setMounted(true);
-    // Extract current locale from pathname
-    const segments = pathname.split('/');
-    const locale = segments[1];
-    if (['en', 'fa', 'ru', 'zh'].includes(locale)) {
-      setCurrentLocale(locale);
-    } else {
-      setCurrentLocale('en');
-    }
-  }, [pathname]);
-
-  const handleLanguageChange = (locale: string) => {
-    localStorage.setItem('preferred-locale', locale);
-    
-    // Update current locale state immediately
-    setCurrentLocale(locale);
-    
-    // Extract the path without locale prefix
-    const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}(\/|$)/, '/');
-    
-    // Ensure we have a proper path (not just '/')
-    const cleanPath = pathWithoutLocale === '/' ? '' : pathWithoutLocale;
-    
-    // Build the new path with the selected locale (treat all locales equally)
-    const newPath = `/${locale}${cleanPath}`;
-    
-    router.push(newPath);
-    
-    document.documentElement.lang = locale;
-    document.documentElement.setAttribute('dir', locale === 'fa' ? 'rtl' : 'ltr');
-  };
+// Theme Toggle Component
+export function ThemeToggle() {
+  const { setTheme } = useTheme()
+  const { t } = useTranslations()
 
   const toggleTheme = useCallback(
-    (newTheme: 'light' | 'dark' | 'system') => {
-      setTheme(newTheme);
+    (theme: Theme) => {
+      setTheme(theme)
     },
     [setTheme],
-  );
+  )
 
-  const currentLanguage = languages.find(lang => lang.code === currentLocale) || languages[0];
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 transition-colors duration-200 hover:bg-accent/50">
+          <Sun className="h-3.5 w-3.5 dark:hidden transition-all duration-300 ease-in-out" />
+          <Moon className="h-3.5 w-3.5 hidden dark:block transition-all duration-300 ease-in-out" />
+          <span className="sr-only">{t('theme.toggle')}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" side="top" className="w-32 transition-all duration-200 ease-in-out">
+        <DropdownMenuItem onClick={() => toggleTheme('light')} className="transition-colors duration-150 hover:bg-accent cursor-pointer">
+          <Sun className="mr-2 h-3.5 w-3.5 transition-transform duration-200 hover:scale-110" />
+          <span className="text-sm">{t('theme.light')}</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => toggleTheme('dark')} className="transition-colors duration-150 hover:bg-accent cursor-pointer">
+          <Moon className="mr-2 h-3.5 w-3.5 transition-transform duration-200 hover:scale-110" />
+          <span className="text-sm">{t('theme.dark')}</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => toggleTheme('system')} className="transition-colors duration-150 hover:bg-accent cursor-pointer">
+          <Monitor className="mr-2 h-3.5 w-3.5 transition-transform duration-200 hover:scale-110" />
+          <span className="text-sm">{t('theme.system')}</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
-  // Prevent hydration mismatch
+// Language Component
+export function Language() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const [currentLocale, setCurrentLocale] = useState('en')
+  const [mounted, setMounted] = useState(false)
+  const supportedLangs = ['en', 'fa', 'zh', 'ru']
+
+  useEffect(() => {
+    setMounted(true)
+    // Extract current locale from pathname
+    const segments = pathname.split('/')
+    const locale = segments[1]
+    if (supportedLangs.includes(locale)) {
+      setCurrentLocale(locale)
+    } else {
+      setCurrentLocale('en')
+    }
+  }, [pathname])
+
+  const changeLanguage = async (lang: string) => {
+    if (lang === 'system') {
+      // detect browser language and change without reload
+      const detectedLang = navigator.language.split('-')[0] // e.g., 'en-US' -> 'en'
+      const langToSet = supportedLangs.includes(detectedLang) ? detectedLang : 'en'
+      await handleLanguageChange(langToSet)
+    } else {
+      await handleLanguageChange(lang)
+    }
+  }
+
+  const handleLanguageChange = async (locale: string) => {
+    localStorage.setItem('preferred-locale', locale)
+    
+    // Update current locale state immediately
+    setCurrentLocale(locale)
+    
+    // Extract the path without locale prefix
+    const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}(\/|$)/, '/')
+    
+    // Ensure we have a proper path (not just '/')
+    const cleanPath = pathWithoutLocale === '/' ? '' : pathWithoutLocale
+    
+    // Build the new path with the selected locale (treat all locales equally)
+    const newPath = `/${locale}${cleanPath}`
+    
+    router.push(newPath)
+    
+    document.documentElement.lang = locale
+    document.documentElement.setAttribute('dir', locale === 'fa' ? 'rtl' : 'ltr')
+  }
+
   if (!mounted) {
     return (
-      <div className="flex items-center gap-2 w-full justify-center sm:justify-end">
-        <div className="h-9 w-20 bg-muted animate-pulse rounded-md" />
-        <div className="h-9 w-20 bg-muted animate-pulse rounded-md" />
-      </div>
-    );
+      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+        <LanguagesIcon className="h-3.5 w-3.5" />
+      </Button>
+    )
   }
 
   return (
-    <div className="flex items-center gap-2 w-full justify-center sm:justify-end">
-      {/* Language Switcher - Enhanced with current language display */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-9 px-3 gap-2 min-w-[80px] sm:min-w-[100px] hover:bg-accent transition-colors duration-200"
-          >
-            <span className="text-sm">{currentLanguage.flag}</span>
-            <span className="hidden sm:inline text-xs font-medium truncate max-w-[60px]">
-              {currentLanguage.name}
-            </span>
-            <ChevronDown className="h-3 w-3 opacity-50" />
-            <span className="sr-only">Change language</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48 min-w-[200px]">
-          {languages.map((lang) => (
-            <DropdownMenuItem
-              key={lang.code}
-              onClick={() => handleLanguageChange(lang.code)}
-              className={`cursor-pointer transition-colors duration-150 ${
-                currentLocale === lang.code 
-                  ? 'bg-accent text-accent-foreground' 
-                  : 'hover:bg-accent/50'
-              }`}
-            >
-              <span className="mr-3 text-base">{lang.flag}</span>
-              <span className="font-medium">{lang.name}</span>
-              {currentLocale === lang.code && (
-                <div className="ml-auto h-2 w-2 rounded-full bg-primary" />
-              )}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 transition-colors duration-200 hover:bg-accent/50">
+          <LanguagesIcon className={cn("h-3.5 w-3.5", currentLocale === 'fa' && 'rotate-180')} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" side="top" className="w-36">
+        <DropdownMenuItem onClick={() => changeLanguage('system')} className="transition-colors duration-150 hover:bg-accent cursor-pointer">
+          <span className="text-sm">System</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => changeLanguage('en')} className="transition-colors duration-150 hover:bg-accent cursor-pointer">
+          <span className="text-sm">English</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => changeLanguage('fa')} className="transition-colors duration-150 hover:bg-accent cursor-pointer">
+          <span className="text-sm">فارسی</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => changeLanguage('zh')} className="transition-colors duration-150 hover:bg-accent cursor-pointer">
+          <span className="text-sm">简体中文</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => changeLanguage('ru')} className="transition-colors duration-150 hover:bg-accent cursor-pointer">
+          <span className="text-sm">Русский</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
-      {/* Theme Toggle - Enhanced with current theme display */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-9 px-3 gap-2 min-w-[80px] sm:min-w-[100px] hover:bg-accent transition-colors duration-200"
-          >
-            <Sun className="h-4 w-4 dark:hidden" />
-            <Moon className="h-4 w-4 hidden dark:block" />
-            <span className="hidden sm:inline text-xs font-medium">
-              {theme === 'system' ? 'System' : theme === 'dark' ? 'Dark' : 'Light'}
-            </span>
-            <ChevronDown className="h-3 w-3 opacity-50" />
-            <span className="sr-only">Toggle theme</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuItem 
-            onClick={() => toggleTheme('light')} 
-            className={`cursor-pointer transition-colors duration-150 ${
-              theme === 'light' 
-                ? 'bg-accent text-accent-foreground' 
-                : 'hover:bg-accent/50'
-            }`}
-          >
-            <Sun className="mr-3 h-4 w-4" />
-            <span className="font-medium">Light</span>
-            {theme === 'light' && (
-              <div className="ml-auto h-2 w-2 rounded-full bg-primary" />
-            )}
-          </DropdownMenuItem>
-          <DropdownMenuItem 
-            onClick={() => toggleTheme('dark')} 
-            className={`cursor-pointer transition-colors duration-150 ${
-              theme === 'dark' 
-                ? 'bg-accent text-accent-foreground' 
-                : 'hover:bg-accent/50'
-            }`}
-          >
-            <Moon className="mr-3 h-4 w-4" />
-            <span className="font-medium">Dark</span>
-            {theme === 'dark' && (
-              <div className="ml-auto h-2 w-2 rounded-full bg-primary" />
-            )}
-          </DropdownMenuItem>
-          <DropdownMenuItem 
-            onClick={() => toggleTheme('system')} 
-            className={`cursor-pointer transition-colors duration-150 ${
-              theme === 'system' 
-                ? 'bg-accent text-accent-foreground' 
-                : 'hover:bg-accent/50'
-            }`}
-          >
-            <Monitor className="mr-3 h-4 w-4" />
-            <span className="font-medium">System</span>
-            {theme === 'system' && (
-              <div className="ml-auto h-2 w-2 rounded-full bg-primary" />
-            )}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+export function CompactControls() {
+  return (
+    <div className="flex items-center gap-1 w-full justify-center sm:justify-between">
+      <Language />
+      <ThemeToggle />
     </div>
-  );
+  )
 }
