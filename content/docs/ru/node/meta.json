@@ -1,0 +1,13 @@
+{
+  "title": "Нод",
+  "description": "Документация и руководства по ноду PasarGuard",
+  "icon": "Network",
+  "pages": [
+    "index",
+    "installation",
+    "configuration",
+    "api",
+    "libraries"
+  ]
+}
+

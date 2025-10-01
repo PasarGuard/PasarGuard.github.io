@@ -1,0 +1,244 @@
+---
+title: Конфигурация
+description: Настройте параметры и переменные окружения нода PasarGuard
+icon: Cog
+---
+
+## Обзор конфигурации
+
+Нод PasarGuard можно настроить с помощью переменных окружения. Все настройки можно установить в файле `.env` или напрямую как переменные окружения.
+
+## Переменные окружения
+
+### Базовые настройки
+
+| Переменная | Тип | По умолчанию | Описание |
+|----------|------|---------|-------------|
+| `SESSION_ID` | string | `random_uuid` | Токен аутентификации для доступа к API |
+| `HOST` | string | `0.0.0.0` | Адрес хоста сервера |
+| `PORT` | int | `443` | Номер порта сервера |
+| `DEBUG` | bool | `false` | Включить режим отладки для подробного логирования |
+
+### Конфигурация SSL/TLS
+
+| Переменная | Тип | По умолчанию | Описание |
+|----------|------|---------|-------------|
+| `TLS_ENABLE` | bool | `true` | Включить TLS/SSL |
+| `TLS_CERT_FILE` | string | `./cert/server.crt` | Путь к SSL-сертификату |
+| `TLS_KEY_FILE` | string | `./cert/server.key` | Путь к закрытому ключу SSL |
+
+### Конфигурация бэкенда
+
+| Переменная | Тип | По умолчанию | Описание |
+|----------|------|---------|-------------|
+| `BACKEND_TYPE` | string | `xray` | Тип ядра бэкенда (xray, sing-box, v2ray) |
+| `BACKEND_KEEP_ALIVE` | int | `60` | Держать бэкенд активным X секунд после последнего соединения |
+| `BACKEND_LOG_LEVEL` | string | `warning` | Уровень логирования бэкенда (debug, info, warning, error) |
+
+### Конфигурация API
+
+| Переменная | Тип | По умолчанию | Описание |
+|----------|------|---------|-------------|
+| `API_ENABLE_REST` | bool | `true` | Включить REST API |
+| `API_ENABLE_GRPC` | bool | `true` | Включить gRPC API |
+| `GRPC_PORT` | int | `50051` | Порт сервера gRPC |
+
+### Настройки производительности
+
+| Переменная | Тип | По умолчанию | Описание |
+|----------|------|---------|-------------|
+| `MAX_CONNECTIONS` | int | `10000` | Максимум одновременных соединений |
+| `STATS_INTERVAL` | int | `60` | Интервал обновления статистики (секунды) |
+| `LOG_BUFFER_SIZE` | int | `1000` | Размер буфера лога |
+
+---
+
+## Примеры конфигурации
+
+### Базовый файл `.env`
+
+```bash
+# Базовые настройки
+SESSION_ID=your-secure-session-id-here
+HOST=0.0.0.0
+PORT=443
+DEBUG=false
+
+# Конфигурация SSL
+TLS_ENABLE=true
+TLS_CERT_FILE=./cert/server.crt
+TLS_KEY_FILE=./cert/server.key
+
+# Бэкенд
+BACKEND_TYPE=xray
+BACKEND_KEEP_ALIVE=60
+BACKEND_LOG_LEVEL=warning
+
+# API
+API_ENABLE_REST=true
+API_ENABLE_GRPC=true
+GRPC_PORT=50051
+```
+
+### Файл `.env` для Docker
+
+```bash
+SESSION_ID=your-secure-session-id-here
+PORT=443
+TLS_ENABLE=true
+BACKEND_TYPE=xray
+DEBUG=false
+```
+
+### Файл `.env` для продакшена
+
+```bash
+# Настройки для продакшена
+SESSION_ID=change-this-to-a-secure-random-string
+HOST=0.0.0.0
+PORT=443
+DEBUG=false
+
+# SSL - Используйте действительные сертификаты
+TLS_ENABLE=true
+TLS_CERT_FILE=/etc/ssl/certs/your-domain.crt
+TLS_KEY_FILE=/etc/ssl/private/your-domain.key
+
+# Оптимизация бэкенда
+BACKEND_TYPE=xray
+BACKEND_KEEP_ALIVE=120
+BACKEND_LOG_LEVEL=warning
+
+# Производительность
+MAX_CONNECTIONS=50000
+STATS_INTERVAL=30
+LOG_BUFFER_SIZE=2000
+
+# API
+API_ENABLE_REST=true
+API_ENABLE_GRPC=true
+GRPC_PORT=50051
+```
+
+---
+
+## Конфигурация SSL-сертификата
+
+### Генерация самоподписанного сертификата
+
+Для тестирования или внутреннего использования:
+
+```bash
+make generate_server_cert CN=example.com SAN="DNS:example.com,IP:YOUR_IP"
+```
+
+### Использование сертификата Let's Encrypt
+
+Для продакшена с доменом:
+
+1. Установите Certbot:
+```bash
+sudo apt-get install certbot
+```
+
+2. Получите сертификат:
+```bash
+sudo certbot certonly --standalone -d your-domain.com
+```
+
+3. Обновите `.env`:
+```bash
+TLS_CERT_FILE=/etc/letsencrypt/live/your-domain.com/fullchain.pem
+TLS_KEY_FILE=/etc/letsencrypt/live/your-domain.com/privkey.pem
+```
+
+### Использование пользовательского сертификата
+
+Если у вас есть свой сертификат:
+
+```bash
+TLS_CERT_FILE=/path/to/your/certificate.crt
+TLS_KEY_FILE=/path/to/your/private.key
+```
+
+---
+
+## Конфигурация, специфичная для бэкенда
+
+### Ядро Xray
+
+При использовании Xray в качестве бэкенда:
+
+```bash
+BACKEND_TYPE=xray
+BACKEND_LOG_LEVEL=warning
+```
+
+Конфигурация Xray обрабатывается автоматически нодом на основе пользователей и входящих соединений, которые вы определяете через API.
+
+---
+
+## Лучшие практики безопасности
+
+### Генерация безопасного SESSION_ID
+
+```bash
+# Linux/macOS
+openssl rand -hex 32
+
+# Или используйте UUID
+uuidgen
+```
+
+### Права доступа к файлам
+
+Убедитесь в правильных правах для конфиденциальных файлов:
+
+```bash
+# Файлы сертификатов
+chmod 600 ./cert/server.key
+chmod 644 ./cert/server.crt
+
+# Файл окружения
+chmod 600 .env
+```
+
+### Конфигурация брандмауэра
+
+Открывайте только необходимые порты:
+
+```bash
+# Разрешить только порт нода
+sudo ufw allow YOUR_PORT/tcp
+
+# Блокировать ненужные порты
+sudo ufw enable
+```
+
+---
+
+## Устранение неполадок
+
+### Распространенные проблемы
+
+**Порт уже используется:**
+```bash
+# Измените порт в .env
+PORT=8443
+```
+
+**Ошибки сертификата:**
+```bash
+# Проверьте наличие файлов сертификата
+ls -la ./cert/
+
+# Проверьте действительность сертификата
+openssl x509 -in ./cert/server.crt -text -noout
+```
+
+**Отказано в доступе:**
+```bash
+# Запустите с sudo или измените порт на > 1024
+PORT=8443
+```
+

@@ -1,0 +1,128 @@
+---
+title: 配置
+description: 使用环境变量和设置配置 PasarGuard 面板
+icon: Cog
+---
+
+## 配置概述
+
+PasarGuard 面板通过存储在 `/opt/pasarguard/.env` 的 `.env` 文件中的环境变量进行配置。
+
+## 环境变量
+
+### 数据库配置
+
+配置数据库连接：
+
+```bash
+# 数据库 URL
+# SQLite 示例：
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
+
+# MySQL 示例：
+SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://user:password@localhost/pasarguard"
+
+# PostgreSQL 示例：
+SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://user:password@localhost/pasarguard"
+```
+
+### UVICORN 配置
+
+控制 Web 服务器行为：
+
+```bash
+# 主机和端口
+UVICORN_HOST = "0.0.0.0"
+UVICORN_PORT = 8000
+
+# SSL 配置
+UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
+UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
+```
+
+### Xray 配置
+
+配置 Xray 核心：
+
+```bash
+# Xray 可执行文件路径
+XRAY_EXECUTABLE_PATH = "/usr/local/bin/xray"
+
+# Xray 资源目录
+XRAY_ASSETS_PATH = "/usr/local/share/xray"
+
+# Xray 配置路径
+XRAY_JSON = "/var/lib/pasarguard/xray_config.json"
+```
+
+### 面板设置
+
+自定义面板行为：
+
+```bash
+# 用于身份验证的 JWT 密钥
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
+
+# 文档端点（设置为 false 以禁用）
+DOCS = true
+
+# 调试模式
+DEBUG = false
+```
+
+### Telegram 机器人
+
+配置 Telegram 机器人集成：
+
+```bash
+# Telegram 机器人令牌
+TELEGRAM_API_TOKEN = "YOUR_BOT_TOKEN"
+
+# 管理员聊天 ID（逗号分隔）
+TELEGRAM_ADMIN_ID = "123456789,987654321"
+```
+
+## 配置管理
+
+### 查看当前配置
+
+```bash
+cat /opt/pasarguard/.env
+```
+
+### 编辑配置
+
+```bash
+sudo nano /opt/pasarguard/.env
+```
+
+### 应用更改
+
+修改配置后，重启面板：
+
+```bash
+pasarguard restart
+```
+
+## 高级配置
+
+### 自定义 Xray 配置
+
+您可以通过编辑配置文件来自定义 Xray 设置：
+
+```bash
+sudo nano /var/lib/pasarguard/xray_config.json
+```
+
+<Callout type="warn">
+  **警告：** 不正确的 Xray 配置可能导致服务失败。在进行更改之前，请始终备份您的配置。
+</Callout>
+
+### 多节点设置
+
+要配置多个节点，您需要：
+
+1. 使用适当的 API 凭据配置每个节点
+2. 在面板界面中添加节点连接详细信息
+3. 确保面板和节点之间的网络连接
+

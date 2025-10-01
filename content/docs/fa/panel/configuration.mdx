@@ -1,0 +1,128 @@
+---
+title: پیکربندی
+description: پیکربندی پنل PasarGuard با متغیرهای محیطی و تنظیمات
+icon: Cog
+---
+
+## بررسی اجمالی پیکربندی
+
+پنل PasarGuard از طریق متغیرهای محیطی ذخیره شده در فایل `.env` واقع در `/opt/pasarguard/.env` پیکربندی می‌شود.
+
+## متغیرهای محیطی
+
+### پیکربندی پایگاه داده
+
+اتصال پایگاه داده خود را پیکربندی کنید:
+
+```bash
+# URL پایگاه داده
+# مثال SQLite:
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
+
+# مثال MySQL:
+SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://user:password@localhost/pasarguard"
+
+# مثال PostgreSQL:
+SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://user:password@localhost/pasarguard"
+```
+
+### پیکربندی UVICORN
+
+رفتار وب سرور را کنترل کنید:
+
+```bash
+# میزبان و پورت
+UVICORN_HOST = "0.0.0.0"
+UVICORN_PORT = 8000
+
+# پیکربندی SSL
+UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
+UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
+```
+
+### پیکربندی Xray
+
+هسته Xray را پیکربندی کنید:
+
+```bash
+# مسیر فایل اجرایی Xray
+XRAY_EXECUTABLE_PATH = "/usr/local/bin/xray"
+
+# دایرکتوری دارایی‌های Xray
+XRAY_ASSETS_PATH = "/usr/local/share/xray"
+
+# مسیر پیکربندی Xray
+XRAY_JSON = "/var/lib/pasarguard/xray_config.json"
+```
+
+### تنظیمات پنل
+
+رفتار پنل را سفارشی کنید:
+
+```bash
+# کلید مخفی JWT برای احراز هویت
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
+
+# نقطه پایانی مستندات (برای غیرفعال کردن false تنظیم کنید)
+DOCS = true
+
+# حالت اشکال‌زدایی
+DEBUG = false
+```
+
+### ربات تلگرام
+
+یکپارچه‌سازی ربات تلگرام را پیکربندی کنید:
+
+```bash
+# توکن ربات تلگرام
+TELEGRAM_API_TOKEN = "YOUR_BOT_TOKEN"
+
+# شناسه چت مدیران (جدا شده با کاما)
+TELEGRAM_ADMIN_ID = "123456789,987654321"
+```
+
+## مدیریت پیکربندی
+
+### مشاهده پیکربندی فعلی
+
+```bash
+cat /opt/pasarguard/.env
+```
+
+### ویرایش پیکربندی
+
+```bash
+sudo nano /opt/pasarguard/.env
+```
+
+### اعمال تغییرات
+
+پس از تغییر پیکربندی، پنل را راه‌اندازی مجدد کنید:
+
+```bash
+pasarguard restart
+```
+
+## پیکربندی پیشرفته
+
+### پیکربندی سفارشی Xray
+
+می‌توانید تنظیمات Xray را با ویرایش فایل پیکربندی سفارشی کنید:
+
+```bash
+sudo nano /var/lib/pasarguard/xray_config.json
+```
+
+<Callout type="warn">
+  **هشدار:** پیکربندی نادرست Xray ممکن است باعث خرابی سرویس شود. همیشه قبل از انجام تغییرات از پیکربندی خود نسخه پشتیبان تهیه کنید.
+</Callout>
+
+### راه‌اندازی چند نودی
+
+برای پیکربندی چندین نود، باید:
+
+1. هر نود را با اعتبارنامه‌های API مناسب پیکربندی کنید
+2. جزئیات اتصال نود را در رابط پنل اضافه کنید
+3. اطمینان حاصل کنید که اتصال شبکه بین پنل و نودها برقرار است
+

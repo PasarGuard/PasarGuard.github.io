@@ -1,0 +1,128 @@
+---
+title: Конфигурация
+description: Настройте панель PasarGuard с помощью переменных окружения и параметров
+icon: Cog
+---
+
+## Обзор конфигурации
+
+Панель PasarGuard настраивается через переменные окружения, хранящиеся в файле `.env`, расположенном по адресу `/opt/pasarguard/.env`.
+
+## Переменные окружения
+
+### Конфигурация базы данных
+
+Настройте подключение к базе данных:
+
+```bash
+# URL базы данных
+# Пример SQLite:
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
+
+# Пример MySQL:
+SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://user:password@localhost/pasarguard"
+
+# Пример PostgreSQL:
+SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://user:password@localhost/pasarguard"
+```
+
+### Конфигурация UVICORN
+
+Управление поведением веб-сервера:
+
+```bash
+# Хост и порт
+UVICORN_HOST = "0.0.0.0"
+UVICORN_PORT = 8000
+
+# Конфигурация SSL
+UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
+UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
+```
+
+### Конфигурация Xray
+
+Настройте ядро Xray:
+
+```bash
+# Путь к исполняемому файлу Xray
+XRAY_EXECUTABLE_PATH = "/usr/local/bin/xray"
+
+# Директория ресурсов Xray
+XRAY_ASSETS_PATH = "/usr/local/share/xray"
+
+# Путь к конфигурации Xray
+XRAY_JSON = "/var/lib/pasarguard/xray_config.json"
+```
+
+### Настройки панели
+
+Настройте поведение панели:
+
+```bash
+# Секретный ключ JWT для аутентификации
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
+
+# Конечная точка документации (установите false для отключения)
+DOCS = true
+
+# Режим отладки
+DEBUG = false
+```
+
+### Telegram бот
+
+Настройте интеграцию с Telegram ботом:
+
+```bash
+# Токен Telegram бота
+TELEGRAM_API_TOKEN = "YOUR_BOT_TOKEN"
+
+# ID чатов администраторов (через запятую)
+TELEGRAM_ADMIN_ID = "123456789,987654321"
+```
+
+## Управление конфигурацией
+
+### Просмотр текущей конфигурации
+
+```bash
+cat /opt/pasarguard/.env
+```
+
+### Редактирование конфигурации
+
+```bash
+sudo nano /opt/pasarguard/.env
+```
+
+### Применение изменений
+
+После изменения конфигурации перезапустите панель:
+
+```bash
+pasarguard restart
+```
+
+## Расширенная конфигурация
+
+### Пользовательская конфигурация Xray
+
+Вы можете настроить параметры Xray, отредактировав файл конфигурации:
+
+```bash
+sudo nano /var/lib/pasarguard/xray_config.json
+```
+
+<Callout type="warn">
+  **Предупреждение:** Неправильная конфигурация Xray может привести к сбою сервиса. Всегда делайте резервную копию конфигурации перед внесением изменений.
+</Callout>
+
+### Настройка с несколькими нодами
+
+Для настройки нескольких нодов вам необходимо:
+
+1. Настроить каждый нод с соответствующими учетными данными API
+2. Добавить сведения о подключении нода в интерфейсе панели
+3. Обеспечить сетевое подключение между панелью и нодами
+

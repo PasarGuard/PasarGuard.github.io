@@ -1,0 +1,319 @@
+---
+title: Справочник API
+description: Полный справочник REST API и gRPC для нода PasarGuard
+icon: Code
+---
+
+## Обзор API
+
+Нод PasarGuard предоставляет интерфейсы **REST API** и **gRPC** для управления нодом, пользователями и получения статистики.
+
+### Аутентификация
+
+Все запросы API требуют аутентификации с использованием `SESSION_ID`, настроенного в вашем файле `.env`.
+
+**REST API:**
+```http
+Authorization: Bearer <session_id>
+```
+
+**gRPC:**
+```
+authorization: Bearer <session_id>
+```
+
+### Базовый URL
+
+Запросы REST API должны отправляться на:
+```
+https://your-node-address:port/
+```
+
+### Тип содержимого
+
+REST API использует Protocol Buffers для сериализации данных:
+```http
+Content-Type: application/x-protobuf
+```
+
+---
+
+## Структуры данных
+
+### Backend
+
+```protobuf
+message Backend {
+  BackendType type;      // Тип бэкенда (XRAY = 0)
+  string config;         // Конфигурация бэкенда
+  repeated User users;   // Список пользователей
+  uint64 keepAlive;      // Длительность keep alive в секундах
+}
+```
+
+### User
+
+```protobuf
+message User {
+  string email;           // Уникальный идентификатор email пользователя
+  Proxy proxies;          // Конфигурации прокси
+  repeated string inbounds; // Список тегов входящих соединений
+}
+```
+
+### StatRequest
+
+```protobuf
+message StatRequest {
+  string name;      // Email пользователя или тег входящего/исходящего соединения
+  bool reset;       // Сбросить статистику трафика после получения
+  StatType type;    // Тип статистики для получения
+}
+
+enum StatType {
+  Outbounds = 0;   // Вся статистика исходящих соединений
+  Outbound = 1;    // Статистика одного исходящего соединения
+  Inbounds = 2;    // Вся статистика входящих соединений
+  Inbound = 3;     // Статистика одного входящего соединения
+  UsersStat = 4;   // Статистика всех пользователей
+  UserStat = 5;    // Статистика одного пользователя
+}
+```
+
+---
+
+## Методы API
+
+### Управление нодом
+
+#### Запуск бэкенда
+
+Запуск бэкенда нода с конфигурацией.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    POST /start
+    Authorization: Bearer <session_id>
+    Content-Type: application/x-protobuf
+
+    Body: Backend (protobuf)
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc Start(Backend) returns (BaseInfoResponse)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl -X POST https://node:443/start \
+      -H "Authorization: Bearer your-session-id" \
+      -H "Content-Type: application/x-protobuf" \
+      --data-binary @backend.pb
+    ```
+  </Tab>
+</Tabs>
+
+<Callout type="info">
+  Это единственный метод, вызываемый перед созданием соединения с нодом.
+</Callout>
+
+---
+
+#### Остановка бэкенда
+
+Остановка бэкенда и деактивация клиентских соединений.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    PUT /stop
+    Authorization: Bearer <session_id>
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc Stop(Empty) returns (Empty)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl -X PUT https://node:443/stop \
+      -H "Authorization: Bearer your-session-id"
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+#### Получение базовой информации
+
+Получение базовой информации о ноде и проверка статуса подключения.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    GET /info
+    Authorization: Bearer <session_id>
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc GetBaseInfo(Empty) returns (BaseInfoResponse)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl https://node:443/info \
+      -H "Authorization: Bearer your-session-id"
+    ```
+  </Tab>
+</Tabs>
+
+**Ответ:**
+```protobuf
+message BaseInfoResponse {
+  string version;
+  string core_type;
+  bool running;
+}
+```
+
+---
+
+### Логирование
+
+#### Получение логов
+
+Потоковая передача логов в реальном времени с бэкенда.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    GET /logs
+    Authorization: Bearer <session_id>
+    
+    // Возвращает поток Server-Sent Events (SSE)
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc GetLogs(Empty) returns (stream Log)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl -N https://node:443/logs \
+      -H "Authorization: Bearer your-session-id"
+    ```
+  </Tab>
+</Tabs>
+
+**Структура лога:**
+```protobuf
+message Log {
+  string detail;  // Сообщение лога
+}
+```
+
+---
+
+### Статистика
+
+#### Получение системной статистики
+
+Получение статистики на уровне системы.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    GET /stats/system
+    Authorization: Bearer <session_id>
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc GetSystemStats(Empty) returns (SystemStatsResponse)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl https://node:443/stats/system \
+      -H "Authorization: Bearer your-session-id"
+    ```
+  </Tab>
+</Tabs>
+
+**Ответ:**
+```protobuf
+message SystemStatsResponse {
+  uint64 mem_total;                  // Всего памяти
+  uint64 mem_used;                   // Использовано памяти
+  uint64 cpu_cores;                  // Ядра CPU
+  double cpu_usage;                  // Использование CPU %
+  uint64 incoming_bandwidth_speed;   // Скорость загрузки
+  uint64 outgoing_bandwidth_speed;   // Скорость выгрузки
+}
+```
+
+---
+
+### Управление пользователями
+
+#### Синхронизация пользователя
+
+Добавление, обновление или удаление одного пользователя.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    PUT /user/sync
+    Authorization: Bearer <session_id>
+    Content-Type: application/x-protobuf
+
+    Body: User (protobuf)
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc SyncUser(stream User) returns (Empty)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl -X PUT https://node:443/user/sync \
+      -H "Authorization: Bearer your-session-id" \
+      -H "Content-Type: application/x-protobuf" \
+      --data-binary @user.pb
+    ```
+  </Tab>
+</Tabs>
+
+<Callout type="info">
+  Чтобы **удалить** пользователя, отправьте пустой массив входящих соединений. gRPC предоставляет потоковый интерфейс, но REST требует отдельных вызовов для каждого пользователя.
+</Callout>
+
+---
+
+## Ответы об ошибках
+
+### HTTP коды состояния
+
+| Код | Значение |
+|------|---------|
+| 200 | Успешно |
+| 400 | Неверный запрос - Недействительные данные |
+| 401 | Не авторизован - Недействительный SESSION_ID |
+| 404 | Не найдено - Конечная точка не существует |
+| 500 | Внутренняя ошибка сервера |
+
+---
+
+## Ограничение скорости
+
+В настоящее время нет встроенных ограничений скорости, но рекомендуется:
+- Группировать обновления пользователей, когда это возможно
+- Кэшировать статистику локально
+- Избегать чрезмерных опросов
+

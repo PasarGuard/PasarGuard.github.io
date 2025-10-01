@@ -1,0 +1,213 @@
+---
+title: نصب
+description: نصب نود PasarGuard با استفاده از روش‌های مختلف
+icon: Download
+---
+
+## روش‌های نصب
+
+نود PasarGuard را می‌توان با استفاده از چندین روش نصب کرد. روشی را انتخاب کنید که بهترین مطابقت با نیازهای شما دارد.
+
+## نصب یک کلیکی (توصیه می‌شود)
+
+ساده‌ترین راه برای نصب نود PasarGuard استفاده از اسکریپت نصب خودکار ما است:
+
+```bash
+sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pg-node.sh)" @ install
+```
+
+این اسکریپت:
+- تمام وابستگی‌های مورد نیاز را نصب می‌کند
+- نود PasarGuard را راه‌اندازی می‌کند
+- تنظیمات پایه را پیکربندی می‌کند
+- سرویس را به صورت خودکار شروع می‌کند
+
+---
+
+## نصب داکر
+
+### پیش‌نیازها
+
+داکر را روی دستگاه خود نصب کنید:
+
+```bash
+curl -fsSL https://get.docker.com | sh
+```
+
+### استفاده از Docker Compose
+
+1. فایل docker-compose را دانلود کنید:
+
+```bash
+wget https://raw.githubusercontent.com/PasarGuard/node/refs/heads/main/docker-compose.yml
+```
+
+2. فایل `.env` خود را ایجاد و پیکربندی کنید (به [پیکربندی](/node/configuration) مراجعه کنید)
+
+3. نود را شروع کنید:
+
+```bash
+docker compose up -d
+```
+
+### دستورات داکر
+
+**مشاهده لاگ‌ها:**
+```bash
+docker compose logs -f
+```
+
+**توقف نود:**
+```bash
+docker compose down
+```
+
+**راه‌اندازی مجدد نود:**
+```bash
+docker compose restart
+```
+
+**به‌روزرسانی به آخرین نسخه:**
+```bash
+docker compose pull
+docker compose up -d
+```
+
+---
+
+## نصب دستی
+
+<Callout type="warn">
+  نصب دستی برای مبتدیان توصیه نمی‌شود. به جای آن از روش نصب یک کلیکی یا داکر استفاده کنید.
+</Callout>
+
+### پیش‌نیازها
+
+1. **نصب Go** (نسخه 1.21 یا بالاتر)
+   
+   از [go.dev](https://go.dev/dl/) دانلود کنید
+
+2. **کلون کردن مخزن:**
+
+```bash
+git clone https://github.com/PasarGuard/node.git
+cd node
+```
+
+### ساخت فایل باینری
+
+1. نصب وابستگی‌ها:
+
+```bash
+make deps
+```
+
+2. ساخت فایل باینری:
+
+```bash
+make
+```
+
+این یک فایل باینری برای معماری سیستم شما تولید می‌کند.
+
+### نصب هسته Xray
+
+هسته Xray را نصب کنید:
+
+```bash
+make install_xray
+```
+
+### تولید گواهی SSL
+
+بر اساس IP یا دامنه سرور خود گواهی تولید کنید:
+
+```bash
+# برای گواهی مبتنی بر دامنه
+make generate_server_cert CN=example.com SAN="DNS:example.com"
+
+# برای گواهی مبتنی بر IP
+make generate_server_cert CN=example.com SAN="IP:YOUR_SERVER_IP"
+
+# برای دامنه و IP
+make generate_server_cert CN=example.com SAN="DNS:example.com,IP:YOUR_SERVER_IP"
+```
+
+### پیکربندی و اجرا
+
+1. فایل `.env` خود را ایجاد و پیکربندی کنید (به [پیکربندی](/node/configuration) مراجعه کنید)
+
+2. فایل باینری را اجرا کنید:
+
+```bash
+./pasarguard-node
+```
+
+---
+
+## پس از نصب
+
+### تأیید نصب
+
+بررسی کنید که نود در حال اجرا است:
+
+```bash
+curl -k https://localhost:YOUR_PORT/info
+```
+
+شما باید پاسخی با اطلاعات پایه نود دریافت کنید.
+
+### پیکربندی فایروال
+
+مطمئن شوید که پورت‌های مورد نیاز را در فایروال خود باز کرده‌اید:
+
+```bash
+# برای Ubuntu/Debian
+sudo ufw allow YOUR_PORT/tcp
+
+# برای CentOS/RHEL
+sudo firewall-cmd --permanent --add-port=YOUR_PORT/tcp
+sudo firewall-cmd --reload
+```
+
+### راه‌اندازی به عنوان سرویس سیستم (نصب دستی)
+
+یک فایل سرویس systemd ایجاد کنید:
+
+```bash
+sudo nano /etc/systemd/system/pasarguard-node.service
+```
+
+محتوای زیر را اضافه کنید:
+
+```ini
+[Unit]
+Description=PasarGuard Node
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/path/to/node
+ExecStart=/path/to/node/pasarguard-node
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+```
+
+فعال و شروع سرویس:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable pasarguard-node
+sudo systemctl start pasarguard-node
+```
+
+بررسی وضعیت سرویس:
+
+```bash
+sudo systemctl status pasarguard-node
+```
+

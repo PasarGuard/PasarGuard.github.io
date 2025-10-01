@@ -1,0 +1,80 @@
+---
+title: PasarGuard 节点
+description: 稳定、可扩展且高效的代理管理节点
+---
+
+## 概述
+
+PasarGuard 节点由 PasarGuard 团队开发，为管理代理核心提供稳定、可扩展和高效的解决方案。它设计为与 PasarGuard 面板无缝协作或作为独立解决方案使用。
+
+### 为什么使用 PasarGuard 节点？
+
+PasarGuard 节点设计为灵活和通用：
+
+- **通用设计**：可用于任何项目，即使没有 PasarGuard 面板
+- **简单集成**：使用官方库通过简单脚本运行节点
+- **多核心支持**：计划在测试阶段后扩展支持各种核心
+- **可扩展架构**：为性能和可靠性而构建
+
+### 支持的核心
+
+| 核心 | 支持 |
+| ---- | ------- |
+| [Xray-core](https://github.com/XTLS/Xray-core) | ✅ 已支持 |
+| [Sing-box](https://github.com/SagerNet/sing-box) | ⏳ 即将推出 |
+| [V2ray-core](https://github.com/v2fly/v2ray-core) | ⏳ 即将推出 |
+
+### 主要功能
+
+- **REST API 和 gRPC 支持**：选择您喜欢的通信协议
+- **实时统计**：监控系统、后端和用户统计信息
+- **用户管理**：动态用户同步和管理
+- **实时日志**：实时流式传输日志
+- **流量控制**：每个用户的流量监控和控制
+- **SSL/TLS 支持**：内置证书生成和管理
+
+## 快速开始
+
+使用我们的一键安装开始使用 PasarGuard 节点：
+
+```bash
+sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pg-node.sh)" @ install
+```
+
+<Cards>
+  <Card title="安装" href="/node/installation">
+    所有部署方法的完整安装指南
+  </Card>
+
+  <Card title="配置" href="/node/configuration">
+    使用环境变量和设置配置您的节点
+  </Card>
+
+  <Card title="API 参考" href="/node/api">
+    探索 REST API 和 gRPC 方法
+  </Card>
+
+  <Card title="库" href="/node/libraries">
+    Go 和 Python 集成的官方库
+  </Card>
+</Cards>
+
+## 架构
+
+PasarGuard 节点使用以下技术构建：
+
+- **Go**：高性能后端
+- **gRPC & REST API**：双协议支持
+- **Protobuf**：高效的数据序列化
+- **Docker**：容器化部署就绪
+
+## 社区和支持
+
+- **GitHub**：[PasarGuard/node](https://github.com/PasarGuard/node)
+- **Telegram**：[t.me/Pasar_Guard](https://t.me/Pasar_Guard)
+- **文档**：全面的指南和 API 参考
+
+## 贡献
+
+我们 ❤️‍🔥 贡献者！查看我们的[贡献指南](https://github.com/PasarGuard/node/blob/main/CONTRIBUTING.md)，随时提交 pull request 或打开 issue。
+

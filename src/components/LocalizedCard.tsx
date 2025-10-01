@@ -42,15 +42,18 @@ export function LocalizedCard({ title, href, children }: LocalizedCardProps) {
     return `/${currentLocale}/${href}`;
   };
   
+  const currentLocale = getCurrentLocale();
   const localizedHref = getLocalizedHref(href);
+  const isRTL = currentLocale === 'fa';
   
   return (
     <Link
       href={localizedHref}
-      className="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+      dir={isRTL ? 'rtl' : 'ltr'}
+      className={`block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors no-underline ${isRTL ? 'text-right' : ''}`}
     >
-      <h3 className="font-semibold text-lg">{title}</h3>
-      {children}
+      <h3 className="font-semibold text-lg no-underline">{title}</h3>
+      {children && <div className="no-underline">{children}</div>}
     </Link>
   );
 }

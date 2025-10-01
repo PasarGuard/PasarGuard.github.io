@@ -1,41 +1,23 @@
 import { docs } from '@/.source';
 import { type InferPageType, loader } from 'fumadocs-core/source';
 import { i18n } from './i18n';
-import { 
-  Home, 
-  Download, 
-  Rocket, 
-  Monitor, 
-  Server, 
-  Terminal, 
-  ArrowRightLeft 
-} from 'lucide-react';
+import { icons } from 'lucide-react';
 import { createElement } from 'react';
-
-// Icon handler to convert icon names to JSX elements
-const iconHandler = (icon: string | undefined) => {
-  if (!icon) return createElement(Home, { className: "h-4 w-4" });
-  
-  const iconMap = {
-    Home,
-    Download,
-    Rocket,
-    Monitor,
-    Server,
-    Terminal,
-    ArrowRightLeft,
-  };
-  
-  const IconComponent = iconMap[icon as keyof typeof iconMap];
-  return IconComponent ? createElement(IconComponent, { className: "h-4 w-4" }) : createElement(Home, { className: "h-4 w-4" });
-};
 
 // See https://fumadocs.vercel.app/headless/source-api for more info
 export const source = loader({
   baseUrl: '/',
   source: docs.toFumadocsSource(),
   i18n,
-  icon: iconHandler,
+  icon(icon) {
+    if (!icon) {
+      // Return undefined for no default icon
+      return;
+    }
+    if (icon in icons) {
+      return createElement(icons[icon as keyof typeof icons]);
+    }
+  },
 });
 
 

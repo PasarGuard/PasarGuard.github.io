@@ -1,0 +1,127 @@
+---
+title: Configuration
+description: Configure PasarGuard Panel with environment variables and settings
+icon: Cog
+---
+
+## Configuration Overview
+
+PasarGuard Panel is configured through environment variables stored in the `.env` file located at `/opt/pasarguard/.env`.
+
+## Environment Variables
+
+### Database Configuration
+
+Configure your database connection:
+
+```bash
+# Database URL
+# SQLite example:
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
+
+# MySQL example:
+SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://user:password@localhost/pasarguard"
+
+# PostgreSQL example:
+SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://user:password@localhost/pasarguard"
+```
+
+### UVICORN Configuration
+
+Control the web server behavior:
+
+```bash
+# Host and port
+UVICORN_HOST = "0.0.0.0"
+UVICORN_PORT = 8000
+
+# SSL configuration
+UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
+UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
+```
+
+### Xray Configuration
+
+Configure the Xray core:
+
+```bash
+# Xray executable path
+XRAY_EXECUTABLE_PATH = "/usr/local/bin/xray"
+
+# Xray assets directory
+XRAY_ASSETS_PATH = "/usr/local/share/xray"
+
+# Xray configuration path
+XRAY_JSON = "/var/lib/pasarguard/xray_config.json"
+```
+
+### Panel Settings
+
+Customize panel behavior:
+
+```bash
+# JWT secret key for authentication
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
+
+# Docs endpoint (set to false to disable)
+DOCS = true
+
+# Debug mode
+DEBUG = false
+```
+
+### Telegram Bot
+
+Configure Telegram bot integration:
+
+```bash
+# Telegram bot token
+TELEGRAM_API_TOKEN = "YOUR_BOT_TOKEN"
+
+# Admin chat IDs (comma separated)
+TELEGRAM_ADMIN_ID = "123456789,987654321"
+```
+
+## Configuration Management
+
+### View Current Configuration
+
+```bash
+cat /opt/pasarguard/.env
+```
+
+### Edit Configuration
+
+```bash
+sudo nano /opt/pasarguard/.env
+```
+
+### Apply Changes
+
+After modifying configuration, restart the panel:
+
+```bash
+pasarguard restart
+```
+
+## Advanced Configuration
+
+### Custom Xray Configuration
+
+You can customize Xray settings by editing the configuration file:
+
+```bash
+sudo nano /var/lib/pasarguard/xray_config.json
+```
+
+<Callout type="warn">
+  **Warning:** Incorrect Xray configuration may cause the service to fail. Always backup your configuration before making changes.
+</Callout>
+
+### Multi-Node Setup
+
+To configure multiple nodes, you'll need to:
+
+1. Configure each node with proper API credentials
+2. Add node connection details in the panel interface
+3. Ensure network connectivity between panel and nodes

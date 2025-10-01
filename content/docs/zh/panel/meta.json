@@ -2,7 +2,10 @@
   "title": "面板",
   "description": "PasarGuard 面板管理",
   "pages": [
-    "installation"
+    "index",
+    "installation",
+    "configuration",
+    "features"
   ],
   "icon": "Monitor"
 }

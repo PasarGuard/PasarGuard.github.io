@@ -1,0 +1,252 @@
+---
+title: Официальные библиотеки
+description: Официальные библиотеки Go и Python для интеграции с нодом PasarGuard
+icon: Library
+---
+
+## Обзор
+
+PasarGuard предоставляет официальные библиотеки для упрощения интеграции с нодом. Эти библиотеки обрабатывают аутентификацию, сериализацию и предоставляют типобезопасные интерфейсы для всех операций API.
+
+---
+
+## Библиотека Go
+
+### node-bridge
+
+Официальная библиотека Go для бесшовной интеграции с нодом PasarGuard.
+
+**Репозиторий:** [PasarGuard/node_bridge](https://github.com/PasarGuard/node_bridge)
+
+### Установка
+
+```bash
+go get github.com/PasarGuard/node_bridge
+```
+
+### Быстрый старт
+
+```go
+package main
+
+import (
+    "context"
+    "log"
+    
+    "github.com/PasarGuard/node_bridge"
+)
+
+func main() {
+    // Создать новый клиент
+    client, err := nodebridge.NewClient(
+        "https://your-node:443",
+        "your-session-id",
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer client.Close()
+
+    // Получить информацию о ноде
+    info, err := client.GetBaseInfo(context.Background())
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    log.Printf("Версия нода: %s, Запущен: %v", info.Version, info.Running)
+}
+```
+
+### Примеры
+
+#### Запуск бэкенда
+
+```go
+package main
+
+import (
+    "context"
+    "log"
+    
+    "github.com/PasarGuard/node_bridge"
+    pb "github.com/PasarGuard/node_bridge/proto"
+)
+
+func main() {
+    client, _ := nodebridge.NewClient("https://node:443", "session-id")
+    defer client.Close()
+
+    backend := &pb.Backend{
+        Type: pb.BackendType_XRAY,
+        Config: `{
+            "log": {"loglevel": "warning"},
+            "inbounds": [...],
+            "outbounds": [...]
+        }`,
+        Users: []*pb.User{
+            {
+                Email: "user1@example.com",
+                Proxies: &pb.Proxy{
+                    Vmess: &pb.Vmess{
+                        Id: "uuid-here",
+                    },
+                },
+                Inbounds: []string{"inbound-tag"},
+            },
+        },
+        KeepAlive: 60,
+    }
+
+    info, err := client.Start(context.Background(), backend)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    log.Printf("Бэкенд запущен: %v", info)
+}
+```
+
+#### Синхронизация пользователей
+
+```go
+// Синхронизировать одного пользователя
+user := &pb.User{
+    Email: "newuser@example.com",
+    Proxies: &pb.Proxy{
+        Vmess: &pb.Vmess{Id: "uuid"},
+    },
+    Inbounds: []string{"inbound-tag"},
+}
+
+err := client.SyncUser(context.Background(), user)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Удалить пользователя (пустые входящие)
+user.Inbounds = []string{}
+err = client.SyncUser(context.Background(), user)
+```
+
+---
+
+## Библиотека Python
+
+### node-bridge-py
+
+Официальная библиотека Python для интеграции с нодом PasarGuard.
+
+**Репозиторий:** [PasarGuard/node-bridge-py](https://github.com/PasarGuard/node-bridge-py)
+
+### Установка
+
+```bash
+pip install pasarguard-node-bridge
+```
+
+### Быстрый старт
+
+```python
+from pasarguard_node_bridge import NodeClient
+
+# Создать клиент
+client = NodeClient(
+    url="https://your-node:443",
+    session_id="your-session-id"
+)
+
+# Получить информацию о ноде
+info = client.get_base_info()
+print(f"Версия нода: {info.version}, Запущен: {info.running}")
+```
+
+### Примеры
+
+#### Запуск бэкенда
+
+```python
+from pasarguard_node_bridge import NodeClient, Backend, User, Proxy, Vmess
+
+client = NodeClient("https://node:443", "session-id")
+
+backend = Backend(
+    type=Backend.Type.XRAY,
+    config="""{
+        "log": {"loglevel": "warning"},
+        "inbounds": [...],
+        "outbounds": [...]
+    }""",
+    users=[
+        User(
+            email="user1@example.com",
+            proxies=Proxy(
+                vmess=Vmess(id="uuid-here")
+            ),
+            inbounds=["inbound-tag"]
+        )
+    ],
+    keep_alive=60
+)
+
+info = client.start(backend)
+print(f"Бэкенд запущен: {info}")
+```
+
+#### Синхронизация пользователей
+
+```python
+from pasarguard_node_bridge import User, Proxy, Vmess
+
+# Добавить/обновить пользователя
+user = User(
+    email="newuser@example.com",
+    proxies=Proxy(
+        vmess=Vmess(id="uuid")
+    ),
+    inbounds=["inbound-tag"]
+)
+
+client.sync_user(user)
+
+# Удалить пользователя (пустые входящие)
+user.inbounds = []
+client.sync_user(user)
+```
+
+---
+
+## Лучшие практики
+
+### Управление соединением
+
+**Go:**
+```go
+// Всегда закрывайте клиенты
+defer client.Close()
+```
+
+**Python:**
+```python
+# Используйте context manager
+with NodeClient(url, session_id) as client:
+    # Используйте клиент
+    pass
+
+# Или закрывайте вручную
+client.close()
+```
+
+### Обработка ошибок
+
+Всегда обрабатывайте ошибки должным образом:
+- Ошибки аутентификации → Проверьте SESSION_ID
+- Ошибки подключения → Убедитесь, что нод запущен
+- Ошибки тайм-аута → Увеличьте тайм-аут контекста
+
+### Советы по производительности
+
+1. **Переиспользуйте клиенты** - Не создавайте новые клиенты для каждого запроса
+2. **Пакетные операции** - Используйте `SyncUsers` для обновления нескольких пользователей
+3. **Кэшируйте статистику** - Не опрашивайте статистику слишком часто
+4. **Используйте потоковую передачу** - Для логов используйте потоковую передачу вместо опросов
+

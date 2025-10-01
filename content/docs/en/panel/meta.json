@@ -2,7 +2,10 @@
   "title": "Panel",
   "description": "PasarGuard Panel Management",
   "pages": [
-    "installation"
+    "index",
+    "installation",
+    "configuration",
+    "features"
   ],
   "icon": "Monitor"
 }

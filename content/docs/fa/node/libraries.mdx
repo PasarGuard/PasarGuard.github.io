@@ -1,0 +1,287 @@
+---
+title: کتابخانه‌های رسمی
+description: کتابخانه‌های رسمی Go و Python برای یکپارچه‌سازی با نود PasarGuard
+icon: Library
+---
+
+## بررسی اجمالی
+
+PasarGuard کتابخانه‌های رسمی را برای ساده‌سازی یکپارچه‌سازی با نود فراهم می‌کند. این کتابخانه‌ها احراز هویت، سریال‌سازی را مدیریت می‌کنند و رابط‌های type-safe برای تمام عملیات API فراهم می‌کنند.
+
+---
+
+## کتابخانه Go
+
+### node-bridge
+
+کتابخانه رسمی Go برای یکپارچه‌سازی یکپارچه با نود PasarGuard.
+
+**مخزن:** [PasarGuard/node_bridge](https://github.com/PasarGuard/node_bridge)
+
+### نصب
+
+```bash
+go get github.com/PasarGuard/node_bridge
+```
+
+### شروع سریع
+
+```go
+package main
+
+import (
+    "context"
+    "log"
+    
+    "github.com/PasarGuard/node_bridge"
+)
+
+func main() {
+    // ایجاد کلاینت جدید
+    client, err := nodebridge.NewClient(
+        "https://your-node:443",
+        "your-session-id",
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer client.Close()
+
+    // دریافت اطلاعات نود
+    info, err := client.GetBaseInfo(context.Background())
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    log.Printf("نسخه نود: %s، در حال اجرا: %v", info.Version, info.Running)
+}
+```
+
+### مثال‌ها
+
+#### شروع یک بکند
+
+```go
+package main
+
+import (
+    "context"
+    "log"
+    
+    "github.com/PasarGuard/node_bridge"
+    pb "github.com/PasarGuard/node_bridge/proto"
+)
+
+func main() {
+    client, _ := nodebridge.NewClient("https://node:443", "session-id")
+    defer client.Close()
+
+    backend := &pb.Backend{
+        Type: pb.BackendType_XRAY,
+        Config: `{
+            "log": {"loglevel": "warning"},
+            "inbounds": [...],
+            "outbounds": [...]
+        }`,
+        Users: []*pb.User{
+            {
+                Email: "user1@example.com",
+                Proxies: &pb.Proxy{
+                    Vmess: &pb.Vmess{
+                        Id: "uuid-here",
+                    },
+                },
+                Inbounds: []string{"inbound-tag"},
+            },
+        },
+        KeepAlive: 60,
+    }
+
+    info, err := client.Start(context.Background(), backend)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    log.Printf("بکند شروع شد: %v", info)
+}
+```
+
+#### همگام‌سازی کاربران
+
+```go
+// همگام‌سازی یک کاربر
+user := &pb.User{
+    Email: "newuser@example.com",
+    Proxies: &pb.Proxy{
+        Vmess: &pb.Vmess{Id: "uuid"},
+    },
+    Inbounds: []string{"inbound-tag"},
+}
+
+err := client.SyncUser(context.Background(), user)
+if err != nil {
+    log.Fatal(err)
+}
+
+// حذف کاربر (ورودی‌های خالی)
+user.Inbounds = []string{}
+err = client.SyncUser(context.Background(), user)
+```
+
+#### دریافت آمار
+
+```go
+// دریافت آمار تمام کاربران
+statsReq := &pb.StatRequest{
+    Type: pb.StatType_UsersStat,
+    Reset: false,
+}
+
+stats, err := client.GetStats(context.Background(), statsReq)
+if err != nil {
+    log.Fatal(err)
+}
+
+for _, stat := range stats.Stats {
+    log.Printf("کاربر: %s، ترافیک: %d بایت", stat.Name, stat.Value)
+}
+```
+
+---
+
+## کتابخانه Python
+
+### node-bridge-py
+
+کتابخانه رسمی Python برای یکپارچه‌سازی با نود PasarGuard.
+
+**مخزن:** [PasarGuard/node-bridge-py](https://github.com/PasarGuard/node-bridge-py)
+
+### نصب
+
+```bash
+pip install pasarguard-node-bridge
+```
+
+### شروع سریع
+
+```python
+from pasarguard_node_bridge import NodeClient
+
+# ایجاد کلاینت
+client = NodeClient(
+    url="https://your-node:443",
+    session_id="your-session-id"
+)
+
+# دریافت اطلاعات نود
+info = client.get_base_info()
+print(f"نسخه نود: {info.version}، در حال اجرا: {info.running}")
+```
+
+### مثال‌ها
+
+#### شروع یک بکند
+
+```python
+from pasarguard_node_bridge import NodeClient, Backend, User, Proxy, Vmess
+
+client = NodeClient("https://node:443", "session-id")
+
+backend = Backend(
+    type=Backend.Type.XRAY,
+    config="""{
+        "log": {"loglevel": "warning"},
+        "inbounds": [...],
+        "outbounds": [...]
+    }""",
+    users=[
+        User(
+            email="user1@example.com",
+            proxies=Proxy(
+                vmess=Vmess(id="uuid-here")
+            ),
+            inbounds=["inbound-tag"]
+        )
+    ],
+    keep_alive=60
+)
+
+info = client.start(backend)
+print(f"بکند شروع شد: {info}")
+```
+
+#### همگام‌سازی کاربران
+
+```python
+from pasarguard_node_bridge import User, Proxy, Vmess
+
+# اضافه/به‌روزرسانی کاربر
+user = User(
+    email="newuser@example.com",
+    proxies=Proxy(
+        vmess=Vmess(id="uuid")
+    ),
+    inbounds=["inbound-tag"]
+)
+
+client.sync_user(user)
+
+# حذف کاربر (ورودی‌های خالی)
+user.inbounds = []
+client.sync_user(user)
+```
+
+#### دریافت آمار
+
+```python
+from pasarguard_node_bridge import StatRequest, StatType
+
+# دریافت آمار تمام کاربران
+stats_req = StatRequest(
+    type=StatType.USERS_STAT,
+    reset=False
+)
+
+stats = client.get_stats(stats_req)
+for stat in stats.stats:
+    print(f"کاربر: {stat.name}، ترافیک: {stat.value} بایت")
+```
+
+---
+
+## بهترین شیوه‌ها
+
+### مدیریت اتصال
+
+**Go:**
+```go
+// همیشه کلاینت‌ها را ببندید
+defer client.Close()
+```
+
+**Python:**
+```python
+# استفاده از context manager
+with NodeClient(url, session_id) as client:
+    # استفاده از کلاینت
+    pass
+
+# یا بستن دستی
+client.close()
+```
+
+### مدیریت خطا
+
+همیشه خطاها را به طور مناسب مدیریت کنید:
+- خطاهای احراز هویت → بررسی SESSION_ID
+- خطاهای اتصال → تأیید کنید که نود در حال اجرا است
+- خطاهای timeout → افزایش timeout کانتکست
+
+### نکات عملکردی
+
+1. **استفاده مجدد از کلاینت‌ها** - برای هر درخواست کلاینت جدید ایجاد نکنید
+2. **عملیات دسته‌ای** - از `SyncUsers` برای به‌روزرسانی‌های چندین کاربر استفاده کنید
+3. **کش آمار** - آمار را خیلی مکرر نظرسنجی نکنید
+4. **استفاده از streaming** - برای لاگ‌ها، از streaming به جای نظرسنجی استفاده کنید
+

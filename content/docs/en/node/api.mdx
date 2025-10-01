@@ -1,0 +1,537 @@
+---
+title: API Reference
+description: Complete REST API and gRPC reference for PasarGuard Node
+icon: Code
+---
+
+## API Overview
+
+PasarGuard Node provides both **REST API** and **gRPC** interfaces for managing the node, users, and retrieving statistics.
+
+### Authentication
+
+All API requests require authentication using the `SESSION_ID` configured in your `.env` file.
+
+**REST API:**
+```http
+Authorization: Bearer <session_id>
+```
+
+**gRPC:**
+```
+authorization: Bearer <session_id>
+```
+
+### Base URL
+
+REST API requests should be sent to:
+```
+https://your-node-address:port/
+```
+
+### Content Type
+
+REST API uses Protocol Buffers for data serialization:
+```http
+Content-Type: application/x-protobuf
+```
+
+---
+
+## Data Structures
+
+### Backend
+
+```protobuf
+message Backend {
+  BackendType type;      // Backend type (XRAY = 0)
+  string config;         // Backend configuration
+  repeated User users;   // List of users
+  uint64 keepAlive;      // Keep alive duration in seconds
+}
+```
+
+### User
+
+```protobuf
+message User {
+  string email;           // User's unique email identifier
+  Proxy proxies;          // Proxy configurations
+  repeated string inbounds; // List of inbound tags
+}
+```
+
+### StatRequest
+
+```protobuf
+message StatRequest {
+  string name;      // User email or inbound/outbound tag
+  bool reset;       // Reset traffic stats after retrieval
+  StatType type;    // Type of stats to retrieve
+}
+
+enum StatType {
+  Outbounds = 0;   // All outbound stats
+  Outbound = 1;    // Single outbound stats
+  Inbounds = 2;    // All inbound stats
+  Inbound = 3;     // Single inbound stats
+  UsersStat = 4;   // All users stats
+  UserStat = 5;    // Single user stats
+}
+```
+
+---
+
+## API Methods
+
+### Node Management
+
+#### Start Backend
+
+Start the node backend with configuration.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    POST /start
+    Authorization: Bearer <session_id>
+    Content-Type: application/x-protobuf
+
+    Body: Backend (protobuf)
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc Start(Backend) returns (BaseInfoResponse)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl -X POST https://node:443/start \
+      -H "Authorization: Bearer your-session-id" \
+      -H "Content-Type: application/x-protobuf" \
+      --data-binary @backend.pb
+    ```
+  </Tab>
+</Tabs>
+
+<Callout type="info">
+  This is the only method called before creating a connection with the node.
+</Callout>
+
+---
+
+#### Stop Backend
+
+Stop the backend and deactivate client connections.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    PUT /stop
+    Authorization: Bearer <session_id>
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc Stop(Empty) returns (Empty)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl -X PUT https://node:443/stop \
+      -H "Authorization: Bearer your-session-id"
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+#### Get Base Info
+
+Retrieve basic node information and check connection status.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    GET /info
+    Authorization: Bearer <session_id>
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc GetBaseInfo(Empty) returns (BaseInfoResponse)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl https://node:443/info \
+      -H "Authorization: Bearer your-session-id"
+    ```
+  </Tab>
+</Tabs>
+
+**Response:**
+```protobuf
+message BaseInfoResponse {
+  string version;
+  string core_type;
+  bool running;
+}
+```
+
+---
+
+### Logging
+
+#### Get Logs
+
+Stream real-time logs from the backend.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    GET /logs
+    Authorization: Bearer <session_id>
+    
+    // Returns Server-Sent Events (SSE) stream
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc GetLogs(Empty) returns (stream Log)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl -N https://node:443/logs \
+      -H "Authorization: Bearer your-session-id"
+    ```
+  </Tab>
+</Tabs>
+
+**Log Structure:**
+```protobuf
+message Log {
+  string detail;  // Log message
+}
+```
+
+---
+
+### Statistics
+
+#### Get System Stats
+
+Retrieve system-level statistics.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    GET /stats/system
+    Authorization: Bearer <session_id>
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc GetSystemStats(Empty) returns (SystemStatsResponse)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl https://node:443/stats/system \
+      -H "Authorization: Bearer your-session-id"
+    ```
+  </Tab>
+</Tabs>
+
+**Response:**
+```protobuf
+message SystemStatsResponse {
+  uint64 mem_total;                  // Total memory
+  uint64 mem_used;                   // Used memory
+  uint64 cpu_cores;                  // CPU cores
+  double cpu_usage;                  // CPU usage %
+  uint64 incoming_bandwidth_speed;   // Download speed
+  uint64 outgoing_bandwidth_speed;   // Upload speed
+}
+```
+
+---
+
+#### Get Backend Stats
+
+Retrieve backend runtime statistics.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    GET /stats/backend
+    Authorization: Bearer <session_id>
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc GetBackendStats(Empty) returns (BackendStatsResponse)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl https://node:443/stats/backend \
+      -H "Authorization: Bearer your-session-id"
+    ```
+  </Tab>
+</Tabs>
+
+**Response:**
+```protobuf
+message BackendStatsResponse {
+  uint32 num_goroutine;    // Active goroutines
+  uint32 num_gc;           // GC runs
+  uint64 alloc;            // Allocated memory
+  uint64 total_alloc;      // Total allocated
+  uint64 sys;              // System memory
+  uint64 mallocs;          // Malloc count
+  uint64 frees;            // Free count
+  uint64 live_objects;     // Live objects
+  uint64 pause_total_ns;   // Total GC pause
+  uint32 uptime;           // Uptime in seconds
+}
+```
+
+---
+
+#### Get Traffic Stats
+
+Retrieve traffic statistics for users, inbounds, or outbounds.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    GET /stats
+    Authorization: Bearer <session_id>
+    Content-Type: application/x-protobuf
+
+    Body: StatRequest (protobuf)
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc GetStats(StatRequest) returns (StatResponse)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl -X GET https://node:443/stats \
+      -H "Authorization: Bearer your-session-id" \
+      -H "Content-Type: application/x-protobuf" \
+      --data-binary @stat-request.pb
+    ```
+  </Tab>
+</Tabs>
+
+**Examples:**
+
+Get all users' stats:
+```protobuf
+StatRequest {
+  type: UsersStat,
+  reset: false
+}
+```
+
+Get specific user stats:
+```protobuf
+StatRequest {
+  name: "user@example.com",
+  type: UserStat,
+  reset: true  // Reset after retrieval
+}
+```
+
+**Response:**
+```protobuf
+message StatResponse {
+  repeated Stat stats;
+}
+
+message Stat {
+  string name;   // User email or tag
+  string type;   // Stat type
+  string link;   // Link identifier
+  int64 value;   // Traffic value in bytes
+}
+```
+
+---
+
+#### Get User Online Stats
+
+Get online connection count for a user.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    GET /stats/user/online
+    Authorization: Bearer <session_id>
+    Content-Type: application/x-protobuf
+
+    Body: StatRequest (protobuf)
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc GetUserOnlineStats(StatRequest) returns (OnlineStatResponse)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl -X GET https://node:443/stats/user/online \
+      -H "Authorization: Bearer your-session-id" \
+      --data-binary @stat-request.pb
+    ```
+  </Tab>
+</Tabs>
+
+**Response:**
+```protobuf
+message OnlineStatResponse {
+  string name;   // User email
+  int64 value;   // Online connection count
+}
+```
+
+---
+
+#### Get User Online IP List
+
+Get list of IPs for online user connections.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    GET /stats/user/online_ip
+    Authorization: Bearer <session_id>
+    Content-Type: application/x-protobuf
+
+    Body: StatRequest (protobuf)
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc GetUserOnlineIpListStats(StatRequest) returns (StatsOnlineIpListResponse)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl -X GET https://node:443/stats/user/online_ip \
+      -H "Authorization: Bearer your-session-id" \
+      --data-binary @stat-request.pb
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+### User Management
+
+#### Sync User
+
+Add, update, or remove a single user.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    PUT /user/sync
+    Authorization: Bearer <session_id>
+    Content-Type: application/x-protobuf
+
+    Body: User (protobuf)
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc SyncUser(stream User) returns (Empty)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl -X PUT https://node:443/user/sync \
+      -H "Authorization: Bearer your-session-id" \
+      -H "Content-Type: application/x-protobuf" \
+      --data-binary @user.pb
+    ```
+  </Tab>
+</Tabs>
+
+<Callout type="info">
+  To **remove** a user, send empty inbounds array. gRPC provides a stream interface, but REST requires individual calls per user.
+</Callout>
+
+---
+
+#### Sync Users
+
+Replace all users with a new set.
+
+<Tabs items={['REST', 'gRPC', 'cURL']}>
+  <Tab value="REST">
+    ```http
+    PUT /users/sync
+    Authorization: Bearer <session_id>
+    Content-Type: application/x-protobuf
+
+    Body: Users (protobuf)
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc SyncUsers(Users) returns (Empty)
+    ```
+  </Tab>
+  <Tab value="cURL">
+    ```bash
+    curl -X PUT https://node:443/users/sync \
+      -H "Authorization: Bearer your-session-id" \
+      -H "Content-Type: application/x-protobuf" \
+      --data-binary @users.pb
+    ```
+  </Tab>
+</Tabs>
+
+<Callout type="warn">
+  This method **removes all old users** and replaces them with the provided list.
+</Callout>
+
+---
+
+## Error Responses
+
+### HTTP Status Codes
+
+| Code | Meaning |
+|------|---------|
+| 200 | Success |
+| 400 | Bad Request - Invalid data |
+| 401 | Unauthorized - Invalid SESSION_ID |
+| 404 | Not Found - Endpoint doesn't exist |
+| 500 | Internal Server Error |
+
+### Error Format
+
+```json
+{
+  "error": "Error description",
+  "code": "ERROR_CODE"
+}
+```
+
+---
+
+## Rate Limiting
+
+There are currently no built-in rate limits, but it's recommended to:
+- Batch user updates when possible
+- Cache statistics locally
+- Avoid excessive polling
+

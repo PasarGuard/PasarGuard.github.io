@@ -1,0 +1,244 @@
+---
+title: Configuration
+description: Configure PasarGuard Node settings and environment variables
+icon: Cog
+---
+
+## Configuration Overview
+
+PasarGuard Node can be configured using environment variables. All settings can be set in a `.env` file or directly as environment variables.
+
+## Environment Variables
+
+### Basic Settings
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `SESSION_ID` | string | `random_uuid` | Authentication token for API access |
+| `HOST` | string | `0.0.0.0` | Server host address |
+| `PORT` | int | `443` | Server port number |
+| `DEBUG` | bool | `false` | Enable debug mode for verbose logging |
+
+### SSL/TLS Configuration
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `TLS_ENABLE` | bool | `true` | Enable TLS/SSL |
+| `TLS_CERT_FILE` | string | `./cert/server.crt` | Path to SSL certificate |
+| `TLS_KEY_FILE` | string | `./cert/server.key` | Path to SSL private key |
+
+### Backend Configuration
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `BACKEND_TYPE` | string | `xray` | Backend core type (xray, sing-box, v2ray) |
+| `BACKEND_KEEP_ALIVE` | int | `60` | Keep backend alive for X seconds after last connection |
+| `BACKEND_LOG_LEVEL` | string | `warning` | Backend log level (debug, info, warning, error) |
+
+### API Configuration
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `API_ENABLE_REST` | bool | `true` | Enable REST API |
+| `API_ENABLE_GRPC` | bool | `true` | Enable gRPC API |
+| `GRPC_PORT` | int | `50051` | gRPC server port |
+
+### Performance Settings
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `MAX_CONNECTIONS` | int | `10000` | Maximum concurrent connections |
+| `STATS_INTERVAL` | int | `60` | Statistics update interval (seconds) |
+| `LOG_BUFFER_SIZE` | int | `1000` | Log buffer size |
+
+---
+
+## Example Configuration
+
+### Basic `.env` File
+
+```bash
+# Basic Settings
+SESSION_ID=your-secure-session-id-here
+HOST=0.0.0.0
+PORT=443
+DEBUG=false
+
+# SSL Configuration
+TLS_ENABLE=true
+TLS_CERT_FILE=./cert/server.crt
+TLS_KEY_FILE=./cert/server.key
+
+# Backend
+BACKEND_TYPE=xray
+BACKEND_KEEP_ALIVE=60
+BACKEND_LOG_LEVEL=warning
+
+# API
+API_ENABLE_REST=true
+API_ENABLE_GRPC=true
+GRPC_PORT=50051
+```
+
+### Docker `.env` File
+
+```bash
+SESSION_ID=your-secure-session-id-here
+PORT=443
+TLS_ENABLE=true
+BACKEND_TYPE=xray
+DEBUG=false
+```
+
+### Production `.env` File
+
+```bash
+# Production Settings
+SESSION_ID=change-this-to-a-secure-random-string
+HOST=0.0.0.0
+PORT=443
+DEBUG=false
+
+# SSL - Use valid certificates
+TLS_ENABLE=true
+TLS_CERT_FILE=/etc/ssl/certs/your-domain.crt
+TLS_KEY_FILE=/etc/ssl/private/your-domain.key
+
+# Backend Optimization
+BACKEND_TYPE=xray
+BACKEND_KEEP_ALIVE=120
+BACKEND_LOG_LEVEL=warning
+
+# Performance
+MAX_CONNECTIONS=50000
+STATS_INTERVAL=30
+LOG_BUFFER_SIZE=2000
+
+# API
+API_ENABLE_REST=true
+API_ENABLE_GRPC=true
+GRPC_PORT=50051
+```
+
+---
+
+## SSL Certificate Configuration
+
+### Generate Self-Signed Certificate
+
+For testing or internal use:
+
+```bash
+make generate_server_cert CN=example.com SAN="DNS:example.com,IP:YOUR_IP"
+```
+
+### Use Let's Encrypt Certificate
+
+For production with a domain:
+
+1. Install Certbot:
+```bash
+sudo apt-get install certbot
+```
+
+2. Obtain certificate:
+```bash
+sudo certbot certonly --standalone -d your-domain.com
+```
+
+3. Update `.env`:
+```bash
+TLS_CERT_FILE=/etc/letsencrypt/live/your-domain.com/fullchain.pem
+TLS_KEY_FILE=/etc/letsencrypt/live/your-domain.com/privkey.pem
+```
+
+### Use Custom Certificate
+
+If you have your own certificate:
+
+```bash
+TLS_CERT_FILE=/path/to/your/certificate.crt
+TLS_KEY_FILE=/path/to/your/private.key
+```
+
+---
+
+## Backend-Specific Configuration
+
+### Xray Core
+
+When using Xray as the backend:
+
+```bash
+BACKEND_TYPE=xray
+BACKEND_LOG_LEVEL=warning
+```
+
+Xray configuration is handled automatically by the node based on the users and inbounds you define through the API.
+
+---
+
+## Security Best Practices
+
+### Generate Secure SESSION_ID
+
+```bash
+# Linux/macOS
+openssl rand -hex 32
+
+# Or use UUID
+uuidgen
+```
+
+### File Permissions
+
+Ensure proper permissions for sensitive files:
+
+```bash
+# Certificate files
+chmod 600 ./cert/server.key
+chmod 644 ./cert/server.crt
+
+# Environment file
+chmod 600 .env
+```
+
+### Firewall Configuration
+
+Only expose necessary ports:
+
+```bash
+# Allow only node port
+sudo ufw allow YOUR_PORT/tcp
+
+# Block unnecessary ports
+sudo ufw enable
+```
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+**Port already in use:**
+```bash
+# Change the port in .env
+PORT=8443
+```
+
+**Certificate errors:**
+```bash
+# Verify certificate files exist
+ls -la ./cert/
+
+# Check certificate validity
+openssl x509 -in ./cert/server.crt -text -noout
+```
+
+**Permission denied:**
+```bash
+# Run with sudo or change port to > 1024
+PORT=8443
+```
+

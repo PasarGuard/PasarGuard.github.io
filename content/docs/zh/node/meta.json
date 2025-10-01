@@ -1,0 +1,13 @@
+{
+  "title": "节点",
+  "description": "PasarGuard 节点文档和指南",
+  "icon": "Network",
+  "pages": [
+    "index",
+    "installation",
+    "configuration",
+    "api",
+    "libraries"
+  ]
+}
+

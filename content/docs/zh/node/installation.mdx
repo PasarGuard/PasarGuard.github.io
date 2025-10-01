@@ -1,0 +1,213 @@
+---
+title: 安装
+description: 使用各种方法安装 PasarGuard 节点
+icon: Download
+---
+
+## 安装方法
+
+PasarGuard 节点可以使用多种方法安装。选择最适合您需求的方法。
+
+## 一键安装（推荐）
+
+安装 PasarGuard 节点最简单的方法是使用我们的自动化安装脚本：
+
+```bash
+sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pg-node.sh)" @ install
+```
+
+此脚本将：
+- 安装所有必需的依赖项
+- 设置 PasarGuard 节点
+- 配置基本设置
+- 自动启动服务
+
+---
+
+## Docker 安装
+
+### 先决条件
+
+在您的机器上安装 Docker：
+
+```bash
+curl -fsSL https://get.docker.com | sh
+```
+
+### 使用 Docker Compose
+
+1. 下载 docker-compose 文件：
+
+```bash
+wget https://raw.githubusercontent.com/PasarGuard/node/refs/heads/main/docker-compose.yml
+```
+
+2. 创建并配置您的 `.env` 文件（参见[配置](/node/configuration)）
+
+3. 启动节点：
+
+```bash
+docker compose up -d
+```
+
+### Docker 命令
+
+**查看日志：**
+```bash
+docker compose logs -f
+```
+
+**停止节点：**
+```bash
+docker compose down
+```
+
+**重启节点：**
+```bash
+docker compose restart
+```
+
+**更新到最新版本：**
+```bash
+docker compose pull
+docker compose up -d
+```
+
+---
+
+## 手动安装
+
+<Callout type="warn">
+  不建议初学者进行手动安装。请改用一键安装或 Docker 方法。
+</Callout>
+
+### 先决条件
+
+1. **安装 Go**（版本 1.21 或更高）
+   
+   从 [go.dev](https://go.dev/dl/) 下载
+
+2. **克隆仓库：**
+
+```bash
+git clone https://github.com/PasarGuard/node.git
+cd node
+```
+
+### 构建二进制文件
+
+1. 安装依赖项：
+
+```bash
+make deps
+```
+
+2. 构建二进制文件：
+
+```bash
+make
+```
+
+这将为您的系统架构生成二进制文件。
+
+### 安装 Xray 核心
+
+安装 Xray 核心：
+
+```bash
+make install_xray
+```
+
+### 生成 SSL 证书
+
+根据服务器的 IP 或域名生成证书：
+
+```bash
+# 基于域名的证书
+make generate_server_cert CN=example.com SAN="DNS:example.com"
+
+# 基于 IP 的证书
+make generate_server_cert CN=example.com SAN="IP:YOUR_SERVER_IP"
+
+# 域名和 IP
+make generate_server_cert CN=example.com SAN="DNS:example.com,IP:YOUR_SERVER_IP"
+```
+
+### 配置和运行
+
+1. 创建并配置您的 `.env` 文件（参见[配置](/node/configuration)）
+
+2. 运行二进制文件：
+
+```bash
+./pasarguard-node
+```
+
+---
+
+## 安装后
+
+### 验证安装
+
+检查节点是否正在运行：
+
+```bash
+curl -k https://localhost:YOUR_PORT/info
+```
+
+您应该收到包含基本节点信息的响应。
+
+### 配置防火墙
+
+确保在防火墙中打开所需端口：
+
+```bash
+# Ubuntu/Debian
+sudo ufw allow YOUR_PORT/tcp
+
+# CentOS/RHEL
+sudo firewall-cmd --permanent --add-port=YOUR_PORT/tcp
+sudo firewall-cmd --reload
+```
+
+### 设置为系统服务（手动安装）
+
+创建 systemd 服务文件：
+
+```bash
+sudo nano /etc/systemd/system/pasarguard-node.service
+```
+
+添加以下内容：
+
+```ini
+[Unit]
+Description=PasarGuard Node
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/path/to/node
+ExecStart=/path/to/node/pasarguard-node
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+```
+
+启用并启动服务：
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable pasarguard-node
+sudo systemctl start pasarguard-node
+```
+
+检查服务状态：
+
+```bash
+sudo systemctl status pasarguard-node
+```
+

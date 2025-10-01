@@ -517,6 +517,22 @@ code,
   unicode-bidi: embed;
 }
 
+/* Exception: Card links should respect RTL */
+[dir="rtl"] a[class*="block p-4 border"],
+[dir="rtl"] .prose a[class*="block p-4 border"] {
+  direction: rtl !important;
+  text-align: right !important;
+  unicode-bidi: normal !important;
+}
+
+[dir="rtl"] a[class*="block p-4 border"] h3,
+[dir="rtl"] a[class*="block p-4 border"] div,
+[dir="rtl"] .prose a[class*="block p-4 border"] h3,
+[dir="rtl"] .prose a[class*="block p-4 border"] div {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
 /* Target common language classes specifically */
 [class*="language-"] {
   direction: ltr !important;

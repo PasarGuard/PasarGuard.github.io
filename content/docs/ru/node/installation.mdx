@@ -1,0 +1,213 @@
+---
+title: Установка
+description: Установите нод PasarGuard различными способами
+icon: Download
+---
+
+## Методы установки
+
+Нод PasarGuard можно установить несколькими способами. Выберите тот, который лучше всего соответствует вашим потребностям.
+
+## Установка в один клик (рекомендуется)
+
+Самый простой способ установить нод PasarGuard - использовать наш автоматизированный скрипт установки:
+
+```bash
+sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pg-node.sh)" @ install
+```
+
+Этот скрипт:
+- Установит все необходимые зависимости
+- Настроит нод PasarGuard
+- Сконфигурирует базовые настройки
+- Автоматически запустит сервис
+
+---
+
+## Установка через Docker
+
+### Предварительные требования
+
+Установите Docker на вашу машину:
+
+```bash
+curl -fsSL https://get.docker.com | sh
+```
+
+### Использование Docker Compose
+
+1. Скачайте файл docker-compose:
+
+```bash
+wget https://raw.githubusercontent.com/PasarGuard/node/refs/heads/main/docker-compose.yml
+```
+
+2. Создайте и настройте файл `.env` (см. [Конфигурация](/node/configuration))
+
+3. Запустите нод:
+
+```bash
+docker compose up -d
+```
+
+### Команды Docker
+
+**Просмотр логов:**
+```bash
+docker compose logs -f
+```
+
+**Остановка нода:**
+```bash
+docker compose down
+```
+
+**Перезапуск нода:**
+```bash
+docker compose restart
+```
+
+**Обновление до последней версии:**
+```bash
+docker compose pull
+docker compose up -d
+```
+
+---
+
+## Ручная установка
+
+<Callout type="warn">
+  Ручная установка не рекомендуется для начинающих. Вместо этого используйте установку в один клик или метод Docker.
+</Callout>
+
+### Предварительные требования
+
+1. **Установите Go** (версия 1.21 или выше)
+   
+   Скачайте с [go.dev](https://go.dev/dl/)
+
+2. **Клонируйте репозиторий:**
+
+```bash
+git clone https://github.com/PasarGuard/node.git
+cd node
+```
+
+### Сборка бинарного файла
+
+1. Установите зависимости:
+
+```bash
+make deps
+```
+
+2. Соберите бинарный файл:
+
+```bash
+make
+```
+
+Это создаст бинарный файл для архитектуры вашей системы.
+
+### Установка ядра Xray
+
+Установите ядро Xray:
+
+```bash
+make install_xray
+```
+
+### Генерация SSL-сертификата
+
+Сгенерируйте сертификат на основе IP или домена вашего сервера:
+
+```bash
+# Для сертификата на основе домена
+make generate_server_cert CN=example.com SAN="DNS:example.com"
+
+# Для сертификата на основе IP
+make generate_server_cert CN=example.com SAN="IP:YOUR_SERVER_IP"
+
+# Для домена и IP
+make generate_server_cert CN=example.com SAN="DNS:example.com,IP:YOUR_SERVER_IP"
+```
+
+### Настройка и запуск
+
+1. Создайте и настройте файл `.env` (см. [Конфигурация](/node/configuration))
+
+2. Запустите бинарный файл:
+
+```bash
+./pasarguard-node
+```
+
+---
+
+## После установки
+
+### Проверка установки
+
+Проверьте, работает ли нод:
+
+```bash
+curl -k https://localhost:YOUR_PORT/info
+```
+
+Вы должны получить ответ с базовой информацией о ноде.
+
+### Настройка брандмауэра
+
+Убедитесь, что открыли необходимые порты в брандмауэре:
+
+```bash
+# Для Ubuntu/Debian
+sudo ufw allow YOUR_PORT/tcp
+
+# Для CentOS/RHEL
+sudo firewall-cmd --permanent --add-port=YOUR_PORT/tcp
+sudo firewall-cmd --reload
+```
+
+### Настройка как системный сервис (ручная установка)
+
+Создайте файл сервиса systemd:
+
+```bash
+sudo nano /etc/systemd/system/pasarguard-node.service
+```
+
+Добавьте следующее содержимое:
+
+```ini
+[Unit]
+Description=PasarGuard Node
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/path/to/node
+ExecStart=/path/to/node/pasarguard-node
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Включите и запустите сервис:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable pasarguard-node
+sudo systemctl start pasarguard-node
+```
+
+Проверьте статус сервиса:
+
+```bash
+sudo systemctl status pasarguard-node
+```
+

@@ -1,0 +1,213 @@
+---
+title: Installation
+description: Install PasarGuard Node using various methods
+icon: Download
+---
+
+## Installation Methods
+
+PasarGuard Node can be installed using multiple methods. Choose the one that best fits your needs.
+
+## One-Click Installation (Recommended)
+
+The easiest way to install PasarGuard Node is using our automated installation script:
+
+```bash
+sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pg-node.sh)" @ install
+```
+
+This script will:
+- Install all required dependencies
+- Set up the PasarGuard Node
+- Configure basic settings
+- Start the service automatically
+
+---
+
+## Docker Installation
+
+### Prerequisites
+
+Install Docker on your machine:
+
+```bash
+curl -fsSL https://get.docker.com | sh
+```
+
+### Using Docker Compose
+
+1. Download the docker-compose file:
+
+```bash
+wget https://raw.githubusercontent.com/PasarGuard/node/refs/heads/main/docker-compose.yml
+```
+
+2. Create and configure your `.env` file (see [Configuration](/node/configuration))
+
+3. Start the node:
+
+```bash
+docker compose up -d
+```
+
+### Docker Commands
+
+**View logs:**
+```bash
+docker compose logs -f
+```
+
+**Stop the node:**
+```bash
+docker compose down
+```
+
+**Restart the node:**
+```bash
+docker compose restart
+```
+
+**Update to latest version:**
+```bash
+docker compose pull
+docker compose up -d
+```
+
+---
+
+## Manual Installation
+
+<Callout type="warn">
+  Manual installation is not recommended for beginners. Use the one-click installation or Docker method instead.
+</Callout>
+
+### Prerequisites
+
+1. **Install Go** (version 1.21 or higher)
+   
+   Download from [go.dev](https://go.dev/dl/)
+
+2. **Clone the repository:**
+
+```bash
+git clone https://github.com/PasarGuard/node.git
+cd node
+```
+
+### Build the Binary
+
+1. Install dependencies:
+
+```bash
+make deps
+```
+
+2. Build the binary:
+
+```bash
+make
+```
+
+This will generate a binary file for your system architecture.
+
+### Install Xray Core
+
+Install the Xray core:
+
+```bash
+make install_xray
+```
+
+### Generate SSL Certificate
+
+Generate a certificate based on your server's IP or domain:
+
+```bash
+# For domain-based certificate
+make generate_server_cert CN=example.com SAN="DNS:example.com"
+
+# For IP-based certificate
+make generate_server_cert CN=example.com SAN="IP:YOUR_SERVER_IP"
+
+# For both domain and IP
+make generate_server_cert CN=example.com SAN="DNS:example.com,IP:YOUR_SERVER_IP"
+```
+
+### Configure and Run
+
+1. Create and configure your `.env` file (see [Configuration](/node/configuration))
+
+2. Run the binary:
+
+```bash
+./pasarguard-node
+```
+
+---
+
+## Post-Installation
+
+### Verify Installation
+
+Check if the node is running:
+
+```bash
+curl -k https://localhost:YOUR_PORT/info
+```
+
+You should receive a response with basic node information.
+
+### Configure Firewall
+
+Make sure to open the required ports in your firewall:
+
+```bash
+# For Ubuntu/Debian
+sudo ufw allow YOUR_PORT/tcp
+
+# For CentOS/RHEL
+sudo firewall-cmd --permanent --add-port=YOUR_PORT/tcp
+sudo firewall-cmd --reload
+```
+
+### Set Up as System Service (Manual Installation)
+
+Create a systemd service file:
+
+```bash
+sudo nano /etc/systemd/system/pasarguard-node.service
+```
+
+Add the following content:
+
+```ini
+[Unit]
+Description=PasarGuard Node
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/path/to/node
+ExecStart=/path/to/node/pasarguard-node
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start the service:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable pasarguard-node
+sudo systemctl start pasarguard-node
+```
+
+Check service status:
+
+```bash
+sudo systemctl status pasarguard-node
+```
+

@@ -1,0 +1,244 @@
+---
+title: پیکربندی
+description: پیکربندی تنظیمات و متغیرهای محیطی نود PasarGuard
+icon: Cog
+---
+
+## بررسی اجمالی پیکربندی
+
+نود PasarGuard را می‌توان با استفاده از متغیرهای محیطی پیکربندی کرد. تمام تنظیمات را می‌توان در فایل `.env` یا مستقیماً به عنوان متغیرهای محیطی تنظیم کرد.
+
+## متغیرهای محیطی
+
+### تنظیمات پایه
+
+| متغیر | نوع | پیش‌فرض | توضیحات |
+|----------|------|---------|-------------|
+| `SESSION_ID` | string | `random_uuid` | توکن احراز هویت برای دسترسی API |
+| `HOST` | string | `0.0.0.0` | آدرس میزبان سرور |
+| `PORT` | int | `443` | شماره پورت سرور |
+| `DEBUG` | bool | `false` | فعال‌سازی حالت اشکال‌زدایی برای لاگ‌گیری جزئی |
+
+### پیکربندی SSL/TLS
+
+| متغیر | نوع | پیش‌فرض | توضیحات |
+|----------|------|---------|-------------|
+| `TLS_ENABLE` | bool | `true` | فعال‌سازی TLS/SSL |
+| `TLS_CERT_FILE` | string | `./cert/server.crt` | مسیر گواهی SSL |
+| `TLS_KEY_FILE` | string | `./cert/server.key` | مسیر کلید خصوصی SSL |
+
+### پیکربندی بکند
+
+| متغیر | نوع | پیش‌فرض | توضیحات |
+|----------|------|---------|-------------|
+| `BACKEND_TYPE` | string | `xray` | نوع هسته بکند (xray، sing-box، v2ray) |
+| `BACKEND_KEEP_ALIVE` | int | `60` | نگه داشتن بکند فعال برای X ثانیه پس از آخرین اتصال |
+| `BACKEND_LOG_LEVEL` | string | `warning` | سطح لاگ بکند (debug، info، warning، error) |
+
+### پیکربندی API
+
+| متغیر | نوع | پیش‌فرض | توضیحات |
+|----------|------|---------|-------------|
+| `API_ENABLE_REST` | bool | `true` | فعال‌سازی REST API |
+| `API_ENABLE_GRPC` | bool | `true` | فعال‌سازی gRPC API |
+| `GRPC_PORT` | int | `50051` | پورت سرور gRPC |
+
+### تنظیمات عملکرد
+
+| متغیر | نوع | پیش‌فرض | توضیحات |
+|----------|------|---------|-------------|
+| `MAX_CONNECTIONS` | int | `10000` | حداکثر اتصالات همزمان |
+| `STATS_INTERVAL` | int | `60` | فاصله به‌روزرسانی آمار (ثانیه) |
+| `LOG_BUFFER_SIZE` | int | `1000` | اندازه بافر لاگ |
+
+---
+
+## مثال پیکربندی
+
+### فایل پایه `.env`
+
+```bash
+# تنظیمات پایه
+SESSION_ID=your-secure-session-id-here
+HOST=0.0.0.0
+PORT=443
+DEBUG=false
+
+# پیکربندی SSL
+TLS_ENABLE=true
+TLS_CERT_FILE=./cert/server.crt
+TLS_KEY_FILE=./cert/server.key
+
+# بکند
+BACKEND_TYPE=xray
+BACKEND_KEEP_ALIVE=60
+BACKEND_LOG_LEVEL=warning
+
+# API
+API_ENABLE_REST=true
+API_ENABLE_GRPC=true
+GRPC_PORT=50051
+```
+
+### فایل `.env` داکر
+
+```bash
+SESSION_ID=your-secure-session-id-here
+PORT=443
+TLS_ENABLE=true
+BACKEND_TYPE=xray
+DEBUG=false
+```
+
+### فایل `.env` پروداکشن
+
+```bash
+# تنظیمات پروداکشن
+SESSION_ID=change-this-to-a-secure-random-string
+HOST=0.0.0.0
+PORT=443
+DEBUG=false
+
+# SSL - از گواهی‌های معتبر استفاده کنید
+TLS_ENABLE=true
+TLS_CERT_FILE=/etc/ssl/certs/your-domain.crt
+TLS_KEY_FILE=/etc/ssl/private/your-domain.key
+
+# بهینه‌سازی بکند
+BACKEND_TYPE=xray
+BACKEND_KEEP_ALIVE=120
+BACKEND_LOG_LEVEL=warning
+
+# عملکرد
+MAX_CONNECTIONS=50000
+STATS_INTERVAL=30
+LOG_BUFFER_SIZE=2000
+
+# API
+API_ENABLE_REST=true
+API_ENABLE_GRPC=true
+GRPC_PORT=50051
+```
+
+---
+
+## پیکربندی گواهی SSL
+
+### تولید گواهی خود-امضا
+
+برای تست یا استفاده داخلی:
+
+```bash
+make generate_server_cert CN=example.com SAN="DNS:example.com,IP:YOUR_IP"
+```
+
+### استفاده از گواهی Let's Encrypt
+
+برای پروداکشن با دامنه:
+
+1. نصب Certbot:
+```bash
+sudo apt-get install certbot
+```
+
+2. دریافت گواهی:
+```bash
+sudo certbot certonly --standalone -d your-domain.com
+```
+
+3. به‌روزرسانی `.env`:
+```bash
+TLS_CERT_FILE=/etc/letsencrypt/live/your-domain.com/fullchain.pem
+TLS_KEY_FILE=/etc/letsencrypt/live/your-domain.com/privkey.pem
+```
+
+### استفاده از گواهی سفارشی
+
+اگر گواهی خود را دارید:
+
+```bash
+TLS_CERT_FILE=/path/to/your/certificate.crt
+TLS_KEY_FILE=/path/to/your/private.key
+```
+
+---
+
+## پیکربندی خاص بکند
+
+### هسته Xray
+
+هنگام استفاده از Xray به عنوان بکند:
+
+```bash
+BACKEND_TYPE=xray
+BACKEND_LOG_LEVEL=warning
+```
+
+پیکربندی Xray به طور خودکار توسط نود بر اساس کاربران و ورودی‌هایی که از طریق API تعریف می‌کنید، مدیریت می‌شود.
+
+---
+
+## بهترین شیوه‌های امنیتی
+
+### تولید SESSION_ID امن
+
+```bash
+# Linux/macOS
+openssl rand -hex 32
+
+# یا استفاده از UUID
+uuidgen
+```
+
+### مجوزهای فایل
+
+اطمینان از مجوزهای مناسب برای فایل‌های حساس:
+
+```bash
+# فایل‌های گواهی
+chmod 600 ./cert/server.key
+chmod 644 ./cert/server.crt
+
+# فایل محیطی
+chmod 600 .env
+```
+
+### پیکربندی فایروال
+
+فقط پورت‌های لازم را باز کنید:
+
+```bash
+# فقط پورت نود را مجاز کنید
+sudo ufw allow YOUR_PORT/tcp
+
+# مسدود کردن پورت‌های غیرضروری
+sudo ufw enable
+```
+
+---
+
+## عیب‌یابی
+
+### مشکلات رایج
+
+**پورت در حال استفاده است:**
+```bash
+# تغییر پورت در .env
+PORT=8443
+```
+
+**خطاهای گواهی:**
+```bash
+# بررسی وجود فایل‌های گواهی
+ls -la ./cert/
+
+# بررسی اعتبار گواهی
+openssl x509 -in ./cert/server.crt -text -noout
+```
+
+**مجوز رد شد:**
+```bash
+# با sudo اجرا کنید یا پورت را به > 1024 تغییر دهید
+PORT=8443
+```
+

@@ -2,7 +2,10 @@
   "title": "پنل",
   "description": "مدیریت پنل PasarGuard",
   "pages": [
-    "installation"
+    "index",
+    "installation",
+    "configuration",
+    "features"
   ],
   "icon": "Monitor"
 }

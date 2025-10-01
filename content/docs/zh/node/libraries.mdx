@@ -1,0 +1,252 @@
+---
+title: 官方库
+description: 用于 PasarGuard 节点集成的官方 Go 和 Python 库
+icon: Library
+---
+
+## 概述
+
+PasarGuard 提供官方库以简化与节点的集成。这些库处理身份验证、序列化，并为所有 API 操作提供类型安全的接口。
+
+---
+
+## Go 库
+
+### node-bridge
+
+用于无缝 PasarGuard 节点集成的官方 Go 库。
+
+**仓库：** [PasarGuard/node_bridge](https://github.com/PasarGuard/node_bridge)
+
+### 安装
+
+```bash
+go get github.com/PasarGuard/node_bridge
+```
+
+### 快速开始
+
+```go
+package main
+
+import (
+    "context"
+    "log"
+    
+    "github.com/PasarGuard/node_bridge"
+)
+
+func main() {
+    // 创建新客户端
+    client, err := nodebridge.NewClient(
+        "https://your-node:443",
+        "your-session-id",
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer client.Close()
+
+    // 获取节点信息
+    info, err := client.GetBaseInfo(context.Background())
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    log.Printf("节点版本: %s, 运行中: %v", info.Version, info.Running)
+}
+```
+
+### 示例
+
+#### 启动后端
+
+```go
+package main
+
+import (
+    "context"
+    "log"
+    
+    "github.com/PasarGuard/node_bridge"
+    pb "github.com/PasarGuard/node_bridge/proto"
+)
+
+func main() {
+    client, _ := nodebridge.NewClient("https://node:443", "session-id")
+    defer client.Close()
+
+    backend := &pb.Backend{
+        Type: pb.BackendType_XRAY,
+        Config: `{
+            "log": {"loglevel": "warning"},
+            "inbounds": [...],
+            "outbounds": [...]
+        }`,
+        Users: []*pb.User{
+            {
+                Email: "user1@example.com",
+                Proxies: &pb.Proxy{
+                    Vmess: &pb.Vmess{
+                        Id: "uuid-here",
+                    },
+                },
+                Inbounds: []string{"inbound-tag"},
+            },
+        },
+        KeepAlive: 60,
+    }
+
+    info, err := client.Start(context.Background(), backend)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    log.Printf("后端已启动: %v", info)
+}
+```
+
+#### 同步用户
+
+```go
+// 同步单个用户
+user := &pb.User{
+    Email: "newuser@example.com",
+    Proxies: &pb.Proxy{
+        Vmess: &pb.Vmess{Id: "uuid"},
+    },
+    Inbounds: []string{"inbound-tag"},
+}
+
+err := client.SyncUser(context.Background(), user)
+if err != nil {
+    log.Fatal(err)
+}
+
+// 删除用户（空入站）
+user.Inbounds = []string{}
+err = client.SyncUser(context.Background(), user)
+```
+
+---
+
+## Python 库
+
+### node-bridge-py
+
+用于 PasarGuard 节点集成的官方 Python 库。
+
+**仓库：** [PasarGuard/node-bridge-py](https://github.com/PasarGuard/node-bridge-py)
+
+### 安装
+
+```bash
+pip install pasarguard-node-bridge
+```
+
+### 快速开始
+
+```python
+from pasarguard_node_bridge import NodeClient
+
+# 创建客户端
+client = NodeClient(
+    url="https://your-node:443",
+    session_id="your-session-id"
+)
+
+# 获取节点信息
+info = client.get_base_info()
+print(f"节点版本: {info.version}, 运行中: {info.running}")
+```
+
+### 示例
+
+#### 启动后端
+
+```python
+from pasarguard_node_bridge import NodeClient, Backend, User, Proxy, Vmess
+
+client = NodeClient("https://node:443", "session-id")
+
+backend = Backend(
+    type=Backend.Type.XRAY,
+    config="""{
+        "log": {"loglevel": "warning"},
+        "inbounds": [...],
+        "outbounds": [...]
+    }""",
+    users=[
+        User(
+            email="user1@example.com",
+            proxies=Proxy(
+                vmess=Vmess(id="uuid-here")
+            ),
+            inbounds=["inbound-tag"]
+        )
+    ],
+    keep_alive=60
+)
+
+info = client.start(backend)
+print(f"后端已启动: {info}")
+```
+
+#### 同步用户
+
+```python
+from pasarguard_node_bridge import User, Proxy, Vmess
+
+# 添加/更新用户
+user = User(
+    email="newuser@example.com",
+    proxies=Proxy(
+        vmess=Vmess(id="uuid")
+    ),
+    inbounds=["inbound-tag"]
+)
+
+client.sync_user(user)
+
+# 删除用户（空入站）
+user.inbounds = []
+client.sync_user(user)
+```
+
+---
+
+## 最佳实践
+
+### 连接管理
+
+**Go：**
+```go
+// 始终关闭客户端
+defer client.Close()
+```
+
+**Python：**
+```python
+# 使用上下文管理器
+with NodeClient(url, session_id) as client:
+    # 使用客户端
+    pass
+
+# 或手动关闭
+client.close()
+```
+
+### 错误处理
+
+始终适当处理错误：
+- 身份验证错误 → 检查 SESSION_ID
+- 连接错误 → 验证节点正在运行
+- 超时错误 → 增加上下文超时
+
+### 性能提示
+
+1. **重用客户端** - 不要为每个请求创建新客户端
+2. **批量操作** - 使用 `SyncUsers` 进行多个用户更新
+3. **缓存统计** - 不要过于频繁地轮询统计信息
+4. **使用流式传输** - 对于日志，使用流式传输而不是轮询
+

@@ -4,6 +4,7 @@
   "pages": [
     "...introduction",
     "panel",
+    "node",
     "migration"
   ]
 }

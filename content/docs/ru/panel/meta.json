@@ -2,7 +2,10 @@
   "title": "Панель",
   "description": "Управление панелью PasarGuard",
   "pages": [
-    "installation"
+    "index",
+    "installation",
+    "configuration",
+    "features"
   ],
   "icon": "Monitor"
 }

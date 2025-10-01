@@ -1,0 +1,13 @@
+{
+  "title": "نود",
+  "description": "مستندات و راهنماهای نود PasarGuard",
+  "icon": "Network",
+  "pages": [
+    "index",
+    "installation",
+    "configuration",
+    "api",
+    "libraries"
+  ]
+}
+
