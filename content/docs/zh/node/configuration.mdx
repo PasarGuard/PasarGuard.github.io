@@ -1,140 +1,129 @@
 ---
 title: 配置
-description: 配置 PasarGuard 节点设置和环境变量
+description: 配置 PasarGuard Node 设置和环境变量
 icon: Cog
 ---
 
 ## 配置概述
 
-PasarGuard 节点可以使用环境变量进行配置。所有设置都可以在 `.env` 文件中设置或直接作为环境变量设置。
+PasarGuard Node 可以使用环境变量进行配置。所有设置都可以在 `.env` 文件中设置或直接设置为环境变量。
+
+<Callout type="warn">
+  PasarGuard Node 目前处于测试/开发阶段。使用风险自负。
+</Callout>
 
 ## 环境变量
 
-### 基本设置
+### 核心设置
 
 | 变量 | 类型 | 默认值 | 描述 |
 |----------|------|---------|-------------|
-| `SESSION_ID` | string | `random_uuid` | API 访问的身份验证令牌 |
-| `HOST` | string | `0.0.0.0` | 服务器主机地址 |
-| `PORT` | int | `443` | 服务器端口号 |
+| `API_KEY` | string | - | API 访问的身份验证 UUID（必需） |
+| `NODE_HOST` | string | `127.0.0.1` | 绑定应用程序主机地址 |
+| `SERVICE_PORT` | int | `62050` | 绑定应用程序端口号 |
+| `SERVICE_PROTOCOL` | string | `grpc` | 连接协议（`grpc` 或 `rest`，推荐：`grpc`） |
 | `DEBUG` | bool | `false` | 启用调试模式以进行详细日志记录 |
 
 ### SSL/TLS 配置
 
 | 变量 | 类型 | 默认值 | 描述 |
 |----------|------|---------|-------------|
-| `TLS_ENABLE` | bool | `true` | 启用 TLS/SSL |
-| `TLS_CERT_FILE` | string | `./cert/server.crt` | SSL 证书路径 |
-| `TLS_KEY_FILE` | string | `./cert/server.key` | SSL 私钥路径 |
+| `SSL_CERT_FILE` | string | - | SSL 证书文件路径 |
+| `SSL_KEY_FILE` | string | - | SSL 私钥文件路径 |
 
-### 后端配置
-
-| 变量 | 类型 | 默认值 | 描述 |
-|----------|------|---------|-------------|
-| `BACKEND_TYPE` | string | `xray` | 后端核心类型（xray、sing-box、v2ray） |
-| `BACKEND_KEEP_ALIVE` | int | `60` | 最后一次连接后保持后端活动 X 秒 |
-| `BACKEND_LOG_LEVEL` | string | `warning` | 后端日志级别（debug、info、warning、error） |
-
-### API 配置
+### Xray 配置
 
 | 变量 | 类型 | 默认值 | 描述 |
 |----------|------|---------|-------------|
-| `API_ENABLE_REST` | bool | `true` | 启用 REST API |
-| `API_ENABLE_GRPC` | bool | `true` | 启用 gRPC API |
-| `GRPC_PORT` | int | `50051` | gRPC 服务器端口 |
+| `XRAY_EXECUTABLE_PATH` | string | `/usr/local/bin/xray` | Xray 二进制文件路径 |
+| `XRAY_ASSETS_PATH` | string | `/usr/local/share/xray` | Xray 资源目录路径 |
 
-### 性能设置
-
-| 变量 | 类型 | 默认值 | 描述 |
-|----------|------|---------|-------------|
-| `MAX_CONNECTIONS` | int | `10000` | 最大并发连接数 |
-| `STATS_INTERVAL` | int | `60` | 统计更新间隔（秒） |
-| `LOG_BUFFER_SIZE` | int | `1000` | 日志缓冲区大小 |
+<Callout type="info">
+  **支持的内核：**
+  - ✅ xray-core
+  - ❌ sing-box（不支持）
+  - ❌ v2ray-core（不支持）
+</Callout>
 
 ---
 
 ## 配置示例
 
-### 基本 `.env` 文件
+### 基本设置
 
 ```bash
-# 基本设置
-SESSION_ID=your-secure-session-id-here
-HOST=0.0.0.0
-PORT=443
+# Core Settings
+API_KEY=your-uuid-here
+NODE_HOST=127.0.0.1
+SERVICE_PORT=62050
+SERVICE_PROTOCOL=grpc
 DEBUG=false
 
-# SSL 配置
-TLS_ENABLE=true
-TLS_CERT_FILE=./cert/server.crt
-TLS_KEY_FILE=./cert/server.key
+# SSL Configuration
+SSL_CERT_FILE=/path/to/ssl_cert.pem
+SSL_KEY_FILE=/path/to/ssl_key.pem
 
-# 后端
-BACKEND_TYPE=xray
-BACKEND_KEEP_ALIVE=60
-BACKEND_LOG_LEVEL=warning
-
-# API
-API_ENABLE_REST=true
-API_ENABLE_GRPC=true
-GRPC_PORT=50051
+# Xray Paths (defaults usually work)
+XRAY_EXECUTABLE_PATH=/usr/local/bin/xray
+XRAY_ASSETS_PATH=/usr/local/share/xray
 ```
 
-### Docker `.env` 文件
+### 生产环境设置
 
 ```bash
-SESSION_ID=your-secure-session-id-here
-PORT=443
-TLS_ENABLE=true
-BACKEND_TYPE=xray
+# Core Settings
+API_KEY=change-this-to-a-secure-uuid
+NODE_HOST=0.0.0.0
+SERVICE_PORT=62050
+SERVICE_PROTOCOL=grpc
 DEBUG=false
+
+# SSL - Use valid certificates
+SSL_CERT_FILE=/etc/ssl/certs/your-domain.pem
+SSL_KEY_FILE=/etc/ssl/private/your-domain-key.pem
+
+# Xray Configuration
+XRAY_EXECUTABLE_PATH=/usr/local/bin/xray
+XRAY_ASSETS_PATH=/usr/local/share/xray
 ```
 
-### 生产 `.env` 文件
+### Docker Compose 设置
+
+使用 Docker 时，您可以在 `docker-compose.yml` 文件中设置环境变量或使用 `.env` 文件：
 
 ```bash
-# 生产设置
-SESSION_ID=change-this-to-a-secure-random-string
-HOST=0.0.0.0
-PORT=443
-DEBUG=false
-
-# SSL - 使用有效证书
-TLS_ENABLE=true
-TLS_CERT_FILE=/etc/ssl/certs/your-domain.crt
-TLS_KEY_FILE=/etc/ssl/private/your-domain.key
-
-# 后端优化
-BACKEND_TYPE=xray
-BACKEND_KEEP_ALIVE=120
-BACKEND_LOG_LEVEL=warning
-
-# 性能
-MAX_CONNECTIONS=50000
-STATS_INTERVAL=30
-LOG_BUFFER_SIZE=2000
-
-# API
-API_ENABLE_REST=true
-API_ENABLE_GRPC=true
-GRPC_PORT=50051
+API_KEY=your-uuid-here
+SERVICE_PORT=62050
+SERVICE_PROTOCOL=grpc
+SSL_CERT_FILE=/app/certs/ssl_cert.pem
+SSL_KEY_FILE=/app/certs/ssl_key.pem
 ```
 
 ---
 
-## SSL 证书配置
+## SSL 证书设置
 
 ### 生成自签名证书
 
-用于测试或内部使用：
+对于测试或内部使用，生成自签名证书：
 
 ```bash
-make generate_server_cert CN=example.com SAN="DNS:example.com,IP:YOUR_IP"
+openssl req -x509 -newkey rsa:4096 -keyout ssl_key.pem \
+  -out ssl_cert.pem -days 36500 -nodes \
+  -subj "/CN=your-server-ip-or-domain" \
+  -addext "subjectAltName = DNS:your-domain.com,IP:your.server.ip"
+```
+
+然后配置路径：
+
+```bash
+SSL_CERT_FILE=/path/to/ssl_cert.pem
+SSL_KEY_FILE=/path/to/ssl_key.pem
 ```
 
 ### 使用 Let's Encrypt 证书
 
-用于带域名的生产环境：
+对于有域名的生产环境：
 
 1. 安装 Certbot：
 ```bash
@@ -146,10 +135,10 @@ sudo apt-get install certbot
 sudo certbot certonly --standalone -d your-domain.com
 ```
 
-3. 更新 `.env`：
+3. 更新环境变量：
 ```bash
-TLS_CERT_FILE=/etc/letsencrypt/live/your-domain.com/fullchain.pem
-TLS_KEY_FILE=/etc/letsencrypt/live/your-domain.com/privkey.pem
+SSL_CERT_FILE=/etc/letsencrypt/live/your-domain.com/fullchain.pem
+SSL_KEY_FILE=/etc/letsencrypt/live/your-domain.com/privkey.pem
 ```
 
 ### 使用自定义证书
@@ -157,62 +146,72 @@ TLS_KEY_FILE=/etc/letsencrypt/live/your-domain.com/privkey.pem
 如果您有自己的证书：
 
 ```bash
-TLS_CERT_FILE=/path/to/your/certificate.crt
-TLS_KEY_FILE=/path/to/your/private.key
+SSL_CERT_FILE=/path/to/your/certificate.pem
+SSL_KEY_FILE=/path/to/your/private-key.pem
 ```
-
----
-
-## 后端特定配置
-
-### Xray 核心
-
-使用 Xray 作为后端时：
-
-```bash
-BACKEND_TYPE=xray
-BACKEND_LOG_LEVEL=warning
-```
-
-Xray 配置由节点根据您通过 API 定义的用户和入站自动处理。
 
 ---
 
 ## 安全最佳实践
 
-### 生成安全的 SESSION_ID
+### 生成安全的 API 密钥
+
+为 `API_KEY` 生成安全的 UUID：
 
 ```bash
-# Linux/macOS
-openssl rand -hex 32
-
-# 或使用 UUID
+# Using uuidgen (Linux/macOS)
 uuidgen
+
+# Using Python
+python3 -c "import uuid; print(uuid.uuid4())"
+
+# Using OpenSSL
+openssl rand -hex 16 | awk '{print substr($1,1,8)"-"substr($1,9,4)"-"substr($1,13,4)"-"substr($1,17,4)"-"substr($1,21,12)}'
 ```
 
 ### 文件权限
 
-确保敏感文件具有正确的权限：
+确保敏感文件具有适当的权限：
 
 ```bash
-# 证书文件
-chmod 600 ./cert/server.key
-chmod 644 ./cert/server.crt
+# Certificate files
+chmod 600 /path/to/ssl_key.pem
+chmod 644 /path/to/ssl_cert.pem
 
-# 环境文件
+# Environment file
 chmod 600 .env
 ```
 
 ### 防火墙配置
 
-仅公开必要的端口：
+仅开放必要的端口：
 
 ```bash
-# 仅允许节点端口
-sudo ufw allow YOUR_PORT/tcp
+# Allow only node port
+sudo ufw allow 62050/tcp
 
-# 阻止不必要的端口
+# Enable firewall
 sudo ufw enable
+```
+
+---
+
+## 协议配置
+
+### gRPC（推荐）
+
+gRPC 是推荐的协议，可提供更好的性能和更低的延迟：
+
+```bash
+SERVICE_PROTOCOL=grpc
+```
+
+### REST API
+
+REST API 也受支持，但可能具有更高的开销：
+
+```bash
+SERVICE_PROTOCOL=rest
 ```
 
 ---
@@ -221,24 +220,18 @@ sudo ufw enable
 
 ### 常见问题
 
-**端口已被使用：**
+**端口已被占用：**
 ```bash
-# 在 .env 中更改端口
-PORT=8443
+# Change the port
+SERVICE_PORT=62051
 ```
 
-**证书错误：**
-```bash
-# 验证证书文件是否存在
-ls -la ./cert/
+### 调试模式
 
-# 检查证书有效性
-openssl x509 -in ./cert/server.crt -text -noout
+启用调试模式以进行详细日志记录：
+
+```bash
+DEBUG=true
 ```
 
-**权限被拒绝：**
-```bash
-# 使用 sudo 运行或将端口更改为 > 1024
-PORT=8443
-```
-
+这将提供详细的日志以帮助排除问题。

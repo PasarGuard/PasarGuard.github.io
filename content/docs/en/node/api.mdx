@@ -10,16 +10,16 @@ PasarGuard Node provides both **REST API** and **gRPC** interfaces for managing 
 
 ### Authentication
 
-All API requests require authentication using the `SESSION_ID` configured in your `.env` file.
+All API requests require authentication using the `API_KEY` configured in your `.env` file.
 
 **REST API:**
 ```http
-Authorization: Bearer <session_id>
+Authorization: Bearer <api_key>
 ```
 
 **gRPC:**
 ```
-authorization: Bearer <session_id>
+authorization: Bearer <api_key>
 ```
 
 ### Base URL
@@ -90,11 +90,11 @@ enum StatType {
 
 Start the node backend with configuration.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     POST /start
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     Content-Type: application/x-protobuf
 
     Body: Backend (protobuf)
@@ -103,14 +103,6 @@ Start the node backend with configuration.
   <Tab value="gRPC">
     ```
     rpc Start(Backend) returns (BaseInfoResponse)
-    ```
-  </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -X POST https://node:443/start \
-      -H "Authorization: Bearer your-session-id" \
-      -H "Content-Type: application/x-protobuf" \
-      --data-binary @backend.pb
     ```
   </Tab>
 </Tabs>
@@ -125,22 +117,16 @@ Start the node backend with configuration.
 
 Stop the backend and deactivate client connections.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     PUT /stop
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     ```
   </Tab>
   <Tab value="gRPC">
     ```
     rpc Stop(Empty) returns (Empty)
-    ```
-  </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -X PUT https://node:443/stop \
-      -H "Authorization: Bearer your-session-id"
     ```
   </Tab>
 </Tabs>
@@ -151,22 +137,16 @@ Stop the backend and deactivate client connections.
 
 Retrieve basic node information and check connection status.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     GET /info
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     ```
   </Tab>
   <Tab value="gRPC">
     ```
     rpc GetBaseInfo(Empty) returns (BaseInfoResponse)
-    ```
-  </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl https://node:443/info \
-      -H "Authorization: Bearer your-session-id"
     ```
   </Tab>
 </Tabs>
@@ -188,24 +168,18 @@ message BaseInfoResponse {
 
 Stream real-time logs from the backend.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     GET /logs
-    Authorization: Bearer <session_id>
-    
+    Authorization: Bearer <api_key>
+
     // Returns Server-Sent Events (SSE) stream
     ```
   </Tab>
   <Tab value="gRPC">
     ```
     rpc GetLogs(Empty) returns (stream Log)
-    ```
-  </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -N https://node:443/logs \
-      -H "Authorization: Bearer your-session-id"
     ```
   </Tab>
 </Tabs>
@@ -225,22 +199,16 @@ message Log {
 
 Retrieve system-level statistics.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     GET /stats/system
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     ```
   </Tab>
   <Tab value="gRPC">
     ```
     rpc GetSystemStats(Empty) returns (SystemStatsResponse)
-    ```
-  </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl https://node:443/stats/system \
-      -H "Authorization: Bearer your-session-id"
     ```
   </Tab>
 </Tabs>
@@ -263,22 +231,16 @@ message SystemStatsResponse {
 
 Retrieve backend runtime statistics.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     GET /stats/backend
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     ```
   </Tab>
   <Tab value="gRPC">
     ```
     rpc GetBackendStats(Empty) returns (BackendStatsResponse)
-    ```
-  </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl https://node:443/stats/backend \
-      -H "Authorization: Bearer your-session-id"
     ```
   </Tab>
 </Tabs>
@@ -305,11 +267,11 @@ message BackendStatsResponse {
 
 Retrieve traffic statistics for users, inbounds, or outbounds.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     GET /stats
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     Content-Type: application/x-protobuf
 
     Body: StatRequest (protobuf)
@@ -318,14 +280,6 @@ Retrieve traffic statistics for users, inbounds, or outbounds.
   <Tab value="gRPC">
     ```
     rpc GetStats(StatRequest) returns (StatResponse)
-    ```
-  </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -X GET https://node:443/stats \
-      -H "Authorization: Bearer your-session-id" \
-      -H "Content-Type: application/x-protobuf" \
-      --data-binary @stat-request.pb
     ```
   </Tab>
 </Tabs>
@@ -369,11 +323,11 @@ message Stat {
 
 Get online connection count for a user.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     GET /stats/user/online
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     Content-Type: application/x-protobuf
 
     Body: StatRequest (protobuf)
@@ -382,13 +336,6 @@ Get online connection count for a user.
   <Tab value="gRPC">
     ```
     rpc GetUserOnlineStats(StatRequest) returns (OnlineStatResponse)
-    ```
-  </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -X GET https://node:443/stats/user/online \
-      -H "Authorization: Bearer your-session-id" \
-      --data-binary @stat-request.pb
     ```
   </Tab>
 </Tabs>
@@ -407,11 +354,11 @@ message OnlineStatResponse {
 
 Get list of IPs for online user connections.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     GET /stats/user/online_ip
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     Content-Type: application/x-protobuf
 
     Body: StatRequest (protobuf)
@@ -420,13 +367,6 @@ Get list of IPs for online user connections.
   <Tab value="gRPC">
     ```
     rpc GetUserOnlineIpListStats(StatRequest) returns (StatsOnlineIpListResponse)
-    ```
-  </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -X GET https://node:443/stats/user/online_ip \
-      -H "Authorization: Bearer your-session-id" \
-      --data-binary @stat-request.pb
     ```
   </Tab>
 </Tabs>
@@ -439,11 +379,11 @@ Get list of IPs for online user connections.
 
 Add, update, or remove a single user.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     PUT /user/sync
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     Content-Type: application/x-protobuf
 
     Body: User (protobuf)
@@ -452,14 +392,6 @@ Add, update, or remove a single user.
   <Tab value="gRPC">
     ```
     rpc SyncUser(stream User) returns (Empty)
-    ```
-  </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -X PUT https://node:443/user/sync \
-      -H "Authorization: Bearer your-session-id" \
-      -H "Content-Type: application/x-protobuf" \
-      --data-binary @user.pb
     ```
   </Tab>
 </Tabs>
@@ -474,11 +406,11 @@ Add, update, or remove a single user.
 
 Replace all users with a new set.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     PUT /users/sync
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     Content-Type: application/x-protobuf
 
     Body: Users (protobuf)
@@ -487,14 +419,6 @@ Replace all users with a new set.
   <Tab value="gRPC">
     ```
     rpc SyncUsers(Users) returns (Empty)
-    ```
-  </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -X PUT https://node:443/users/sync \
-      -H "Authorization: Bearer your-session-id" \
-      -H "Content-Type: application/x-protobuf" \
-      --data-binary @users.pb
     ```
   </Tab>
 </Tabs>
@@ -513,7 +437,7 @@ Replace all users with a new set.
 |------|---------|
 | 200 | Success |
 | 400 | Bad Request - Invalid data |
-| 401 | Unauthorized - Invalid SESSION_ID |
+| 401 | Unauthorized - Invalid API_KEY |
 | 404 | Not Found - Endpoint doesn't exist |
 | 500 | Internal Server Error |
 

@@ -1,37 +1,37 @@
 ---
-title: مرجع API
-description: مرجع کامل REST API و gRPC برای نود PasarGuard
+title: راهنمای API
+description: راهنمای کامل REST API و gRPC برای نود PasarGuard
 icon: Code
 ---
 
-## بررسی اجمالی API
+## معرفی API
 
-نود PasarGuard هم رابط **REST API** و هم **gRPC** را برای مدیریت نود، کاربران و بازیابی آمار فراهم می‌کند.
+نود PasarGuard هم **REST API** و هم **gRPC** رو در اختیارتون میذاره تا بتونید نود، کاربرا و آماره‌ها رو مدیریت کنید.
 
 ### احراز هویت
 
-تمام درخواست‌های API نیاز به احراز هویت با استفاده از `SESSION_ID` پیکربندی شده در فایل `.env` شما دارند.
+برای همه‌ی درخواست‌های API باید از `API_KEY` که تو فایل `.env` تنظیم کردید استفاده کنید.
 
 **REST API:**
 ```http
-Authorization: Bearer <session_id>
+Authorization: Bearer <api_key>
 ```
 
 **gRPC:**
 ```
-authorization: Bearer <session_id>
+authorization: Bearer <api_key>
 ```
 
-### URL پایه
+### آدرس پایه
 
-درخواست‌های REST API باید به این آدرس ارسال شوند:
+درخواست‌های REST API باید به این آدرس فرستاده بشن:
 ```
 https://your-node-address:port/
 ```
 
 ### نوع محتوا
 
-REST API از Protocol Buffers برای سریال‌سازی داده استفاده می‌کند:
+REST API از Protocol Buffers برای سریال‌سازی داده استفاده می‌کنه:
 ```http
 Content-Type: application/x-protobuf
 ```
@@ -86,15 +86,15 @@ enum StatType {
 
 ### مدیریت نود
 
-#### شروع بکند
+#### راه‌اندازی Backend
 
-شروع بکند نود با پیکربندی.
+نود رو با کانفیگ موردنظر استارت بزنید.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     POST /start
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     Content-Type: application/x-protobuf
 
     Body: Backend (protobuf)
@@ -105,42 +105,28 @@ enum StatType {
     rpc Start(Backend) returns (BaseInfoResponse)
     ```
   </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -X POST https://node:443/start \
-      -H "Authorization: Bearer your-session-id" \
-      -H "Content-Type: application/x-protobuf" \
-      --data-binary @backend.pb
-    ```
-  </Tab>
 </Tabs>
 
 <Callout type="info">
-  این تنها متدی است که قبل از ایجاد اتصال با نود فراخوانی می‌شود.
+  این تنها متدیه که قبل از برقراری ارتباط با نود صدا زده میشه.
 </Callout>
 
 ---
 
-#### توقف بکند
+#### خاموش کردن Backend
 
-توقف بکند و غیرفعال کردن اتصالات کلاینت.
+Backend رو متوقف کنید و کانکشن‌های کاربرا رو قطع کنید.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     PUT /stop
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     ```
   </Tab>
   <Tab value="gRPC">
     ```
     rpc Stop(Empty) returns (Empty)
-    ```
-  </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -X PUT https://node:443/stop \
-      -H "Authorization: Bearer your-session-id"
     ```
   </Tab>
 </Tabs>
@@ -149,24 +135,18 @@ enum StatType {
 
 #### دریافت اطلاعات پایه
 
-بازیابی اطلاعات پایه نود و بررسی وضعیت اتصال.
+اطلاعات اولیه نود رو بگیرید و وضعیت اتصال رو چک کنید.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     GET /info
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     ```
   </Tab>
   <Tab value="gRPC">
     ```
     rpc GetBaseInfo(Empty) returns (BaseInfoResponse)
-    ```
-  </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl https://node:443/info \
-      -H "Authorization: Bearer your-session-id"
     ```
   </Tab>
 </Tabs>
@@ -186,15 +166,15 @@ message BaseInfoResponse {
 
 #### دریافت لاگ‌ها
 
-پخش لاگ‌های زمان واقعی از بکند.
+لاگ‌های لحظه‌ای backend رو دریافت کنید.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     GET /logs
-    Authorization: Bearer <session_id>
-    
-    // بازگرداندن جریان Server-Sent Events (SSE)
+    Authorization: Bearer <api_key>
+
+    // Returns Server-Sent Events (SSE) stream
     ```
   </Tab>
   <Tab value="gRPC">
@@ -202,34 +182,28 @@ message BaseInfoResponse {
     rpc GetLogs(Empty) returns (stream Log)
     ```
   </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -N https://node:443/logs \
-      -H "Authorization: Bearer your-session-id"
-    ```
-  </Tab>
 </Tabs>
 
 **ساختار لاگ:**
 ```protobuf
 message Log {
-  string detail;  // پیام لاگ
+  string detail;  // Log message
 }
 ```
 
 ---
 
-### آمار
+### آمار و آمارگیری
 
 #### دریافت آمار سیستم
 
-بازیابی آمار سطح سیستم.
+آمار سطح سیستم رو دریافت کنید.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     GET /stats/system
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     ```
   </Tab>
   <Tab value="gRPC">
@@ -237,37 +211,31 @@ message Log {
     rpc GetSystemStats(Empty) returns (SystemStatsResponse)
     ```
   </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl https://node:443/stats/system \
-      -H "Authorization: Bearer your-session-id"
-    ```
-  </Tab>
 </Tabs>
 
 **پاسخ:**
 ```protobuf
 message SystemStatsResponse {
-  uint64 mem_total;                  // کل حافظه
-  uint64 mem_used;                   // حافظه استفاده شده
-  uint64 cpu_cores;                  // هسته‌های CPU
-  double cpu_usage;                  // استفاده از CPU %
-  uint64 incoming_bandwidth_speed;   // سرعت دانلود
-  uint64 outgoing_bandwidth_speed;   // سرعت آپلود
+  uint64 mem_total;                  // Total memory
+  uint64 mem_used;                   // Used memory
+  uint64 cpu_cores;                  // CPU cores
+  double cpu_usage;                  // CPU usage %
+  uint64 incoming_bandwidth_speed;   // Download speed
+  uint64 outgoing_bandwidth_speed;   // Upload speed
 }
 ```
 
 ---
 
-#### دریافت آمار بکند
+#### دریافت آمار Backend
 
-بازیابی آمار زمان اجرای بکند.
+آمار اجرایی backend رو بگیرید.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     GET /stats/backend
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     ```
   </Tab>
   <Tab value="gRPC">
@@ -275,27 +243,21 @@ message SystemStatsResponse {
     rpc GetBackendStats(Empty) returns (BackendStatsResponse)
     ```
   </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl https://node:443/stats/backend \
-      -H "Authorization: Bearer your-session-id"
-    ```
-  </Tab>
 </Tabs>
 
 **پاسخ:**
 ```protobuf
 message BackendStatsResponse {
-  uint32 num_goroutine;    // گوروتین‌های فعال
-  uint32 num_gc;           // اجراهای GC
-  uint64 alloc;            // حافظه اختصاص داده شده
-  uint64 total_alloc;      // کل اختصاص داده شده
-  uint64 sys;              // حافظه سیستم
-  uint64 mallocs;          // تعداد Malloc
-  uint64 frees;            // تعداد Free
-  uint64 live_objects;     // اشیاء زنده
-  uint64 pause_total_ns;   // کل توقف GC
-  uint32 uptime;           // زمان فعالیت به ثانیه
+  uint32 num_goroutine;    // Active goroutines
+  uint32 num_gc;           // GC runs
+  uint64 alloc;            // Allocated memory
+  uint64 total_alloc;      // Total allocated
+  uint64 sys;              // System memory
+  uint64 mallocs;          // Malloc count
+  uint64 frees;            // Free count
+  uint64 live_objects;     // Live objects
+  uint64 pause_total_ns;   // Total GC pause
+  uint32 uptime;           // Uptime in seconds
 }
 ```
 
@@ -303,13 +265,13 @@ message BackendStatsResponse {
 
 #### دریافت آمار ترافیک
 
-بازیابی آمار ترافیک برای کاربران، ورودی‌ها یا خروجی‌ها.
+آمار ترافیک کاربرا، inbound یا outbound رو دریافت کنید.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     GET /stats
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     Content-Type: application/x-protobuf
 
     Body: StatRequest (protobuf)
@@ -320,19 +282,11 @@ message BackendStatsResponse {
     rpc GetStats(StatRequest) returns (StatResponse)
     ```
   </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -X GET https://node:443/stats \
-      -H "Authorization: Bearer your-session-id" \
-      -H "Content-Type: application/x-protobuf" \
-      --data-binary @stat-request.pb
-    ```
-  </Tab>
 </Tabs>
 
 **مثال‌ها:**
 
-دریافت آمار تمام کاربران:
+دریافت آمار همه کاربرا:
 ```protobuf
 StatRequest {
   type: UsersStat,
@@ -340,12 +294,12 @@ StatRequest {
 }
 ```
 
-دریافت آمار کاربر خاص:
+دریافت آمار یک کاربر خاص:
 ```protobuf
 StatRequest {
   name: "user@example.com",
   type: UserStat,
-  reset: true  // بازنشانی پس از بازیابی
+  reset: true  // Reset after retrieval
 }
 ```
 
@@ -356,26 +310,80 @@ message StatResponse {
 }
 
 message Stat {
-  string name;   // ایمیل کاربر یا تگ
-  string type;   // نوع آمار
-  string link;   // شناسه لینک
-  int64 value;   // مقدار ترافیک به بایت
+  string name;   // User email or tag
+  string type;   // Stat type
+  string link;   // Link identifier
+  int64 value;   // Traffic value in bytes
 }
 ```
 
 ---
 
-### مدیریت کاربران
+#### دریافت آمار آنلاین بودن کاربر
+
+تعداد کانکشن‌های فعال یک کاربر رو بگیرید.
+
+<Tabs items={['REST', 'gRPC']}>
+  <Tab value="REST">
+    ```http
+    GET /stats/user/online
+    Authorization: Bearer <api_key>
+    Content-Type: application/x-protobuf
+
+    Body: StatRequest (protobuf)
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc GetUserOnlineStats(StatRequest) returns (OnlineStatResponse)
+    ```
+  </Tab>
+</Tabs>
+
+**پاسخ:**
+```protobuf
+message OnlineStatResponse {
+  string name;   // User email
+  int64 value;   // Online connection count
+}
+```
+
+---
+
+#### دریافت لیست IP های آنلاین کاربر
+
+لیست IP های کانکشن‌های فعال یک کاربر رو دریافت کنید.
+
+<Tabs items={['REST', 'gRPC']}>
+  <Tab value="REST">
+    ```http
+    GET /stats/user/online_ip
+    Authorization: Bearer <api_key>
+    Content-Type: application/x-protobuf
+
+    Body: StatRequest (protobuf)
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc GetUserOnlineIpListStats(StatRequest) returns (StatsOnlineIpListResponse)
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+### مدیریت کاربرا
 
 #### همگام‌سازی کاربر
 
-اضافه کردن، به‌روزرسانی یا حذف یک کاربر.
+یک کاربر رو اضافه، ویرایش یا حذف کنید.
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     PUT /user/sync
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     Content-Type: application/x-protobuf
 
     Body: User (protobuf)
@@ -386,18 +394,37 @@ message Stat {
     rpc SyncUser(stream User) returns (Empty)
     ```
   </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -X PUT https://node:443/user/sync \
-      -H "Authorization: Bearer your-session-id" \
-      -H "Content-Type: application/x-protobuf" \
-      --data-binary @user.pb
+</Tabs>
+
+<Callout type="info">
+  برای **حذف** یک کاربر، یک آرایه خالی از inbounds بفرستید. gRPC یک اینترفیس stream داره، ولی REST برای هر کاربر نیاز به یک درخواست جداگانه داره.
+</Callout>
+
+---
+
+#### همگام‌سازی همه کاربرا
+
+همه کاربرا رو با یک لیست جدید جایگزین کنید.
+
+<Tabs items={['REST', 'gRPC']}>
+  <Tab value="REST">
+    ```http
+    PUT /users/sync
+    Authorization: Bearer <api_key>
+    Content-Type: application/x-protobuf
+
+    Body: Users (protobuf)
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc SyncUsers(Users) returns (Empty)
     ```
   </Tab>
 </Tabs>
 
-<Callout type="info">
-  برای **حذف** کاربر، آرایه ورودی‌های خالی ارسال کنید. gRPC یک رابط جریانی فراهم می‌کند، اما REST نیاز به فراخوانی‌های جداگانه برای هر کاربر دارد.
+<Callout type="warn">
+  این متد **همه کاربرای قبلی رو پاک می‌کنه** و با لیست جدیدی که میدید جایگزین می‌کنه.
 </Callout>
 
 ---
@@ -408,18 +435,27 @@ message Stat {
 
 | کد | معنی |
 |------|---------|
-| 200 | موفقیت |
-| 400 | درخواست بد - داده نامعتبر |
-| 401 | غیرمجاز - SESSION_ID نامعتبر |
-| 404 | یافت نشد - نقطه پایانی وجود ندارد |
+| 200 | موفق |
+| 400 | درخواست نامعتبر - داده اشتباه |
+| 401 | عدم احراز هویت - API_KEY نامعتبره |
+| 404 | پیدا نشد - endpoint وجود نداره |
 | 500 | خطای داخلی سرور |
+
+### فرمت خطا
+
+```json
+{
+  "error": "Error description",
+  "code": "ERROR_CODE"
+}
+```
 
 ---
 
-## محدودیت نرخ
+## محدودیت تعداد درخواست
 
-در حال حاضر محدودیت نرخ داخلی وجود ندارد، اما توصیه می‌شود:
-- در صورت امکان به‌روزرسانی‌های کاربر را دسته‌بندی کنید
-- آمار را به صورت محلی کش کنید
-- از نظرسنجی بیش از حد اجتناب کنید
+الان محدودیت داخلی برای تعداد درخواست‌ها نیست، ولی پیشنهاد میشه:
+- تا جایی که میشه آپدیت‌های کاربرا رو دسته‌جمعی انجام بدید
+- آمارها رو به صورت محلی کش کنید
+- از درخواست‌های زیاد و مکرر خودداری کنید
 

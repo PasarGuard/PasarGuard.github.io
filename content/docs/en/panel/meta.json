@@ -1,11 +1,11 @@
 {
   "title": "Panel",
   "description": "PasarGuard Panel Management",
+  "icon": "Monitor",
   "pages": [
     "index",
     "installation",
     "configuration",
     "features"
-  ],
-  "icon": "Monitor"
+  ]
 }

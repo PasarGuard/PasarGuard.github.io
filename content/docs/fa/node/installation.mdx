@@ -1,26 +1,26 @@
 ---
 title: نصب
-description: نصب نود PasarGuard با استفاده از روش‌های مختلف
+description: نصب نود PasarGuard با روش‌های مختلف
 icon: Download
 ---
 
 ## روش‌های نصب
 
-نود PasarGuard را می‌توان با استفاده از چندین روش نصب کرد. روشی را انتخاب کنید که بهترین مطابقت با نیازهای شما دارد.
+نود PasarGuard رو می‌تونی با چند روش مختلف نصب کنی. اون روشی رو انتخاب کن که بیشتر برات راحته.
 
-## نصب یک کلیکی (توصیه می‌شود)
+## نصب یک کلیکی (پیشنهادی)
 
-ساده‌ترین راه برای نصب نود PasarGuard استفاده از اسکریپت نصب خودکار ما است:
+ساده‌ترین راه برای نصب نود PasarGuard، استفاده از اسکریپت خودکار ماست:
 
 ```bash
 sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pg-node.sh)" @ install
 ```
 
 این اسکریپت:
-- تمام وابستگی‌های مورد نیاز را نصب می‌کند
-- نود PasarGuard را راه‌اندازی می‌کند
-- تنظیمات پایه را پیکربندی می‌کند
-- سرویس را به صورت خودکار شروع می‌کند
+- همه وابستگی‌های لازم رو نصب می‌کنه
+- نود PasarGuard رو راه‌اندازی می‌کنه
+- تنظیمات پایه رو انجام می‌ده
+- سرویس رو خودکار استارت می‌زنه
 
 ---
 
@@ -83,9 +83,9 @@ docker compose up -d
 
 ### پیش‌نیازها
 
-1. **نصب Go** (نسخه 1.21 یا بالاتر)
-   
-   از [go.dev](https://go.dev/dl/) دانلود کنید
+1. **نصب Go** (نسخه 1.25 یا بالاتر)
+
+   از [go.dev](https://go.dev/dl/) دانلود کن
 
 2. **کلون کردن مخزن:**
 
@@ -147,16 +147,6 @@ make generate_server_cert CN=example.com SAN="DNS:example.com,IP:YOUR_SERVER_IP"
 
 ## پس از نصب
 
-### تأیید نصب
-
-بررسی کنید که نود در حال اجرا است:
-
-```bash
-curl -k https://localhost:YOUR_PORT/info
-```
-
-شما باید پاسخی با اطلاعات پایه نود دریافت کنید.
-
 ### پیکربندی فایروال
 
 مطمئن شوید که پورت‌های مورد نیاز را در فایروال خود باز کرده‌اید:
@@ -172,13 +162,13 @@ sudo firewall-cmd --reload
 
 ### راه‌اندازی به عنوان سرویس سیستم (نصب دستی)
 
-یک فایل سرویس systemd ایجاد کنید:
+یک فایل سرویس systemd بساز:
 
 ```bash
-sudo nano /etc/systemd/system/pasarguard-node.service
+sudo nano /etc/systemd/system/pg-node.service
 ```
 
-محتوای زیر را اضافه کنید:
+محتوای زیر رو اضافه کن:
 
 ```ini
 [Unit]
@@ -197,17 +187,17 @@ RestartSec=5s
 WantedBy=multi-user.target
 ```
 
-فعال و شروع سرویس:
+سرویس رو فعال و استارت بزن:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable pasarguard-node
-sudo systemctl start pasarguard-node
+sudo systemctl enable pg-node
+sudo systemctl start pg-node
 ```
 
-بررسی وضعیت سرویس:
+وضعیت سرویس رو چک کن:
 
 ```bash
-sudo systemctl status pasarguard-node
+sudo systemctl status pg-node
 ```
 

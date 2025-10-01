@@ -4,39 +4,46 @@ description: Installation instructions for PasarGuard.
 icon: Download
 ---
 
+## Installation Options
+
+PasarGuard Panel supports multiple database backends:
+
+- **TimescaleDB** - Optimized for time-series data and analytics (**Recommended**)
+- **PostgreSQL** - Advanced features and scalability
+- **MariaDB** - Open-source alternative to MySQL
+- **MySQL** - Ideal for production environments
+- **SQLite** - Perfect for small deployments and testing
+
 ### Install PasarGuard
 
 <Alert type="warning">
   The following commands will install the pre release versions (alpha/beta)
 </Alert>
 
-<Tabs items={['SQLite', 'MySQL', 'MariaDB', 'PostgreSQL']}>
-  <Tab value="SQLite">
-    ### SQLite Installation
-
+<Tabs items={['TimescaleDB (Recommended)', 'PostgreSQL', 'MySQL', 'MariaDB', 'SQLite']}>
+  <Tab value="TimescaleDB (Recommended)">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --pre-release
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database timescaledb --pre-release
+    ```
+  </Tab>
+  <Tab value="PostgreSQL">
+    ```bash
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database postgresql --pre-release
     ```
   </Tab>
   <Tab value="MySQL">
-    ### MySQL Installation
-
     ```bash
     sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mysql --pre-release
     ```
   </Tab>
   <Tab value="MariaDB">
-    ### MariaDB Installation
-
     ```bash
     sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mariadb --pre-release
     ```
   </Tab>
-  <Tab value="PostgreSQL">
-    ### PostgreSQL Installation
-
+  <Tab value="SQLite">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database postgresql --pre-release
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --pre-release
     ```
   </Tab>
 </Tabs>
@@ -67,7 +74,7 @@ You will lose access to the dashboard as soon as you close the SSH terminal. The
 Next, you need to create a sudo admin for logging into the PasarGuard dashboard by the following command
 
 ```bash
-pasarguard cli admin create --sudo
+pasarguard tui
 ```
 
 That's it! You can login to your dashboard using these credentials

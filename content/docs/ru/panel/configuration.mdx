@@ -1,6 +1,6 @@
 ---
 title: Конфигурация
-description: Настройте панель PasarGuard с помощью переменных окружения и параметров
+description: Настройка панели PasarGuard с помощью переменных окружения и параметров
 icon: Cog
 ---
 
@@ -10,77 +10,135 @@ icon: Cog
 
 ## Переменные окружения
 
+### Конфигурация администратора
+
+| Переменная | Тип | По умолчанию | Описание |
+|----------|------|---------|-------------|
+| `SUDO_USERNAME` | string | - | Имя пользователя суперпользователя для начальной учетной записи администратора |
+| `SUDO_PASSWORD` | string | - | Пароль суперпользователя для начальной учетной записи администратора |
+
+<Callout type="warn">
+  `SUDO_USERNAME` и `SUDO_PASSWORD` работают только когда включен режим `DEBUG`. Для продакшена создавайте администраторов через TUI: `pasarguard tui`
+</Callout>
+
 ### Конфигурация базы данных
 
-Настройте подключение к базе данных:
+| Переменная | Тип | По умолчанию | Описание |
+|----------|------|---------|-------------|
+| `SQLALCHEMY_DATABASE_URL` | string | - | Строка подключения к базе данных (SQLite, MySQL, MariaDB, PostgreSQL, TimescaleDB) |
+
+**Примеры URL баз данных:**
 
 ```bash
-# URL базы данных
-# Пример SQLite:
-SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
+# TimescaleDB/PostgreSQL (по умолчанию)
+SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://user:password@localhost/pasarguard"
 
-# Пример MySQL:
+# MySQL/MariaDB
 SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://user:password@localhost/pasarguard"
 
-# Пример PostgreSQL:
-SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://user:password@localhost/pasarguard"
+# SQLite
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
 ```
 
-### Конфигурация UVICORN
+### Веб-сервер UVICORN
 
-Управление поведением веб-сервера:
+| Переменная | Тип | По умолчанию | Описание |
+|----------|------|---------|-------------|
+| `UVICORN_HOST` | string | `0.0.0.0` | Адрес хоста для привязки веб-сервера |
+| `UVICORN_PORT` | int | `8000` | Номер порта для веб-сервера |
+| `UVICORN_SSL_CERTFILE` | string | - | Путь к файлу SSL-сертификата |
+| `UVICORN_SSL_KEYFILE` | string | - | Путь к файлу приватного ключа SSL |
+
+**Пример:**
 
 ```bash
-# Хост и порт
 UVICORN_HOST = "0.0.0.0"
 UVICORN_PORT = 8000
-
-# Конфигурация SSL
 UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
 UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
 ```
 
-### Конфигурация Xray
+### Аутентификация и безопасность
 
-Настройте ядро Xray:
+| Переменная | Тип | По умолчанию | Описание |
+|----------|------|---------|-------------|
+| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | int | `1440` | Время истечения JWT-токена в минутах (по умолчанию: 24 часа) |
+
+**Пример:**
 
 ```bash
-# Путь к исполняемому файлу Xray
-XRAY_EXECUTABLE_PATH = "/usr/local/bin/xray"
+# Токен истекает через 24 часа
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 
-# Директория ресурсов Xray
-XRAY_ASSETS_PATH = "/usr/local/share/xray"
-
-# Путь к конфигурации Xray
-XRAY_JSON = "/var/lib/pasarguard/xray_config.json"
+# Токен истекает через 7 дней
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 10080
 ```
 
 ### Настройки панели
 
-Настройте поведение панели:
+| Переменная | Тип | По умолчанию | Описание |
+|----------|------|---------|-------------|
+| `DOCS` | bool | `false` | Включить/отключить конечную точку документации API |
+| `DEBUG` | bool | `false` | Включить режим отладки для подробного логирования |
+
+**Пример:**
 
 ```bash
-# Секретный ключ JWT для аутентификации
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
-
-# Конечная точка документации (установите false для отключения)
 DOCS = true
-
-# Режим отладки
 DEBUG = false
 ```
 
-### Telegram бот
+---
 
-Настройте интеграцию с Telegram ботом:
+## Полный пример конфигурации
+
+### Настройка для продакшена
 
 ```bash
-# Токен Telegram бота
-TELEGRAM_API_TOKEN = "YOUR_BOT_TOKEN"
+# Конфигурация администратора
+SUDO_USERNAME = "admin"
+SUDO_PASSWORD = "your-secure-password"
 
-# ID чатов администраторов (через запятую)
-TELEGRAM_ADMIN_ID = "123456789,987654321"
+# База данных (рекомендуется TimescaleDB)
+SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:password@localhost/pasarguard"
+
+# Веб-сервер
+UVICORN_HOST = "0.0.0.0"
+UVICORN_PORT = 8000
+UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
+UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
+
+# Безопасность
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
+
+# Настройки панели
+DOCS = false
+DEBUG = false
 ```
+
+### Настройка для разработки/тестирования
+
+```bash
+# Конфигурация администратора
+SUDO_USERNAME = "admin"
+SUDO_PASSWORD = "admin123"
+
+# База данных (SQLite для тестирования)
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
+
+# Веб-сервер
+UVICORN_HOST = "127.0.0.1"
+UVICORN_PORT = 8000
+
+# Безопасность
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
+
+# Настройки панели
+DOCS = true
+DEBUG = true
+```
+
+---
 
 ## Управление конфигурацией
 
@@ -104,25 +162,66 @@ sudo nano /opt/pasarguard/.env
 pasarguard restart
 ```
 
-## Расширенная конфигурация
+### Проверка конфигурации
 
-### Пользовательская конфигурация Xray
-
-Вы можете настроить параметры Xray, отредактировав файл конфигурации:
+Проверьте, правильно ли работает служба:
 
 ```bash
-sudo nano /var/lib/pasarguard/xray_config.json
+pasarguard status
 ```
 
-<Callout type="warn">
-  **Предупреждение:** Неправильная конфигурация Xray может привести к сбою сервиса. Всегда делайте резервную копию конфигурации перед внесением изменений.
-</Callout>
+Просмотрите логи для устранения неполадок:
 
-### Настройка с несколькими нодами
+```bash
+pasarguard logs
+```
 
-Для настройки нескольких нодов вам необходимо:
+---
 
-1. Настроить каждый нод с соответствующими учетными данными API
-2. Добавить сведения о подключении нода в интерфейсе панели
-3. Обеспечить сетевое подключение между панелью и нодами
+## Настройка нескольких узлов
 
+Для настройки нескольких узлов:
+
+1. **Установите и настройте PasarGuard Node** на каждом сервере (см. [Установка узла](/node/installation))
+
+2. **Настройте учетные данные API узла** на каждом сервере узла
+
+3. **Добавьте узлы в интерфейсе панели:**
+   - Перейдите в раздел "Узлы" на панели управления
+   - Нажмите "Добавить узел"
+   - Введите данные подключения узла (адрес, порт, API-ключ и т.д.)
+   - Проверьте подключение
+---
+
+## Рекомендации по безопасности
+
+### Защита учетных данных базы данных
+
+Используйте надежные пароли для подключения к базе данных:
+
+```bash
+# Генерация безопасного пароля
+openssl rand -base64 32
+```
+
+### Использование SSL-сертификатов
+
+Всегда используйте действительные SSL-сертификаты в продакшене:
+
+```bash
+# Использование Let's Encrypt
+sudo certbot certonly --standalone -d your-domain.com
+
+# Обновление .env
+UVICORN_SSL_CERTFILE = "/etc/letsencrypt/live/your-domain.com/fullchain.pem"
+UVICORN_SSL_KEYFILE = "/etc/letsencrypt/live/your-domain.com/privkey.pem"
+```
+
+### Отключение режима отладки в продакшене
+
+```bash
+DEBUG = false
+DOCS = false
+```
+
+---

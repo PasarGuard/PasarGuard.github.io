@@ -10,77 +10,135 @@ PasarGuard 面板通过存储在 `/opt/pasarguard/.env` 的 `.env` 文件中的�
 
 ## 环境变量
 
+### 管理员配置
+
+| 变量 | 类型 | 默认值 | 描述 |
+|----------|------|---------|-------------|
+| `SUDO_USERNAME` | string | - | 初始管理员账户的超级用户用户名 |
+| `SUDO_PASSWORD` | string | - | 初始管理员账户的超级用户密码 |
+
+<Callout type="warn">
+  `SUDO_USERNAME` 和 `SUDO_PASSWORD` 仅在启用 `DEBUG` 模式时有效。对于生产环境，请使用 TUI 创建管理员用户：`pasarguard tui`
+</Callout>
+
 ### 数据库配置
 
-配置数据库连接：
+| 变量 | 类型 | 默认值 | 描述 |
+|----------|------|---------|-------------|
+| `SQLALCHEMY_DATABASE_URL` | string | - | 数据库连接字符串（SQLite、MySQL、MariaDB、PostgreSQL、TimescaleDB）|
+
+**数据库 URL 示例：**
 
 ```bash
-# 数据库 URL
-# SQLite 示例：
-SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
+# TimescaleDB/PostgreSQL（默认）
+SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://user:password@localhost/pasarguard"
 
-# MySQL 示例：
+# MySQL/MariaDB
 SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://user:password@localhost/pasarguard"
 
-# PostgreSQL 示例：
-SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://user:password@localhost/pasarguard"
+# SQLite
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
 ```
 
-### UVICORN 配置
+### UVICORN Web 服务器
 
-控制 Web 服务器行为：
+| 变量 | 类型 | 默认值 | 描述 |
+|----------|------|---------|-------------|
+| `UVICORN_HOST` | string | `0.0.0.0` | Web 服务器绑定的主机地址 |
+| `UVICORN_PORT` | int | `8000` | Web 服务器的端口号 |
+| `UVICORN_SSL_CERTFILE` | string | - | SSL 证书文件路径 |
+| `UVICORN_SSL_KEYFILE` | string | - | SSL 私钥文件路径 |
+
+**示例：**
 
 ```bash
-# 主机和端口
 UVICORN_HOST = "0.0.0.0"
 UVICORN_PORT = 8000
-
-# SSL 配置
 UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
 UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
 ```
 
-### Xray 配置
+### 身份验证与安全
 
-配置 Xray 核心：
+| 变量 | 类型 | 默认值 | 描述 |
+|----------|------|---------|-------------|
+| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | int | `1440` | JWT 令牌过期时间（分钟）（默认：24 小时）|
+
+**示例：**
 
 ```bash
-# Xray 可执行文件路径
-XRAY_EXECUTABLE_PATH = "/usr/local/bin/xray"
+# 令牌在 24 小时后过期
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 
-# Xray 资源目录
-XRAY_ASSETS_PATH = "/usr/local/share/xray"
-
-# Xray 配置路径
-XRAY_JSON = "/var/lib/pasarguard/xray_config.json"
+# 令牌在 7 天后过期
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 10080
 ```
 
 ### 面板设置
 
-自定义面板行为：
+| 变量 | 类型 | 默认值 | 描述 |
+|----------|------|---------|-------------|
+| `DOCS` | bool | `false` | 启用/禁用 API 文档端点 |
+| `DEBUG` | bool | `false` | 启用调试模式以获取详细日志 |
+
+**示例：**
 
 ```bash
-# 用于身份验证的 JWT 密钥
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
-
-# 文档端点（设置为 false 以禁用）
 DOCS = true
-
-# 调试模式
 DEBUG = false
 ```
 
-### Telegram 机器人
+---
 
-配置 Telegram 机器人集成：
+## 完整配置示例
+
+### 生产环境设置
 
 ```bash
-# Telegram 机器人令牌
-TELEGRAM_API_TOKEN = "YOUR_BOT_TOKEN"
+# 管理员配置
+SUDO_USERNAME = "admin"
+SUDO_PASSWORD = "your-secure-password"
 
-# 管理员聊天 ID（逗号分隔）
-TELEGRAM_ADMIN_ID = "123456789,987654321"
+# 数据库（推荐使用 TimescaleDB）
+SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:password@localhost/pasarguard"
+
+# Web 服务器
+UVICORN_HOST = "0.0.0.0"
+UVICORN_PORT = 8000
+UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
+UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
+
+# 安全
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
+
+# 面板设置
+DOCS = false
+DEBUG = false
 ```
+
+### 开发/测试环境设置
+
+```bash
+# 管理员配置
+SUDO_USERNAME = "admin"
+SUDO_PASSWORD = "admin123"
+
+# 数据库（用于测试的 SQLite）
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
+
+# Web 服务器
+UVICORN_HOST = "127.0.0.1"
+UVICORN_PORT = 8000
+
+# 安全
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
+
+# 面板设置
+DOCS = true
+DEBUG = true
+```
+
+---
 
 ## 配置管理
 
@@ -104,25 +162,66 @@ sudo nano /opt/pasarguard/.env
 pasarguard restart
 ```
 
-## 高级配置
+### 验证配置
 
-### 自定义 Xray 配置
-
-您可以通过编辑配置文件来自定义 Xray 设置：
+检查服务是否正常运行：
 
 ```bash
-sudo nano /var/lib/pasarguard/xray_config.json
+pasarguard status
 ```
 
-<Callout type="warn">
-  **警告：** 不正确的 Xray 配置可能导致服务失败。在进行更改之前，请始终备份您的配置。
-</Callout>
+查看日志以排查问题：
 
-### 多节点设置
+```bash
+pasarguard logs
+```
 
-要配置多个节点，您需要：
+---
 
-1. 使用适当的 API 凭据配置每个节点
-2. 在面板界面中添加节点连接详细信息
-3. 确保面板和节点之间的网络连接
+## 多节点设置
 
+要配置多个节点：
+
+1. **在每台服务器上安装和配置 PasarGuard Node**（参见[节点安装](/node/installation)）
+
+2. **在每个节点服务器上配置节点 API 凭据**
+
+3. **在面板界面中添加节点：**
+   - 在仪表板中导航到节点部分
+   - 点击"添加节点"
+   - 输入节点连接详细信息（地址、端口、API 密钥等）
+   - 检查连接
+---
+
+## 安全最佳实践
+
+### 保护数据库凭据
+
+使用强密码进行数据库连接：
+
+```bash
+# 生成安全密码
+openssl rand -base64 32
+```
+
+### 使用 SSL 证书
+
+在生产环境中始终使用有效的 SSL 证书：
+
+```bash
+# 使用 Let's Encrypt
+sudo certbot certonly --standalone -d your-domain.com
+
+# 更新 .env
+UVICORN_SSL_CERTFILE = "/etc/letsencrypt/live/your-domain.com/fullchain.pem"
+UVICORN_SSL_KEYFILE = "/etc/letsencrypt/live/your-domain.com/privkey.pem"
+```
+
+### 在生产环境中禁用调试模式
+
+```bash
+DEBUG = false
+DOCS = false
+```
+
+---

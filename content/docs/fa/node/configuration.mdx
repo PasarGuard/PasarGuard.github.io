@@ -1,140 +1,129 @@
 ---
 title: پیکربندی
-description: پیکربندی تنظیمات و متغیرهای محیطی نود PasarGuard
+description: تنظیم کانفیگ‌های PasarGuard Node و متغیرهای محیطی
 icon: Cog
 ---
 
-## بررسی اجمالی پیکربندی
+## یه نگاه کلی به کانفیگ
 
-نود PasarGuard را می‌توان با استفاده از متغیرهای محیطی پیکربندی کرد. تمام تنظیمات را می‌توان در فایل `.env` یا مستقیماً به عنوان متغیرهای محیطی تنظیم کرد.
+میتونی PasarGuard Node رو با متغیرهای محیطی (environment variables) تنظیم کنی. همه‌ی تنظیمات رو میشه توی فایل `.env` یا مستقیم به عنوان متغیر محیطی ست کرد.
+
+<Callout type="warn">
+  PasarGuard Node الان توی مرحله تست و توسعه‌ست. استفاده به مسئولیت خودتونه.
+</Callout>
 
 ## متغیرهای محیطی
 
+### تنظیمات اصلی
+
+| متغیر | نوع | پیش‌فرض | توضیحات |
+|----------|------|---------|-------------|
+| `API_KEY` | string | - | UUID برای احراز هویت دسترسی به API (ضروریه) |
+| `NODE_HOST` | string | `127.0.0.1` | آدرس هاست برای اتصال برنامه |
+| `SERVICE_PORT` | int | `62050` | شماره پورت برنامه |
+| `SERVICE_PROTOCOL` | string | `grpc` | پروتکل اتصال (`grpc` یا `rest`، پیشنهادی: `grpc`) |
+| `DEBUG` | bool | `false` | فعال‌سازی حالت دیباگ برای لاگ‌های کامل |
+
+### تنظیمات SSL/TLS
+
+| متغیر | نوع | پیش‌فرض | توضیحات |
+|----------|------|---------|-------------|
+| `SSL_CERT_FILE` | string | - | مسیر فایل گواهینامه SSL |
+| `SSL_KEY_FILE` | string | - | مسیر فایل کلید خصوصی SSL |
+
+### تنظیمات Xray
+
+| متغیر | نوع | پیش‌فرض | توضیحات |
+|----------|------|---------|-------------|
+| `XRAY_EXECUTABLE_PATH` | string | `/usr/local/bin/xray` | مسیر فایل اجرایی Xray |
+| `XRAY_ASSETS_PATH` | string | `/usr/local/share/xray` | مسیر پوشه داده‌های Xray |
+
+<Callout type="info">
+  **هسته‌های پشتیبانی شده:**
+  - ✅ xray-core
+  - ❌ sing-box (پشتیبانی نمیشه)
+  - ❌ v2ray-core (پشتیبانی نمیشه)
+</Callout>
+
+---
+
+## مثال‌های کانفیگ
+
 ### تنظیمات پایه
 
-| متغیر | نوع | پیش‌فرض | توضیحات |
-|----------|------|---------|-------------|
-| `SESSION_ID` | string | `random_uuid` | توکن احراز هویت برای دسترسی API |
-| `HOST` | string | `0.0.0.0` | آدرس میزبان سرور |
-| `PORT` | int | `443` | شماره پورت سرور |
-| `DEBUG` | bool | `false` | فعال‌سازی حالت اشکال‌زدایی برای لاگ‌گیری جزئی |
-
-### پیکربندی SSL/TLS
-
-| متغیر | نوع | پیش‌فرض | توضیحات |
-|----------|------|---------|-------------|
-| `TLS_ENABLE` | bool | `true` | فعال‌سازی TLS/SSL |
-| `TLS_CERT_FILE` | string | `./cert/server.crt` | مسیر گواهی SSL |
-| `TLS_KEY_FILE` | string | `./cert/server.key` | مسیر کلید خصوصی SSL |
-
-### پیکربندی بکند
-
-| متغیر | نوع | پیش‌فرض | توضیحات |
-|----------|------|---------|-------------|
-| `BACKEND_TYPE` | string | `xray` | نوع هسته بکند (xray، sing-box، v2ray) |
-| `BACKEND_KEEP_ALIVE` | int | `60` | نگه داشتن بکند فعال برای X ثانیه پس از آخرین اتصال |
-| `BACKEND_LOG_LEVEL` | string | `warning` | سطح لاگ بکند (debug، info، warning، error) |
-
-### پیکربندی API
-
-| متغیر | نوع | پیش‌فرض | توضیحات |
-|----------|------|---------|-------------|
-| `API_ENABLE_REST` | bool | `true` | فعال‌سازی REST API |
-| `API_ENABLE_GRPC` | bool | `true` | فعال‌سازی gRPC API |
-| `GRPC_PORT` | int | `50051` | پورت سرور gRPC |
-
-### تنظیمات عملکرد
-
-| متغیر | نوع | پیش‌فرض | توضیحات |
-|----------|------|---------|-------------|
-| `MAX_CONNECTIONS` | int | `10000` | حداکثر اتصالات همزمان |
-| `STATS_INTERVAL` | int | `60` | فاصله به‌روزرسانی آمار (ثانیه) |
-| `LOG_BUFFER_SIZE` | int | `1000` | اندازه بافر لاگ |
-
----
-
-## مثال پیکربندی
-
-### فایل پایه `.env`
-
 ```bash
-# تنظیمات پایه
-SESSION_ID=your-secure-session-id-here
-HOST=0.0.0.0
-PORT=443
+# Core Settings
+API_KEY=your-uuid-here
+NODE_HOST=127.0.0.1
+SERVICE_PORT=62050
+SERVICE_PROTOCOL=grpc
 DEBUG=false
 
-# پیکربندی SSL
-TLS_ENABLE=true
-TLS_CERT_FILE=./cert/server.crt
-TLS_KEY_FILE=./cert/server.key
+# SSL Configuration
+SSL_CERT_FILE=/path/to/ssl_cert.pem
+SSL_KEY_FILE=/path/to/ssl_key.pem
 
-# بکند
-BACKEND_TYPE=xray
-BACKEND_KEEP_ALIVE=60
-BACKEND_LOG_LEVEL=warning
-
-# API
-API_ENABLE_REST=true
-API_ENABLE_GRPC=true
-GRPC_PORT=50051
+# Xray Paths (defaults usually work)
+XRAY_EXECUTABLE_PATH=/usr/local/bin/xray
+XRAY_ASSETS_PATH=/usr/local/share/xray
 ```
 
-### فایل `.env` داکر
+### تنظیمات برای سرور واقعی
 
 ```bash
-SESSION_ID=your-secure-session-id-here
-PORT=443
-TLS_ENABLE=true
-BACKEND_TYPE=xray
+# Core Settings
+API_KEY=change-this-to-a-secure-uuid
+NODE_HOST=0.0.0.0
+SERVICE_PORT=62050
+SERVICE_PROTOCOL=grpc
 DEBUG=false
+
+# SSL - Use valid certificates
+SSL_CERT_FILE=/etc/ssl/certs/your-domain.pem
+SSL_KEY_FILE=/etc/ssl/private/your-domain-key.pem
+
+# Xray Configuration
+XRAY_EXECUTABLE_PATH=/usr/local/bin/xray
+XRAY_ASSETS_PATH=/usr/local/share/xray
 ```
 
-### فایل `.env` پروداکشن
+### تنظیمات Docker Compose
+
+وقتی از Docker استفاده میکنی، میتونی متغیرها رو توی فایل `docker-compose.yml` یا توی فایل `.env` تنظیم کنی:
 
 ```bash
-# تنظیمات پروداکشن
-SESSION_ID=change-this-to-a-secure-random-string
-HOST=0.0.0.0
-PORT=443
-DEBUG=false
-
-# SSL - از گواهی‌های معتبر استفاده کنید
-TLS_ENABLE=true
-TLS_CERT_FILE=/etc/ssl/certs/your-domain.crt
-TLS_KEY_FILE=/etc/ssl/private/your-domain.key
-
-# بهینه‌سازی بکند
-BACKEND_TYPE=xray
-BACKEND_KEEP_ALIVE=120
-BACKEND_LOG_LEVEL=warning
-
-# عملکرد
-MAX_CONNECTIONS=50000
-STATS_INTERVAL=30
-LOG_BUFFER_SIZE=2000
-
-# API
-API_ENABLE_REST=true
-API_ENABLE_GRPC=true
-GRPC_PORT=50051
+API_KEY=your-uuid-here
+SERVICE_PORT=62050
+SERVICE_PROTOCOL=grpc
+SSL_CERT_FILE=/app/certs/ssl_cert.pem
+SSL_KEY_FILE=/app/certs/ssl_key.pem
 ```
 
 ---
 
-## پیکربندی گواهی SSL
+## راه‌اندازی گواهی SSL
 
-### تولید گواهی خود-امضا
+### ساخت گواهی Self-Signed
 
-برای تست یا استفاده داخلی:
+برای تست یا استفاده داخلی، یه گواهی self-signed بساز:
 
 ```bash
-make generate_server_cert CN=example.com SAN="DNS:example.com,IP:YOUR_IP"
+openssl req -x509 -newkey rsa:4096 -keyout ssl_key.pem \
+  -out ssl_cert.pem -days 36500 -nodes \
+  -subj "/CN=your-server-ip-or-domain" \
+  -addext "subjectAltName = DNS:your-domain.com,IP:your.server.ip"
+```
+
+بعدش مسیرها رو تنظیم کن:
+
+```bash
+SSL_CERT_FILE=/path/to/ssl_cert.pem
+SSL_KEY_FILE=/path/to/ssl_key.pem
 ```
 
 ### استفاده از گواهی Let's Encrypt
 
-برای پروداکشن با دامنه:
+برای سرور واقعی که دامنه داری:
 
 1. نصب Certbot:
 ```bash
@@ -146,99 +135,103 @@ sudo apt-get install certbot
 sudo certbot certonly --standalone -d your-domain.com
 ```
 
-3. به‌روزرسانی `.env`:
+3. آپدیت متغیرهای محیطی:
 ```bash
-TLS_CERT_FILE=/etc/letsencrypt/live/your-domain.com/fullchain.pem
-TLS_KEY_FILE=/etc/letsencrypt/live/your-domain.com/privkey.pem
+SSL_CERT_FILE=/etc/letsencrypt/live/your-domain.com/fullchain.pem
+SSL_KEY_FILE=/etc/letsencrypt/live/your-domain.com/privkey.pem
 ```
 
-### استفاده از گواهی سفارشی
+### استفاده از گواهی شخصی
 
-اگر گواهی خود را دارید:
+اگه گواهی خودت رو داری:
 
 ```bash
-TLS_CERT_FILE=/path/to/your/certificate.crt
-TLS_KEY_FILE=/path/to/your/private.key
+SSL_CERT_FILE=/path/to/your/certificate.pem
+SSL_KEY_FILE=/path/to/your/private-key.pem
 ```
 
 ---
 
-## پیکربندی خاص بکند
+## نکات امنیتی مهم
 
-### هسته Xray
+### ساخت API Key امن
 
-هنگام استفاده از Xray به عنوان بکند:
-
-```bash
-BACKEND_TYPE=xray
-BACKEND_LOG_LEVEL=warning
-```
-
-پیکربندی Xray به طور خودکار توسط نود بر اساس کاربران و ورودی‌هایی که از طریق API تعریف می‌کنید، مدیریت می‌شود.
-
----
-
-## بهترین شیوه‌های امنیتی
-
-### تولید SESSION_ID امن
+یه UUID امن برای `API_KEY` بساز:
 
 ```bash
-# Linux/macOS
-openssl rand -hex 32
-
-# یا استفاده از UUID
+# Using uuidgen (Linux/macOS)
 uuidgen
+
+# Using Python
+python3 -c "import uuid; print(uuid.uuid4())"
+
+# Using OpenSSL
+openssl rand -hex 16 | awk '{print substr($1,1,8)"-"substr($1,9,4)"-"substr($1,13,4)"-"substr($1,17,4)"-"substr($1,21,12)}'
 ```
 
-### مجوزهای فایل
+### دسترسی‌های فایل
 
-اطمینان از مجوزهای مناسب برای فایل‌های حساس:
+مطمئن شو دسترسی‌های فایل‌های حساس درست تنظیم شدن:
 
 ```bash
-# فایل‌های گواهی
-chmod 600 ./cert/server.key
-chmod 644 ./cert/server.crt
+# Certificate files
+chmod 600 /path/to/ssl_key.pem
+chmod 644 /path/to/ssl_cert.pem
 
-# فایل محیطی
+# Environment file
 chmod 600 .env
 ```
 
-### پیکربندی فایروال
+### تنظیمات فایروال
 
-فقط پورت‌های لازم را باز کنید:
+فقط پورت‌های لازم رو باز کن:
 
 ```bash
-# فقط پورت نود را مجاز کنید
-sudo ufw allow YOUR_PORT/tcp
+# Allow only node port
+sudo ufw allow 62050/tcp
 
-# مسدود کردن پورت‌های غیرضروری
+# Enable firewall
 sudo ufw enable
 ```
 
 ---
 
-## عیب‌یابی
+## تنظیمات پروتکل
+
+### gRPC (پیشنهادی)
+
+gRPC پروتکل پیشنهادیه چون سریع‌تره و تاخیر کمتری داره:
+
+```bash
+SERVICE_PROTOCOL=grpc
+```
+
+### REST API
+
+REST API هم پشتیبانی میشه ولی ممکنه کندتر باشه:
+
+```bash
+SERVICE_PROTOCOL=rest
+```
+
+---
+
+## رفع مشکلات
 
 ### مشکلات رایج
 
-**پورت در حال استفاده است:**
+**پورت از قبل استفاده شده:**
 ```bash
-# تغییر پورت در .env
-PORT=8443
+# Change the port
+SERVICE_PORT=62051
 ```
 
-**خطاهای گواهی:**
-```bash
-# بررسی وجود فایل‌های گواهی
-ls -la ./cert/
+### حالت دیباگ
 
-# بررسی اعتبار گواهی
-openssl x509 -in ./cert/server.crt -text -noout
+برای دیدن لاگ‌های کامل، حالت دیباگ رو فعال کن:
+
+```bash
+DEBUG=true
 ```
 
-**مجوز رد شد:**
-```bash
-# با sudo اجرا کنید یا پورت را به > 1024 تغییر دهید
-PORT=8443
-```
-
+این کار لاگ‌های کامل رو نشون میده که میتونه توی پیدا کردن مشکل کمک کنه.

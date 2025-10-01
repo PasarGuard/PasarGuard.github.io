@@ -4,77 +4,83 @@ description: دستورالعمل‌های نصب PasarGuard.
 icon: Download
 ---
 
+## گزینه‌های نصب
+
+پنل PasarGuard از چندین دیتابیس پشتیبانی می‌کنه:
+
+- **TimescaleDB** - برای داده‌های time-series و تحلیل بهینه شده (**پیشنهادی**)
+- **PostgreSQL** - قابلیت‌های پیشرفته و مقیاس‌پذیری
+- **MariaDB** - جایگزین اوپن‌سورس MySQL
+- **MySQL** - عالی برای محیط‌های production
+- **SQLite** - مناسب برای دیپلوی‌های کوچک و تست
+
 ### نصب PasarGuard
 
 <Alert type="warning">
-  دستورات زیر نسخه‌های پیش‌انتشار (آلفا/بتا) را نصب خواهند کرد
+  دستورات زیر نسخه‌های پیش‌انتشار (آلفا/بتا) رو نصب می‌کنن
 </Alert>
 
-<Tabs items={['SQLite', 'MySQL', 'MariaDB', 'PostgreSQL']}>
-  <Tab value="SQLite">
-    ### نصب SQLite
-
+<Tabs items={['TimescaleDB (Recommended)', 'PostgreSQL', 'MySQL', 'MariaDB', 'SQLite']}>
+  <Tab value="TimescaleDB (Recommended)">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --pre-release
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database timescaledb --pre-release
+    ```
+  </Tab>
+  <Tab value="PostgreSQL">
+    ```bash
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database postgresql --pre-release
     ```
   </Tab>
   <Tab value="MySQL">
-    ### نصب MySQL
-
     ```bash
     sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mysql --pre-release
     ```
   </Tab>
   <Tab value="MariaDB">
-    ### نصب MariaDB
-
     ```bash
     sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mariadb --pre-release
     ```
   </Tab>
-  <Tab value="PostgreSQL">
-    ### نصب PostgreSQL
-
+  <Tab value="SQLite">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database postgresql --pre-release
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --pre-release
     ```
   </Tab>
 </Tabs>
 
-### پس از نصب
+### بعد از نصب
 
-پس از تکمیل نصب:
+بعد از اینکه نصب تموم شد:
 
--   لاگ‌ها را مشاهده خواهید کرد که می‌توانید با بستن ترمینال یا فشار دادن `Ctrl+C` از مشاهده آنها دست بردارید
--   فایل‌های PasarGuard در `/opt/pasarguard` قرار خواهند گرفت
--   فایل پیکربندی را می‌توانید در `/opt/pasarguard/.env` پیدا کنید (به بخش [پیکربندی](#configuration) مراجعه کنید تا متغیرها را ببینید)
--   فایل‌های داده در `/var/lib/pasarguard` قرار خواهند گرفت
--   به دلایل امنیتی، داشبورد PasarGuard از طریق آدرس IP قابل دسترسی نیست. بنابراین، باید [گواهی SSL دریافت کنید](https://PasarGuard.github.io/PasarGuard/en/examples/issue-ssl-certificate) و با باز کردن مرورگر وب و رفتن به `https://YOUR_DOMAIN:8000/dashboard/` به داشبورد PasarGuard خود دسترسی پیدا کنید (YOUR_DOMAIN را با دامنه واقعی خود جایگزین کنید)
--   همچنین می‌توانید برای دسترسی محلی به داشبورد PasarGuard بدون دامنه از SSH port forwarding استفاده کنید. `user@serverip` را با نام کاربری SSH و آدرس IP سرور خود جایگزین کنید و دستور زیر را اجرا کنید:
+-   لاگ‌ها رو می‌بینید که با بستن ترمینال یا زدن `Ctrl+C` می‌تونید ازشون خارج بشید
+-   فایل‌های PasarGuard تو `/opt/pasarguard` قرار می‌گیرن
+-   فایل تنظیمات رو می‌تونید تو `/opt/pasarguard/.env` پیدا کنید (برای دیدن متغیرها به بخش [پیکربندی](#configuration) مراجعه کنید)
+-   فایل‌های دیتا تو `/var/lib/pasarguard` ذخیره می‌شن
+-   برای امنیت، داشبورد PasarGuard با IP قابل دسترسی نیست. پس باید [گواهی SSL بگیرید](https://PasarGuard.github.io/PasarGuard/en/examples/issue-ssl-certificate) و بعد با مرورگر وب به `https://YOUR_DOMAIN:8000/dashboard/` برید (YOUR_DOMAIN رو با دامنه واقعی خودتون جایگزین کنید)
+-   می‌تونید از SSH port forwarding هم استفاده کنید تا بدون دامنه به داشبورد دسترسی داشته باشید. `user@serverip` رو با یوزرنیم SSH و IP سرورتون عوض کنید و این دستور رو بزنید:
 
 ```bash
 ssh -L 8000:localhost:8000 user@serverip
 ```
 
-در نهایت، می‌توانید لینک زیر را در مرورگر خود وارد کنید تا به داشبورد PasarGuard خود دسترسی پیدا کنید:
+بعدش می‌تونید این لینک رو تو مرورگرتون باز کنید:
 
 http://localhost:8000/dashboard/
 
-به محض بستن ترمینال SSH، دسترسی به داشبورد را از دست خواهید داد. بنابراین، این روش فقط برای اهداف آزمایشی توصیه می‌شود.
+وقتی ترمینال SSH رو ببندید دسترسی به داشبورد قطع می‌شه. پس این روش فقط برای تست پیشنهاد می‌شه.
 
-### ایجاد کاربر ادمین
+### ساخت یوزر ادمین
 
-در مرحله بعد، باید یک ادمین sudo برای ورود به داشبورد PasarGuard با دستور زیر ایجاد کنید
+حالا باید یه ادمین sudo برای ورود به داشبورد بسازید با این دستور:
 
 ```bash
-pasarguard cli admin create --sudo
+pasarguard tui
 ```
 
-همین! می‌توانید با این اعتبارنامه‌ها وارد داشبورد خود شوید
+تمام! حالا می‌تونید با این اطلاعات وارد داشبوردتون بشید
 
-برای مشاهده پیام راهنما اسکریپت PasarGuard، دستور زیر را اجرا کنید
+برای دیدن راهنمای اسکریپت PasarGuard این دستور رو بزنید:
 
 ```bash
 pasarguard --help
 ```
-

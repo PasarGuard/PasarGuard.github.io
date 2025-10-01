@@ -1,25 +1,25 @@
 ---
 title: API 参考
-description: PasarGuard 节点的完整 REST API 和 gRPC 参考
+description: PasarGuard Node 的完整 REST API 和 gRPC 参考
 icon: Code
 ---
 
 ## API 概述
 
-PasarGuard 节点提供 **REST API** 和 **gRPC** 接口，用于管理节点、用户和检索统计信息。
+PasarGuard Node 提供 **REST API** 和 **gRPC** 接口用于管理节点、用户和检索统计信息。
 
 ### 身份验证
 
-所有 API 请求都需要使用 `.env` 文件中配置的 `SESSION_ID` 进行身份验证。
+所有 API 请求都需要使用在您的 `.env` 文件中配置的 `API_KEY` 进行身份验证。
 
-**REST API：**
+**REST API:**
 ```http
-Authorization: Bearer <session_id>
+Authorization: Bearer <api_key>
 ```
 
-**gRPC：**
+**gRPC:**
 ```
-authorization: Bearer <session_id>
+authorization: Bearer <api_key>
 ```
 
 ### 基础 URL
@@ -86,15 +86,15 @@ enum StatType {
 
 ### 节点管理
 
-#### 启动后端
+#### 启动 Backend
 
-使用配置启动节点后端。
+使用配置启动节点 backend。
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     POST /start
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     Content-Type: application/x-protobuf
 
     Body: Backend (protobuf)
@@ -105,42 +105,28 @@ enum StatType {
     rpc Start(Backend) returns (BaseInfoResponse)
     ```
   </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -X POST https://node:443/start \
-      -H "Authorization: Bearer your-session-id" \
-      -H "Content-Type: application/x-protobuf" \
-      --data-binary @backend.pb
-    ```
-  </Tab>
 </Tabs>
 
 <Callout type="info">
-  这是在与节点建立连接之前调用的唯一方法。
+  这是在创建与节点的连接之前调用的唯一方法。
 </Callout>
 
 ---
 
-#### 停止后端
+#### 停止 Backend
 
-停止后端并停用客户端连接。
+停止 backend 并停用客户端连接。
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     PUT /stop
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     ```
   </Tab>
   <Tab value="gRPC">
     ```
     rpc Stop(Empty) returns (Empty)
-    ```
-  </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -X PUT https://node:443/stop \
-      -H "Authorization: Bearer your-session-id"
     ```
   </Tab>
 </Tabs>
@@ -151,22 +137,16 @@ enum StatType {
 
 检索基本节点信息并检查连接状态。
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     GET /info
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     ```
   </Tab>
   <Tab value="gRPC">
     ```
     rpc GetBaseInfo(Empty) returns (BaseInfoResponse)
-    ```
-  </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl https://node:443/info \
-      -H "Authorization: Bearer your-session-id"
     ```
   </Tab>
 </Tabs>
@@ -186,15 +166,15 @@ message BaseInfoResponse {
 
 #### 获取日志
 
-从后端流式传输实时日志。
+从 backend 流式传输实时日志。
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     GET /logs
-    Authorization: Bearer <session_id>
-    
-    // 返回服务器发送事件（SSE）流
+    Authorization: Bearer <api_key>
+
+    // Returns Server-Sent Events (SSE) stream
     ```
   </Tab>
   <Tab value="gRPC">
@@ -202,18 +182,12 @@ message BaseInfoResponse {
     rpc GetLogs(Empty) returns (stream Log)
     ```
   </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -N https://node:443/logs \
-      -H "Authorization: Bearer your-session-id"
-    ```
-  </Tab>
 </Tabs>
 
 **日志结构：**
 ```protobuf
 message Log {
-  string detail;  // 日志消息
+  string detail;  // Log message
 }
 ```
 
@@ -225,11 +199,11 @@ message Log {
 
 检索系统级统计信息。
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     GET /stats/system
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     ```
   </Tab>
   <Tab value="gRPC">
@@ -237,25 +211,165 @@ message Log {
     rpc GetSystemStats(Empty) returns (SystemStatsResponse)
     ```
   </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl https://node:443/stats/system \
-      -H "Authorization: Bearer your-session-id"
+</Tabs>
+
+**响应：**
+```protobuf
+message SystemStatsResponse {
+  uint64 mem_total;                  // Total memory
+  uint64 mem_used;                   // Used memory
+  uint64 cpu_cores;                  // CPU cores
+  double cpu_usage;                  // CPU usage %
+  uint64 incoming_bandwidth_speed;   // Download speed
+  uint64 outgoing_bandwidth_speed;   // Upload speed
+}
+```
+
+---
+
+#### 获取 Backend 统计
+
+检索 backend 运行时统计信息。
+
+<Tabs items={['REST', 'gRPC']}>
+  <Tab value="REST">
+    ```http
+    GET /stats/backend
+    Authorization: Bearer <api_key>
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc GetBackendStats(Empty) returns (BackendStatsResponse)
     ```
   </Tab>
 </Tabs>
 
 **响应：**
 ```protobuf
-message SystemStatsResponse {
-  uint64 mem_total;                  // 总内存
-  uint64 mem_used;                   // 已用内存
-  uint64 cpu_cores;                  // CPU 核心
-  double cpu_usage;                  // CPU 使用率 %
-  uint64 incoming_bandwidth_speed;   // 下载速度
-  uint64 outgoing_bandwidth_speed;   // 上传速度
+message BackendStatsResponse {
+  uint32 num_goroutine;    // Active goroutines
+  uint32 num_gc;           // GC runs
+  uint64 alloc;            // Allocated memory
+  uint64 total_alloc;      // Total allocated
+  uint64 sys;              // System memory
+  uint64 mallocs;          // Malloc count
+  uint64 frees;            // Free count
+  uint64 live_objects;     // Live objects
+  uint64 pause_total_ns;   // Total GC pause
+  uint32 uptime;           // Uptime in seconds
 }
 ```
+
+---
+
+#### 获取流量统计
+
+检索用户、入站或出站的流量统计信息。
+
+<Tabs items={['REST', 'gRPC']}>
+  <Tab value="REST">
+    ```http
+    GET /stats
+    Authorization: Bearer <api_key>
+    Content-Type: application/x-protobuf
+
+    Body: StatRequest (protobuf)
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc GetStats(StatRequest) returns (StatResponse)
+    ```
+  </Tab>
+</Tabs>
+
+**示例：**
+
+获取所有用户的统计信息：
+```protobuf
+StatRequest {
+  type: UsersStat,
+  reset: false
+}
+```
+
+获取特定用户的统计信息：
+```protobuf
+StatRequest {
+  name: "user@example.com",
+  type: UserStat,
+  reset: true  // Reset after retrieval
+}
+```
+
+**响应：**
+```protobuf
+message StatResponse {
+  repeated Stat stats;
+}
+
+message Stat {
+  string name;   // User email or tag
+  string type;   // Stat type
+  string link;   // Link identifier
+  int64 value;   // Traffic value in bytes
+}
+```
+
+---
+
+#### 获取用户在线统计
+
+获取用户的在线连接数。
+
+<Tabs items={['REST', 'gRPC']}>
+  <Tab value="REST">
+    ```http
+    GET /stats/user/online
+    Authorization: Bearer <api_key>
+    Content-Type: application/x-protobuf
+
+    Body: StatRequest (protobuf)
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc GetUserOnlineStats(StatRequest) returns (OnlineStatResponse)
+    ```
+  </Tab>
+</Tabs>
+
+**响应：**
+```protobuf
+message OnlineStatResponse {
+  string name;   // User email
+  int64 value;   // Online connection count
+}
+```
+
+---
+
+#### 获取用户在线 IP 列表
+
+获取在线用户连接的 IP 列表。
+
+<Tabs items={['REST', 'gRPC']}>
+  <Tab value="REST">
+    ```http
+    GET /stats/user/online_ip
+    Authorization: Bearer <api_key>
+    Content-Type: application/x-protobuf
+
+    Body: StatRequest (protobuf)
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc GetUserOnlineIpListStats(StatRequest) returns (StatsOnlineIpListResponse)
+    ```
+  </Tab>
+</Tabs>
 
 ---
 
@@ -265,11 +379,11 @@ message SystemStatsResponse {
 
 添加、更新或删除单个用户。
 
-<Tabs items={['REST', 'gRPC', 'cURL']}>
+<Tabs items={['REST', 'gRPC']}>
   <Tab value="REST">
     ```http
     PUT /user/sync
-    Authorization: Bearer <session_id>
+    Authorization: Bearer <api_key>
     Content-Type: application/x-protobuf
 
     Body: User (protobuf)
@@ -280,18 +394,37 @@ message SystemStatsResponse {
     rpc SyncUser(stream User) returns (Empty)
     ```
   </Tab>
-  <Tab value="cURL">
-    ```bash
-    curl -X PUT https://node:443/user/sync \
-      -H "Authorization: Bearer your-session-id" \
-      -H "Content-Type: application/x-protobuf" \
-      --data-binary @user.pb
+</Tabs>
+
+<Callout type="info">
+  要**删除**用户，请发送空的 inbounds 数组。gRPC 提供流式接口，但 REST 需要对每个用户进行单独调用。
+</Callout>
+
+---
+
+#### 同步多个用户
+
+用新集合替换所有用户。
+
+<Tabs items={['REST', 'gRPC']}>
+  <Tab value="REST">
+    ```http
+    PUT /users/sync
+    Authorization: Bearer <api_key>
+    Content-Type: application/x-protobuf
+
+    Body: Users (protobuf)
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ```
+    rpc SyncUsers(Users) returns (Empty)
     ```
   </Tab>
 </Tabs>
 
-<Callout type="info">
-  要**删除**用户，请发送空的入站数组。gRPC 提供流接口，但 REST 需要为每个用户单独调用。
+<Callout type="warn">
+  此方法将**删除所有旧用户**并用提供的列表替换它们。
 </Callout>
 
 ---
@@ -304,16 +437,25 @@ message SystemStatsResponse {
 |------|---------|
 | 200 | 成功 |
 | 400 | 错误请求 - 无效数据 |
-| 401 | 未授权 - 无效的 SESSION_ID |
+| 401 | 未授权 - 无效的 API_KEY |
 | 404 | 未找到 - 端点不存在 |
 | 500 | 内部服务器错误 |
+
+### 错误格式
+
+```json
+{
+  "error": "Error description",
+  "code": "ERROR_CODE"
+}
+```
 
 ---
 
 ## 速率限制
 
 目前没有内置的速率限制，但建议：
-- 尽可能批量处理用户更新
+- 尽可能批量更新用户
 - 在本地缓存统计信息
 - 避免过度轮询
 

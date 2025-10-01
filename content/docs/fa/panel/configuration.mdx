@@ -1,96 +1,154 @@
 ---
 title: پیکربندی
-description: پیکربندی پنل PasarGuard با متغیرهای محیطی و تنظیمات
+description: تنظیمات پنل PasarGuard با متغیرهای محیطی
 icon: Cog
 ---
 
-## بررسی اجمالی پیکربندی
+## یه نگاه کلی به پیکربندی
 
-پنل PasarGuard از طریق متغیرهای محیطی ذخیره شده در فایل `.env` واقع در `/opt/pasarguard/.env` پیکربندی می‌شود.
+پنل PasarGuard از طریق متغیرهای محیطی که توی فایل `.env` در مسیر `/opt/pasarguard/.env` ذخیره شدن، تنظیم میشه.
 
 ## متغیرهای محیطی
 
-### پیکربندی پایگاه داده
+### تنظیمات ادمین
 
-اتصال پایگاه داده خود را پیکربندی کنید:
+| متغیر | نوع | پیش‌فرض | توضیحات |
+|----------|------|---------|-------------|
+| `SUDO_USERNAME` | string | - | نام کاربری ادمین اصلی برای حساب کاربری اولیه |
+| `SUDO_PASSWORD` | string | - | رمز عبور ادمین اصلی برای حساب کاربری اولیه |
+
+<Callout type="warn">
+  `SUDO_USERNAME` و `SUDO_PASSWORD` فقط وقتی کار میکنن که حالت `DEBUG` فعال باشه. برای محیط واقعی (production)، از طریق TUI ادمین بسازید: `pasarguard tui`
+</Callout>
+
+### تنظیمات دیتابیس
+
+| متغیر | نوع | پیش‌فرض | توضیحات |
+|----------|------|---------|-------------|
+| `SQLALCHEMY_DATABASE_URL` | string | - | رشته اتصال به دیتابیس (SQLite، MySQL، MariaDB، PostgreSQL، TimescaleDB) |
+
+**مثال‌های URL دیتابیس:**
 
 ```bash
-# URL پایگاه داده
-# مثال SQLite:
-SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
+# TimescaleDB/PostgreSQL (پیش‌فرض)
+SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://user:password@localhost/pasarguard"
 
-# مثال MySQL:
+# MySQL/MariaDB
 SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://user:password@localhost/pasarguard"
 
-# مثال PostgreSQL:
-SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://user:password@localhost/pasarguard"
+# SQLite
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
 ```
 
-### پیکربندی UVICORN
+### وب سرور UVICORN
 
-رفتار وب سرور را کنترل کنید:
+| متغیر | نوع | پیش‌فرض | توضیحات |
+|----------|------|---------|-------------|
+| `UVICORN_HOST` | string | `0.0.0.0` | آدرس هاستی که وب سرور بهش وصل میشه |
+| `UVICORN_PORT` | int | `8000` | شماره پورت برای وب سرور |
+| `UVICORN_SSL_CERTFILE` | string | - | مسیر فایل گواهینامه SSL |
+| `UVICORN_SSL_KEYFILE` | string | - | مسیر فایل کلید خصوصی SSL |
+
+**مثال:**
 
 ```bash
-# میزبان و پورت
 UVICORN_HOST = "0.0.0.0"
 UVICORN_PORT = 8000
-
-# پیکربندی SSL
 UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
 UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
 ```
 
-### پیکربندی Xray
+### احراز هویت و امنیت
 
-هسته Xray را پیکربندی کنید:
+| متغیر | نوع | پیش‌فرض | توضیحات |
+|----------|------|---------|-------------|
+| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | int | `1440` | مدت انقضای توکن JWT به دقیقه (پیش‌فرض: 24 ساعت) |
+
+**مثال:**
 
 ```bash
-# مسیر فایل اجرایی Xray
-XRAY_EXECUTABLE_PATH = "/usr/local/bin/xray"
+# توکن بعد از 24 ساعت منقضی میشه
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 
-# دایرکتوری دارایی‌های Xray
-XRAY_ASSETS_PATH = "/usr/local/share/xray"
-
-# مسیر پیکربندی Xray
-XRAY_JSON = "/var/lib/pasarguard/xray_config.json"
+# توکن بعد از 7 روز منقضی میشه
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 10080
 ```
 
 ### تنظیمات پنل
 
-رفتار پنل را سفارشی کنید:
+| متغیر | نوع | پیش‌فرض | توضیحات |
+|----------|------|---------|-------------|
+| `DOCS` | bool | `false` | فعال/غیرفعال کردن صفحه مستندات API |
+| `DEBUG` | bool | `false` | فعال کردن حالت دیباگ برای لاگ‌های کامل |
+
+**مثال:**
 
 ```bash
-# کلید مخفی JWT برای احراز هویت
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
-
-# نقطه پایانی مستندات (برای غیرفعال کردن false تنظیم کنید)
 DOCS = true
-
-# حالت اشکال‌زدایی
 DEBUG = false
 ```
 
-### ربات تلگرام
+---
 
-یکپارچه‌سازی ربات تلگرام را پیکربندی کنید:
+## مثال کامل از پیکربندی
+
+### تنظیمات برای محیط واقعی (Production)
 
 ```bash
-# توکن ربات تلگرام
-TELEGRAM_API_TOKEN = "YOUR_BOT_TOKEN"
+# تنظیمات ادمین
+SUDO_USERNAME = "admin"
+SUDO_PASSWORD = "your-secure-password"
 
-# شناسه چت مدیران (جدا شده با کاما)
-TELEGRAM_ADMIN_ID = "123456789,987654321"
+# دیتابیس (TimescaleDB توصیه میشه)
+SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:password@localhost/pasarguard"
+
+# وب سرور
+UVICORN_HOST = "0.0.0.0"
+UVICORN_PORT = 8000
+UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
+UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
+
+# امنیت
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
+
+# تنظیمات پنل
+DOCS = false
+DEBUG = false
 ```
+
+### تنظیمات برای محیط توسعه/تست
+
+```bash
+# تنظیمات ادمین
+SUDO_USERNAME = "admin"
+SUDO_PASSWORD = "admin123"
+
+# دیتابیس (SQLite برای تست)
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
+
+# وب سرور
+UVICORN_HOST = "127.0.0.1"
+UVICORN_PORT = 8000
+
+# امنیت
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
+
+# تنظیمات پنل
+DOCS = true
+DEBUG = true
+```
+
+---
 
 ## مدیریت پیکربندی
 
-### مشاهده پیکربندی فعلی
+### مشاهده تنظیمات فعلی
 
 ```bash
 cat /opt/pasarguard/.env
 ```
 
-### ویرایش پیکربندی
+### ویرایش تنظیمات
 
 ```bash
 sudo nano /opt/pasarguard/.env
@@ -98,31 +156,72 @@ sudo nano /opt/pasarguard/.env
 
 ### اعمال تغییرات
 
-پس از تغییر پیکربندی، پنل را راه‌اندازی مجدد کنید:
+بعد از تغییر تنظیمات، پنل رو ری‌استارت کنید:
 
 ```bash
 pasarguard restart
 ```
 
-## پیکربندی پیشرفته
+### بررسی تنظیمات
 
-### پیکربندی سفارشی Xray
-
-می‌توانید تنظیمات Xray را با ویرایش فایل پیکربندی سفارشی کنید:
+چک کنید که سرویس درست کار میکنه:
 
 ```bash
-sudo nano /var/lib/pasarguard/xray_config.json
+pasarguard status
 ```
 
-<Callout type="warn">
-  **هشدار:** پیکربندی نادرست Xray ممکن است باعث خرابی سرویس شود. همیشه قبل از انجام تغییرات از پیکربندی خود نسخه پشتیبان تهیه کنید.
-</Callout>
+لاگ‌ها رو ببینید اگه مشکلی هست:
 
-### راه‌اندازی چند نودی
+```bash
+pasarguard logs
+```
 
-برای پیکربندی چندین نود، باید:
+---
 
-1. هر نود را با اعتبارنامه‌های API مناسب پیکربندی کنید
-2. جزئیات اتصال نود را در رابط پنل اضافه کنید
-3. اطمینان حاصل کنید که اتصال شبکه بین پنل و نودها برقرار است
+## راه‌اندازی چند نود
 
+برای تنظیم چندین نود:
+
+1. **روی هر سرور، PasarGuard Node رو نصب و تنظیم کنید** (نگاه کنید به [نصب نود](/node/installation))
+
+2. **اعتبارنامه‌های API نود رو روی هر سرور نود تنظیم کنید**
+
+3. **نودها رو توی رابط پنل اضافه کنید:**
+   - برید به بخش نودها در داشبورد
+   - روی "اضافه کردن نود" کلیک کنید
+   - جزئیات اتصال نود رو وارد کنید (آدرس، پورت، API key و...)
+   - اتصال رو چک کنید
+---
+
+## نکات امنیتی
+
+### محافظت از اطلاعات دیتابیس
+
+از رمزهای عبور قوی برای اتصال به دیتابیس استفاده کنید:
+
+```bash
+# ساخت رمز عبور امن
+openssl rand -base64 32
+```
+
+### استفاده از گواهینامه SSL
+
+همیشه توی محیط واقعی از گواهینامه‌های SSL معتبر استفاده کنید:
+
+```bash
+# استفاده از Let's Encrypt
+sudo certbot certonly --standalone -d your-domain.com
+
+# آپدیت .env
+UVICORN_SSL_CERTFILE = "/etc/letsencrypt/live/your-domain.com/fullchain.pem"
+UVICORN_SSL_KEYFILE = "/etc/letsencrypt/live/your-domain.com/privkey.pem"
+```
+
+### غیرفعال کردن حالت دیباگ در محیط واقعی
+
+```bash
+DEBUG = false
+DOCS = false
+```
+
+---

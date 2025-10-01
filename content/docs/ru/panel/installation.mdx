@@ -4,6 +4,15 @@ description: Инструкции по установке PasarGuard.
 icon: Download
 ---
 
+## Варианты установки
+
+PasarGuard Panel поддерживает несколько бэкендов баз данных:
+
+- **TimescaleDB** - Оптимизирован для данных временных рядов и аналитики (**Рекомендуется**)
+- **PostgreSQL** - Продвинутые функции и масштабируемость
+- **MariaDB** - Открытая альтернатива MySQL
+- **MySQL** - Идеально для производственных сред
+- **SQLite** - Идеально для небольших развертываний и тестирования
 
 ### Установка PasarGuard
 
@@ -11,33 +20,30 @@ icon: Download
   Следующие команды установят предварительные версии (альфа/бета)
 </Alert>
 
-<Tabs items={['SQLite', 'MySQL', 'MariaDB', 'PostgreSQL']}>
-  <Tab value="SQLite">
-    ### Установка SQLite
-
+<Tabs items={['TimescaleDB (Recommended)', 'PostgreSQL', 'MySQL', 'MariaDB', 'SQLite']}>
+  <Tab value="TimescaleDB (Recommended)">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --pre-release
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database timescaledb --pre-release
+    ```
+  </Tab>
+  <Tab value="PostgreSQL">
+    ```bash
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database postgresql --pre-release
     ```
   </Tab>
   <Tab value="MySQL">
-    ### Установка MySQL
-
     ```bash
     sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mysql --pre-release
     ```
   </Tab>
   <Tab value="MariaDB">
-    ### Установка MariaDB
-
     ```bash
     sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mariadb --pre-release
     ```
   </Tab>
-  <Tab value="PostgreSQL">
-    ### Установка PostgreSQL
-
+  <Tab value="SQLite">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database postgresql --pre-release
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --pre-release
     ```
   </Tab>
 </Tabs>
@@ -51,7 +57,7 @@ icon: Download
 -   Файл конфигурации можно найти в `/opt/pasarguard/.env` (обратитесь к разделу [конфигурации](#configuration) для просмотра переменных)
 -   Файлы данных будут размещены в `/var/lib/pasarguard`
 -   По соображениям безопасности, панель управления PasarGuard недоступна по IP-адресу. Поэтому вы должны [получить SSL-сертификат](https://PasarGuard.github.io/PasarGuard/en/examples/issue-ssl-certificate) и получить доступ к панели управления PasarGuard, открыв веб-браузер и перейдя по адресу `https://YOUR_DOMAIN:8000/dashboard/` (замените YOUR_DOMAIN на ваш фактический домен)
--   Вы также можете использовать SSH port forwarding для доступа к панели управления PasarGuard локально без домена. Замените `user@serverip` на ваше фактическое имя пользователя SSH и IP-адрес сервера и выполните команду ниже:
+-   Вы также можете использовать переадресацию портов SSH для доступа к панели управления PasarGuard локально без домена. Замените `user@serverip` на ваше фактическое имя пользователя SSH и IP-адрес сервера и выполните команду ниже:
 
 ```bash
 ssh -L 8000:localhost:8000 user@serverip
@@ -68,14 +74,13 @@ http://localhost:8000/dashboard/
 Далее вам нужно создать sudo администратора для входа в панель управления PasarGuard с помощью следующей команды
 
 ```bash
-pasarguard cli admin create --sudo
+pasarguard tui
 ```
 
-Всё! Вы можете войти в панель управления, используя эти учетные данные
+Вот и всё! Вы можете войти в панель управления, используя эти учетные данные
 
 Чтобы увидеть справочное сообщение скрипта PasarGuard, выполните следующую команду
 
 ```bash
 pasarguard --help
 ```
-

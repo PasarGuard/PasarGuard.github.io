@@ -1,12 +1,10 @@
 ---
 title: Официальные библиотеки
-description: Официальные библиотеки Go и Python для интеграции с нодом PasarGuard
+description: Официальные библиотеки Go и Python для интеграции с PasarGuard Node
 icon: Library
 ---
 
-## Обзор
-
-PasarGuard предоставляет официальные библиотеки для упрощения интеграции с нодом. Эти библиотеки обрабатывают аутентификацию, сериализацию и предоставляют типобезопасные интерфейсы для всех операций API.
+PasarGuard предоставляет официальные библиотеки для упрощения интеграции с Node. Эти библиотеки обрабатывают аутентификацию, сериализацию и предоставляют типобезопасные интерфейсы для всех операций API.
 
 ---
 
@@ -14,7 +12,7 @@ PasarGuard предоставляет официальные библиотек�
 
 ### node-bridge
 
-Официальная библиотека Go для бесшовной интеграции с нодом PasarGuard.
+Официальная библиотека Go для бесшовной интеграции с PasarGuard Node.
 
 **Репозиторий:** [PasarGuard/node_bridge](https://github.com/PasarGuard/node_bridge)
 
@@ -32,29 +30,9 @@ package main
 import (
     "context"
     "log"
-    
-    "github.com/PasarGuard/node_bridge"
+
+    bridge "github.com/PasarGuard/node_bridge"
 )
-
-func main() {
-    // Создать новый клиент
-    client, err := nodebridge.NewClient(
-        "https://your-node:443",
-        "your-session-id",
-    )
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer client.Close()
-
-    // Получить информацию о ноде
-    info, err := client.GetBaseInfo(context.Background())
-    if err != nil {
-        log.Fatal(err)
-    }
-    
-    log.Printf("Версия нода: %s, Запущен: %v", info.Version, info.Running)
-}
 ```
 
 ### Примеры
@@ -128,13 +106,117 @@ user.Inbounds = []string{}
 err = client.SyncUser(context.Background(), user)
 ```
 
+#### Получение статистики
+
+```go
+// Получить статистику всех пользователей
+statsReq := &pb.StatRequest{
+    Type: pb.StatType_UsersStat,
+    Reset: false,
+}
+
+stats, err := client.GetStats(context.Background(), statsReq)
+if err != nil {
+    log.Fatal(err)
+}
+
+for _, stat := range stats.Stats {
+    log.Printf("Пользователь: %s, Трафик: %d байт", stat.Name, stat.Value)
+}
+
+// Получить статистику конкретного пользователя и сбросить
+userStatsReq := &pb.StatRequest{
+    Name: "user@example.com",
+    Type: pb.StatType_UserStat,
+    Reset: true,
+}
+
+userStats, err := client.GetStats(context.Background(), userStatsReq)
+```
+
+#### Потоковая передача логов
+
+```go
+ctx := context.Background()
+logStream, err := client.GetLogs(ctx)
+if err != nil {
+    log.Fatal(err)
+}
+
+for {
+    logMsg, err := logStream.Recv()
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    log.Printf("Лог бэкенда: %s", logMsg.Detail)
+}
+```
+
+#### Получение системной статистики
+
+```go
+sysStats, err := client.GetSystemStats(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+
+log.Printf("Использование CPU: %.2f%%", sysStats.CpuUsage)
+log.Printf("Память: %d/%d MB",
+    sysStats.MemUsed/1024/1024,
+    sysStats.MemTotal/1024/1024)
+```
+
+### Расширенное использование
+
+#### Использование gRPC
+
+```go
+client, err := nodebridge.NewGRPCClient(
+    "node:50051",
+    "session-id",
+    grpc.WithTransportCredentials(...),
+)
+```
+
+#### Контекст с таймаутом
+
+```go
+ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+defer cancel()
+
+info, err := client.GetBaseInfo(ctx)
+```
+
+#### Обработка ошибок
+
+```go
+import "google.golang.org/grpc/codes"
+import "google.golang.org/grpc/status"
+
+info, err := client.GetBaseInfo(ctx)
+if err != nil {
+    st, ok := status.FromError(err)
+    if ok {
+        switch st.Code() {
+        case codes.Unauthenticated:
+            log.Println("Неверный session ID")
+        case codes.Unavailable:
+            log.Println("Нода недоступна")
+        default:
+            log.Printf("Ошибка: %v", st.Message())
+        }
+    }
+}
+```
+
 ---
 
 ## Библиотека Python
 
 ### node-bridge-py
 
-Официальная библиотека Python для интеграции с нодом PasarGuard.
+Официальная библиотека Python для интеграции с PasarGuard Node.
 
 **Репозиторий:** [PasarGuard/node-bridge-py](https://github.com/PasarGuard/node-bridge-py)
 
@@ -213,6 +295,112 @@ user.inbounds = []
 client.sync_user(user)
 ```
 
+#### Получение статистики
+
+```python
+from pasarguard_node_bridge import StatRequest, StatType
+
+# Получить статистику всех пользователей
+stats_req = StatRequest(
+    type=StatType.USERS_STAT,
+    reset=False
+)
+
+stats = client.get_stats(stats_req)
+for stat in stats.stats:
+    print(f"Пользователь: {stat.name}, Трафик: {stat.value} байт")
+
+# Получить статистику конкретного пользователя
+user_stats_req = StatRequest(
+    name="user@example.com",
+    type=StatType.USER_STAT,
+    reset=True
+)
+
+user_stats = client.get_stats(user_stats_req)
+```
+
+#### Потоковая передача логов
+
+```python
+# Потоковая передача логов в реальном времени
+for log in client.get_logs():
+    print(f"Лог бэкенда: {log.detail}")
+```
+
+#### Получение системной статистики
+
+```python
+sys_stats = client.get_system_stats()
+
+print(f"Использование CPU: {sys_stats.cpu_usage:.2f}%")
+print(f"Память: {sys_stats.mem_used/1024/1024}/{sys_stats.mem_total/1024/1024} MB")
+print(f"Загрузка: {sys_stats.incoming_bandwidth_speed/1024/1024:.2f} MB/s")
+print(f"Выгрузка: {sys_stats.outgoing_bandwidth_speed/1024/1024:.2f} MB/s")
+```
+
+#### Получение онлайн пользователей
+
+```python
+online_req = StatRequest(
+    name="user@example.com",
+    type=StatType.USER_STAT
+)
+
+online_stats = client.get_user_online_stats(online_req)
+print(f"У пользователя {online_stats.value} активных подключений")
+
+# Получить список IP
+ip_list = client.get_user_online_ip_list(online_req)
+for ip, count in ip_list.value.items():
+    print(f"IP: {ip}, Подключений: {count}")
+```
+
+### Расширенное использование
+
+#### Поддержка асинхронности
+
+```python
+from pasarguard_node_bridge import AsyncNodeClient
+
+async def main():
+    client = AsyncNodeClient("https://node:443", "session-id")
+
+    info = await client.get_base_info()
+    print(info)
+
+    await client.close()
+
+# Запуск с asyncio
+import asyncio
+asyncio.run(main())
+```
+
+#### Обработка ошибок
+
+```python
+from pasarguard_node_bridge import NodeError, AuthenticationError
+
+try:
+    info = client.get_base_info()
+except AuthenticationError:
+    print("Неверный session ID")
+except NodeError as e:
+    print(f"Ошибка ноды: {e}")
+except Exception as e:
+    print(f"Неожиданная ошибка: {e}")
+```
+
+#### Использование gRPC
+
+```python
+client = NodeClient(
+    url="node:50051",
+    session_id="session-id",
+    use_grpc=True
+)
+```
+
 ---
 
 ## Лучшие практики
@@ -249,4 +437,13 @@ client.close()
 2. **Пакетные операции** - Используйте `SyncUsers` для обновления нескольких пользователей
 3. **Кэшируйте статистику** - Не опрашивайте статистику слишком часто
 4. **Используйте потоковую передачу** - Для логов используйте потоковую передачу вместо опросов
+
+---
+
+## Примеры и руководства
+
+Ознакомьтесь с полными примерами в репозиториях библиотек:
+
+- **Примеры Go:** [github.com/PasarGuard/node_bridge/examples](https://github.com/PasarGuard/node_bridge/tree/main/examples)
+- **Примеры Python:** [github.com/PasarGuard/node-bridge-py/examples](https://github.com/PasarGuard/node-bridge-py/tree/main/examples)
 

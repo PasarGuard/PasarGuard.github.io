@@ -23,6 +23,8 @@ icon: ArrowRightLeft
 
 Сначала остановите все запущенные контейнеры Marzban:
 
+#### Команды остановки сервиса
+
 ```bash
 cd /opt/marzban
 docker compose down
@@ -32,6 +34,8 @@ docker compose down
 
 Измените название основной директории Marzban на PasarGuard:
 
+#### Команда переименования директории
+
 ```bash
 sudo mv /opt/marzban /opt/pasarguard
 ```
@@ -40,6 +44,8 @@ sudo mv /opt/marzban /opt/pasarguard
 
 Также измените название директории данных:
 
+#### Команда переименования директории данных
+
 ```bash
 sudo mv /var/lib/marzban /var/lib/pasarguard
 ```
@@ -47,6 +53,8 @@ sudo mv /var/lib/marzban /var/lib/pasarguard
 ### 4. Переименуйте директорию MySQL (если используется)
 
 Если вы используете MySQL и у вас есть выделенная директория для базы данных Marzban:
+
+#### Команда переименования директории MySQL
 
 ```bash
 sudo mv /var/lib/mysql/marzban /var/lib/mysql/pasarguard
@@ -211,6 +219,8 @@ services:
 
 Убедитесь, что у вас есть необходимые права для новых директорий:
 
+#### Команды обновления прав доступа
+
 ```bash
 sudo chown -R $USER:$USER /opt/pasarguard
 sudo chmod -R 755 /opt/pasarguard
@@ -219,6 +229,8 @@ sudo chmod -R 755 /opt/pasarguard
 ### 8. Установите скрипт управления PasarGuard
 
 Установите скрипт управления PasarGuard для более удобного управления:
+
+#### Команда установки скрипта
 
 ```bash
 sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install-script
@@ -230,6 +242,8 @@ sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasargua
 
 Теперь запустите PasarGuard с новой конфигурацией:
 
+#### Команда запуска
+
 ```bash
 pasarguard up
 ```
@@ -237,6 +251,8 @@ pasarguard up
 ### 10. Проверьте миграцию
 
 Проверьте, что все сервисы работают правильно:
+
+#### Команды проверки
 
 ```bash
 pasarguard status

@@ -1,12 +1,10 @@
 ---
 title: 官方库
-description: 用于 PasarGuard 节点集成的官方 Go 和 Python 库
+description: 用于 PasarGuard Node 集成的官方 Go 和 Python 库
 icon: Library
 ---
 
-## 概述
-
-PasarGuard 提供官方库以简化与节点的集成。这些库处理身份验证、序列化，并为所有 API 操作提供类型安全的接口。
+PasarGuard 提供官方库以简化与 Node 的集成。这些库处理身份验证、序列化，并为所有 API 操作提供类型安全的接口。
 
 ---
 
@@ -14,7 +12,7 @@ PasarGuard 提供官方库以简化与节点的集成。这些库处理身份验
 
 ### node-bridge
 
-用于无缝 PasarGuard 节点集成的官方 Go 库。
+用于无缝 PasarGuard Node 集成的官方 Go 库。
 
 **仓库：** [PasarGuard/node_bridge](https://github.com/PasarGuard/node_bridge)
 
@@ -32,29 +30,9 @@ package main
 import (
     "context"
     "log"
-    
-    "github.com/PasarGuard/node_bridge"
+
+    bridge "github.com/PasarGuard/node_bridge"
 )
-
-func main() {
-    // 创建新客户端
-    client, err := nodebridge.NewClient(
-        "https://your-node:443",
-        "your-session-id",
-    )
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer client.Close()
-
-    // 获取节点信息
-    info, err := client.GetBaseInfo(context.Background())
-    if err != nil {
-        log.Fatal(err)
-    }
-    
-    log.Printf("节点版本: %s, 运行中: %v", info.Version, info.Running)
-}
 ```
 
 ### 示例
@@ -128,13 +106,117 @@ user.Inbounds = []string{}
 err = client.SyncUser(context.Background(), user)
 ```
 
+#### 获取统计
+
+```go
+// 获取所有用户的统计
+statsReq := &pb.StatRequest{
+    Type: pb.StatType_UsersStat,
+    Reset: false,
+}
+
+stats, err := client.GetStats(context.Background(), statsReq)
+if err != nil {
+    log.Fatal(err)
+}
+
+for _, stat := range stats.Stats {
+    log.Printf("用户: %s, 流量: %d 字节", stat.Name, stat.Value)
+}
+
+// 获取特定用户的统计并重置
+userStatsReq := &pb.StatRequest{
+    Name: "user@example.com",
+    Type: pb.StatType_UserStat,
+    Reset: true,
+}
+
+userStats, err := client.GetStats(context.Background(), userStatsReq)
+```
+
+#### 流式传输日志
+
+```go
+ctx := context.Background()
+logStream, err := client.GetLogs(ctx)
+if err != nil {
+    log.Fatal(err)
+}
+
+for {
+    logMsg, err := logStream.Recv()
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    log.Printf("后端日志: %s", logMsg.Detail)
+}
+```
+
+#### 获取系统统计
+
+```go
+sysStats, err := client.GetSystemStats(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+
+log.Printf("CPU 使用率: %.2f%%", sysStats.CpuUsage)
+log.Printf("内存: %d/%d MB",
+    sysStats.MemUsed/1024/1024,
+    sysStats.MemTotal/1024/1024)
+```
+
+### 高级用法
+
+#### 使用 gRPC
+
+```go
+client, err := nodebridge.NewGRPCClient(
+    "node:50051",
+    "session-id",
+    grpc.WithTransportCredentials(...),
+)
+```
+
+#### 带超时的上下文
+
+```go
+ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+defer cancel()
+
+info, err := client.GetBaseInfo(ctx)
+```
+
+#### 错误处理
+
+```go
+import "google.golang.org/grpc/codes"
+import "google.golang.org/grpc/status"
+
+info, err := client.GetBaseInfo(ctx)
+if err != nil {
+    st, ok := status.FromError(err)
+    if ok {
+        switch st.Code() {
+        case codes.Unauthenticated:
+            log.Println("无效的 session ID")
+        case codes.Unavailable:
+            log.Println("节点不可用")
+        default:
+            log.Printf("错误: %v", st.Message())
+        }
+    }
+}
+```
+
 ---
 
 ## Python 库
 
 ### node-bridge-py
 
-用于 PasarGuard 节点集成的官方 Python 库。
+用于 PasarGuard Node 集成的官方 Python 库。
 
 **仓库：** [PasarGuard/node-bridge-py](https://github.com/PasarGuard/node-bridge-py)
 
@@ -213,6 +295,112 @@ user.inbounds = []
 client.sync_user(user)
 ```
 
+#### 获取统计
+
+```python
+from pasarguard_node_bridge import StatRequest, StatType
+
+# 获取所有用户的统计
+stats_req = StatRequest(
+    type=StatType.USERS_STAT,
+    reset=False
+)
+
+stats = client.get_stats(stats_req)
+for stat in stats.stats:
+    print(f"用户: {stat.name}, 流量: {stat.value} 字节")
+
+# 获取特定用户的统计
+user_stats_req = StatRequest(
+    name="user@example.com",
+    type=StatType.USER_STAT,
+    reset=True
+)
+
+user_stats = client.get_stats(user_stats_req)
+```
+
+#### 流式传输日志
+
+```python
+# 实时流式传输日志
+for log in client.get_logs():
+    print(f"后端日志: {log.detail}")
+```
+
+#### 获取系统统计
+
+```python
+sys_stats = client.get_system_stats()
+
+print(f"CPU 使用率: {sys_stats.cpu_usage:.2f}%")
+print(f"内存: {sys_stats.mem_used/1024/1024}/{sys_stats.mem_total/1024/1024} MB")
+print(f"下载: {sys_stats.incoming_bandwidth_speed/1024/1024:.2f} MB/s")
+print(f"上传: {sys_stats.outgoing_bandwidth_speed/1024/1024:.2f} MB/s")
+```
+
+#### 获取在线用户
+
+```python
+online_req = StatRequest(
+    name="user@example.com",
+    type=StatType.USER_STAT
+)
+
+online_stats = client.get_user_online_stats(online_req)
+print(f"用户有 {online_stats.value} 个活动连接")
+
+# 获取 IP 列表
+ip_list = client.get_user_online_ip_list(online_req)
+for ip, count in ip_list.value.items():
+    print(f"IP: {ip}, 连接数: {count}")
+```
+
+### 高级用法
+
+#### 异步支持
+
+```python
+from pasarguard_node_bridge import AsyncNodeClient
+
+async def main():
+    client = AsyncNodeClient("https://node:443", "session-id")
+
+    info = await client.get_base_info()
+    print(info)
+
+    await client.close()
+
+# 使用 asyncio 运行
+import asyncio
+asyncio.run(main())
+```
+
+#### 错误处理
+
+```python
+from pasarguard_node_bridge import NodeError, AuthenticationError
+
+try:
+    info = client.get_base_info()
+except AuthenticationError:
+    print("无效的 session ID")
+except NodeError as e:
+    print(f"节点错误: {e}")
+except Exception as e:
+    print(f"意外错误: {e}")
+```
+
+#### 使用 gRPC
+
+```python
+client = NodeClient(
+    url="node:50051",
+    session_id="session-id",
+    use_grpc=True
+)
+```
+
 ---
 
 ## 最佳实践
@@ -249,4 +437,13 @@ client.close()
 2. **批量操作** - 使用 `SyncUsers` 进行多个用户更新
 3. **缓存统计** - 不要过于频繁地轮询统计信息
 4. **使用流式传输** - 对于日志，使用流式传输而不是轮询
+
+---
+
+## 示例和教程
+
+在库仓库中查看完整示例：
+
+- **Go 示例：** [github.com/PasarGuard/node_bridge/examples](https://github.com/PasarGuard/node_bridge/tree/main/examples)
+- **Python 示例：** [github.com/PasarGuard/node-bridge-py/examples](https://github.com/PasarGuard/node-bridge-py/tree/main/examples)
 

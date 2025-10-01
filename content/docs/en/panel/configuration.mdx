@@ -10,77 +10,135 @@ PasarGuard Panel is configured through environment variables stored in the `.env
 
 ## Environment Variables
 
+### Admin Configuration
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `SUDO_USERNAME` | string | - | Superuser's username for initial admin account |
+| `SUDO_PASSWORD` | string | - | Superuser's password for initial admin account |
+
+<Callout type="warn">
+  `SUDO_USERNAME` and `SUDO_PASSWORD` only work when `DEBUG` mode is enabled. For production, create admin users using the TUI: `pasarguard tui`
+</Callout>
+
 ### Database Configuration
 
-Configure your database connection:
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `SQLALCHEMY_DATABASE_URL` | string | - | Database connection string (SQLite, MySQL, MariaDB, PostgreSQL, TimescaleDB) |
+
+**Database URL Examples:**
 
 ```bash
-# Database URL
-# SQLite example:
-SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
+# TimescaleDB/PostgreSQL (default)
+SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://user:password@localhost/pasarguard"
 
-# MySQL example:
+# MySQL/MariaDB
 SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://user:password@localhost/pasarguard"
 
-# PostgreSQL example:
-SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://user:password@localhost/pasarguard"
+# SQLite 
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
 ```
 
-### UVICORN Configuration
+### UVICORN Web Server
 
-Control the web server behavior:
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `UVICORN_HOST` | string | `0.0.0.0` | Host address to bind the web server |
+| `UVICORN_PORT` | int | `8000` | Port number for the web server |
+| `UVICORN_SSL_CERTFILE` | string | - | Path to SSL certificate file |
+| `UVICORN_SSL_KEYFILE` | string | - | Path to SSL private key file |
+
+**Example:**
 
 ```bash
-# Host and port
 UVICORN_HOST = "0.0.0.0"
 UVICORN_PORT = 8000
-
-# SSL configuration
 UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
 UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
 ```
 
-### Xray Configuration
+### Authentication & Security
 
-Configure the Xray core:
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | int | `1440` | JWT token expiration time in minutes (default: 24 hours) |
+
+**Example:**
 
 ```bash
-# Xray executable path
-XRAY_EXECUTABLE_PATH = "/usr/local/bin/xray"
+# Token expires after 24 hours
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 
-# Xray assets directory
-XRAY_ASSETS_PATH = "/usr/local/share/xray"
-
-# Xray configuration path
-XRAY_JSON = "/var/lib/pasarguard/xray_config.json"
+# Token expires after 7 days
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 10080
 ```
 
 ### Panel Settings
 
-Customize panel behavior:
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `DOCS` | bool | `false` | Enable/disable API documentation endpoint |
+| `DEBUG` | bool | `false` | Enable debug mode for verbose logging |
+
+**Example:**
 
 ```bash
-# JWT secret key for authentication
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
-
-# Docs endpoint (set to false to disable)
 DOCS = true
-
-# Debug mode
 DEBUG = false
 ```
 
-### Telegram Bot
+---
 
-Configure Telegram bot integration:
+## Complete Configuration Example
+
+### Production Setup
 
 ```bash
-# Telegram bot token
-TELEGRAM_API_TOKEN = "YOUR_BOT_TOKEN"
+# Admin Configuration
+SUDO_USERNAME = "admin"
+SUDO_PASSWORD = "your-secure-password"
 
-# Admin chat IDs (comma separated)
-TELEGRAM_ADMIN_ID = "123456789,987654321"
+# Database (TimescaleDB recommended)
+SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:password@localhost/pasarguard"
+
+# Web Server
+UVICORN_HOST = "0.0.0.0"
+UVICORN_PORT = 8000
+UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
+UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
+
+# Security
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
+
+# Panel Settings
+DOCS = false
+DEBUG = false
 ```
+
+### Development/Testing Setup
+
+```bash
+# Admin Configuration
+SUDO_USERNAME = "admin"
+SUDO_PASSWORD = "admin123"
+
+# Database (SQLite for testing)
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
+
+# Web Server
+UVICORN_HOST = "127.0.0.1"
+UVICORN_PORT = 8000
+
+# Security
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
+
+# Panel Settings
+DOCS = true
+DEBUG = true
+```
+
+---
 
 ## Configuration Management
 
@@ -104,24 +162,66 @@ After modifying configuration, restart the panel:
 pasarguard restart
 ```
 
-## Advanced Configuration
+### Verify Configuration
 
-### Custom Xray Configuration
-
-You can customize Xray settings by editing the configuration file:
+Check if the service is running correctly:
 
 ```bash
-sudo nano /var/lib/pasarguard/xray_config.json
+pasarguard status
 ```
 
-<Callout type="warn">
-  **Warning:** Incorrect Xray configuration may cause the service to fail. Always backup your configuration before making changes.
-</Callout>
+View logs to troubleshoot issues:
 
-### Multi-Node Setup
+```bash
+pasarguard logs
+```
 
-To configure multiple nodes, you'll need to:
+---
 
-1. Configure each node with proper API credentials
-2. Add node connection details in the panel interface
-3. Ensure network connectivity between panel and nodes
+## Multi-Node Setup
+
+To configure multiple nodes:
+
+1. **Install and configure PasarGuard Node** on each server (see [Node Installation](/node/installation))
+
+2. **Configure node API credentials** on each node server
+
+3. **Add nodes in the panel interface:**
+   - Navigate to the Nodes section in the dashboard
+   - Click "Add Node"
+   - Enter node connection details (address, port, API key, etc.)
+   - Check the connection
+---
+
+## Security Best Practices
+
+### Secure Database Credentials
+
+Use strong passwords for database connections:
+
+```bash
+# Generate secure password
+openssl rand -base64 32
+```
+
+### Use SSL Certificates
+
+Always use valid SSL certificates in production:
+
+```bash
+# Using Let's Encrypt
+sudo certbot certonly --standalone -d your-domain.com
+
+# Update .env
+UVICORN_SSL_CERTFILE = "/etc/letsencrypt/live/your-domain.com/fullchain.pem"
+UVICORN_SSL_KEYFILE = "/etc/letsencrypt/live/your-domain.com/privkey.pem"
+```
+
+### Disable Debug Mode in Production
+
+```bash
+DEBUG = false
+DOCS = false
+```
+
+---

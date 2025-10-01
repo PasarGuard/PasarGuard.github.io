@@ -14,7 +14,6 @@ PasarGuard Panel provides a modern web interface for managing your proxy infrast
 
 Create and manage proxy users through the intuitive interface:
 
-- **Single Protocol**: Create users with one protocol (VMess, VLESS, Trojan, Shadowsocks)
 - **Multi Protocol**: Assign multiple protocols to a single user
 - **Traffic Limits**: Set data transfer limits per user
 - **Expiry Dates**: Configure subscription expiration dates
@@ -37,6 +36,8 @@ PasarGuard generates subscription links compatible with popular clients:
 - **V2Ray**: Standard V2Ray subscription format
 - **Clash**: Clash configuration format
 - **ClashMeta**: Enhanced Clash format with additional features
+- **Sing-Box**: Sing-Box compatible json configuration
+- **Outline**: Outline compatible links (Supports Only Shadowsocks)
 
 ### QR Codes
 
@@ -54,7 +55,6 @@ Distribute your infrastructure across multiple servers:
 
 - **Load Distribution**: Balance traffic across nodes
 - **Geographic Distribution**: Place nodes in different locations
-- **Redundancy**: Backup nodes for high availability
 
 ### Node Monitoring
 
@@ -99,10 +99,8 @@ Integrate with Telegram for notifications and management:
 Command-line interface for automation:
 
 ```bash
-# User management
-pasarguard cli user create
-pasarguard cli user list
-pasarguard cli user delete
+# Admin Terminal User Interface
+pasarguard tui
 
 # Admin management
 pasarguard cli admin create --sudo
@@ -120,35 +118,8 @@ pasarguard update
 
 Secure connections with TLS:
 
-- **Automatic Certificates**: Built-in certificate management
 - **Custom Certificates**: Use your own SSL certificates
 - **SNI Configuration**: Server Name Indication support
-
-### REALITY Protocol
-
-Advanced censorship resistance:
-
-- **Traffic Camouflage**: Disguise proxy traffic
-- **Enhanced Privacy**: Improved security features
-- **Fingerprint Resistance**: Avoid detection
-
-## Configuration Options
-
-### Inbound Settings
-
-Customize inbound connections:
-
-- **Port Configuration**: Define listening ports
-- **Protocol Settings**: Configure protocol-specific options
-- **Security Options**: TLS and security settings
-
-### Routing Rules
-
-Advanced traffic routing:
-
-- **Domain Routing**: Route based on domain names
-- **IP Routing**: Direct traffic based on IP addresses
-- **Custom Rules**: Create complex routing logic
 
 <Cards>
   <Card title="Installation" href="/panel/installation">
@@ -159,19 +130,3 @@ Advanced traffic routing:
     Configure environment variables and settings
   </Card>
 </Cards>
-
-## Best Practices
-
-### Regular Maintenance
-
-- **Backup Database**: Regular database backups
-- **Update Panel**: Keep software up to date
-- **Monitor Logs**: Check logs for issues
-- **Review Users**: Audit user accounts periodically
-
-### Performance Optimization
-
-- **Resource Planning**: Allocate adequate resources
-- **Database Tuning**: Optimize database performance
-- **Node Distribution**: Balance load across nodes
-- **Traffic Monitoring**: Track and analyze usage patterns

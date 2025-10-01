@@ -4,8 +4,6 @@ description: Official Go and Python libraries for PasarGuard Node integration
 icon: Library
 ---
 
-## Overview
-
 PasarGuard provides official libraries to simplify integration with the Node. These libraries handle authentication, serialization, and provide type-safe interfaces for all API operations.
 
 ---
@@ -33,28 +31,8 @@ import (
     "context"
     "log"
     
-    "github.com/PasarGuard/node_bridge"
+    bridge "github.com/PasarGuard/node_bridge"
 )
-
-func main() {
-    // Create a new client
-    client, err := nodebridge.NewClient(
-        "https://your-node:443",
-        "your-session-id",
-    )
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer client.Close()
-
-    // Get node info
-    info, err := client.GetBaseInfo(context.Background())
-    if err != nil {
-        log.Fatal(err)
-    }
-    
-    log.Printf("Node version: %s, Running: %v", info.Version, info.Running)
-}
 ```
 
 ### Examples

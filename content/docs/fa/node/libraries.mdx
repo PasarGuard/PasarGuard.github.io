@@ -1,12 +1,10 @@
 ---
 title: کتابخانه‌های رسمی
-description: کتابخانه‌های رسمی Go و Python برای یکپارچه‌سازی با نود PasarGuard
+description: کتابخانه‌های رسمی Go و Python برای اتصال به PasarGuard Node
 icon: Library
 ---
 
-## بررسی اجمالی
-
-PasarGuard کتابخانه‌های رسمی را برای ساده‌سازی یکپارچه‌سازی با نود فراهم می‌کند. این کتابخانه‌ها احراز هویت، سریال‌سازی را مدیریت می‌کنند و رابط‌های type-safe برای تمام عملیات API فراهم می‌کنند.
+ما کتابخانه‌های رسمی رو آماده کردیم که کار با Node رو خیلی راحت‌تر می‌کنن. این کتابخانه‌ها احراز هویت، سریال‌سازی و همه چیزای دیگه رو خودشون مدیریت می‌کنن و یه رابط type-safe برای همه عملیات API بهت می‌دن.
 
 ---
 
@@ -14,7 +12,7 @@ PasarGuard کتابخانه‌های رسمی را برای ساده‌سازی 
 
 ### node-bridge
 
-کتابخانه رسمی Go برای یکپارچه‌سازی یکپارچه با نود PasarGuard.
+کتابخانه رسمی Go برای اتصال راحت به PasarGuard Node.
 
 **مخزن:** [PasarGuard/node_bridge](https://github.com/PasarGuard/node_bridge)
 
@@ -32,29 +30,9 @@ package main
 import (
     "context"
     "log"
-    
-    "github.com/PasarGuard/node_bridge"
+
+    bridge "github.com/PasarGuard/node_bridge"
 )
-
-func main() {
-    // ایجاد کلاینت جدید
-    client, err := nodebridge.NewClient(
-        "https://your-node:443",
-        "your-session-id",
-    )
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer client.Close()
-
-    // دریافت اطلاعات نود
-    info, err := client.GetBaseInfo(context.Background())
-    if err != nil {
-        log.Fatal(err)
-    }
-    
-    log.Printf("نسخه نود: %s، در حال اجرا: %v", info.Version, info.Running)
-}
 ```
 
 ### مثال‌ها
@@ -145,6 +123,91 @@ if err != nil {
 for _, stat := range stats.Stats {
     log.Printf("کاربر: %s، ترافیک: %d بایت", stat.Name, stat.Value)
 }
+
+// دریافت آمار یک کاربر خاص و ریست کردن
+userStatsReq := &pb.StatRequest{
+    Name: "user@example.com",
+    Type: pb.StatType_UserStat,
+    Reset: true,
+}
+
+userStats, err := client.GetStats(context.Background(), userStatsReq)
+```
+
+#### استریم کردن لاگ‌ها
+
+```go
+ctx := context.Background()
+logStream, err := client.GetLogs(ctx)
+if err != nil {
+    log.Fatal(err)
+}
+
+for {
+    logMsg, err := logStream.Recv()
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    log.Printf("لاگ بکند: %s", logMsg.Detail)
+}
+```
+
+#### دریافت آمار سیستم
+
+```go
+sysStats, err := client.GetSystemStats(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+
+log.Printf("استفاده CPU: %.2f%%", sysStats.CpuUsage)
+log.Printf("حافظه: %d/%d MB",
+    sysStats.MemUsed/1024/1024,
+    sysStats.MemTotal/1024/1024)
+```
+
+### استفاده پیشرفته
+
+#### استفاده از gRPC
+
+```go
+client, err := nodebridge.NewGRPCClient(
+    "node:50051",
+    "session-id",
+    grpc.WithTransportCredentials(...),
+)
+```
+
+#### Context با تایم‌اوت
+
+```go
+ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+defer cancel()
+
+info, err := client.GetBaseInfo(ctx)
+```
+
+#### مدیریت خطا
+
+```go
+import "google.golang.org/grpc/codes"
+import "google.golang.org/grpc/status"
+
+info, err := client.GetBaseInfo(ctx)
+if err != nil {
+    st, ok := status.FromError(err)
+    if ok {
+        switch st.Code() {
+        case codes.Unauthenticated:
+            log.Println("session ID نامعتبره")
+        case codes.Unavailable:
+            log.Println("نود در دسترس نیست")
+        default:
+            log.Printf("خطا: %v", st.Message())
+        }
+    }
+}
 ```
 
 ---
@@ -153,7 +216,7 @@ for _, stat := range stats.Stats {
 
 ### node-bridge-py
 
-کتابخانه رسمی Python برای یکپارچه‌سازی با نود PasarGuard.
+کتابخانه رسمی Python برای اتصال به PasarGuard Node.
 
 **مخزن:** [PasarGuard/node-bridge-py](https://github.com/PasarGuard/node-bridge-py)
 
@@ -246,6 +309,96 @@ stats_req = StatRequest(
 stats = client.get_stats(stats_req)
 for stat in stats.stats:
     print(f"کاربر: {stat.name}، ترافیک: {stat.value} بایت")
+
+# دریافت آمار یک کاربر خاص
+user_stats_req = StatRequest(
+    name="user@example.com",
+    type=StatType.USER_STAT,
+    reset=True
+)
+
+user_stats = client.get_stats(user_stats_req)
+```
+
+#### استریم کردن لاگ‌ها
+
+```python
+# مشاهده لاگ‌ها به صورت لحظه‌ای
+for log in client.get_logs():
+    print(f"لاگ بکند: {log.detail}")
+```
+
+#### دریافت آمار سیستم
+
+```python
+sys_stats = client.get_system_stats()
+
+print(f"استفاده CPU: {sys_stats.cpu_usage:.2f}%")
+print(f"حافظه: {sys_stats.mem_used/1024/1024}/{sys_stats.mem_total/1024/1024} MB")
+print(f"دانلود: {sys_stats.incoming_bandwidth_speed/1024/1024:.2f} MB/s")
+print(f"آپلود: {sys_stats.outgoing_bandwidth_speed/1024/1024:.2f} MB/s")
+```
+
+#### دریافت کاربران آنلاین
+
+```python
+online_req = StatRequest(
+    name="user@example.com",
+    type=StatType.USER_STAT
+)
+
+online_stats = client.get_user_online_stats(online_req)
+print(f"کاربر {online_stats.value} تا اتصال فعال داره")
+
+# دریافت لیست IP
+ip_list = client.get_user_online_ip_list(online_req)
+for ip, count in ip_list.value.items():
+    print(f"IP: {ip}، تعداد اتصال: {count}")
+```
+
+### استفاده پیشرفته
+
+#### پشتیبانی از Async
+
+```python
+from pasarguard_node_bridge import AsyncNodeClient
+
+async def main():
+    client = AsyncNodeClient("https://node:443", "session-id")
+
+    info = await client.get_base_info()
+    print(info)
+
+    await client.close()
+
+# اجرا با asyncio
+import asyncio
+asyncio.run(main())
+```
+
+#### مدیریت خطا
+
+```python
+from pasarguard_node_bridge import NodeError, AuthenticationError
+
+try:
+    info = client.get_base_info()
+except AuthenticationError:
+    print("session ID نامعتبره")
+except NodeError as e:
+    print(f"خطای نود: {e}")
+except Exception as e:
+    print(f"خطای غیرمنتظره: {e}")
+```
+
+#### استفاده از gRPC
+
+```python
+client = NodeClient(
+    url="node:50051",
+    session_id="session-id",
+    use_grpc=True
+)
 ```
 
 ---
@@ -273,15 +426,24 @@ client.close()
 
 ### مدیریت خطا
 
-همیشه خطاها را به طور مناسب مدیریت کنید:
-- خطاهای احراز هویت → بررسی SESSION_ID
-- خطاهای اتصال → تأیید کنید که نود در حال اجرا است
-- خطاهای timeout → افزایش timeout کانتکست
+همیشه خطاها رو درست مدیریت کن:
+- خطای احراز هویت → SESSION_ID رو چک کن
+- خطای اتصال → مطمئن شو که نود در حال اجراست
+- خطای timeout → timeout کانتکست رو بیشتر کن
 
-### نکات عملکردی
+### نکات مهم برای کارایی بهتر
 
-1. **استفاده مجدد از کلاینت‌ها** - برای هر درخواست کلاینت جدید ایجاد نکنید
-2. **عملیات دسته‌ای** - از `SyncUsers` برای به‌روزرسانی‌های چندین کاربر استفاده کنید
-3. **کش آمار** - آمار را خیلی مکرر نظرسنجی نکنید
-4. **استفاده از streaming** - برای لاگ‌ها، از streaming به جای نظرسنجی استفاده کنید
+1. **کلاینت‌ها رو دوباره استفاده کن** - برای هر درخواست کلاینت جدید نساز
+2. **عملیات دسته‌ای** - از `SyncUsers` برای آپدیت چند کاربر استفاده کن
+3. **آمار رو کش کن** - خیلی زیاد آمار نگیر
+4. **از streaming استفاده کن** - برای لاگ‌ها، streaming بهتر از polling هست
+
+---
+
+## مثال‌ها و آموزش‌ها
+
+مثال‌های کامل رو توی ریپوزیتوری کتابخانه‌ها ببین:
+
+- **مثال‌های Go:** [github.com/PasarGuard/node_bridge/examples](https://github.com/PasarGuard/node_bridge/tree/main/examples)
+- **مثال‌های Python:** [github.com/PasarGuard/node-bridge-py/examples](https://github.com/PasarGuard/node-bridge-py/tree/main/examples)
 

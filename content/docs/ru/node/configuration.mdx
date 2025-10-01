@@ -1,135 +1,124 @@
 ---
 title: Конфигурация
-description: Настройте параметры и переменные окружения нода PasarGuard
+description: Настройка параметров PasarGuard Node и переменных окружения
 icon: Cog
 ---
 
 ## Обзор конфигурации
 
-Нод PasarGuard можно настроить с помощью переменных окружения. Все настройки можно установить в файле `.env` или напрямую как переменные окружения.
+PasarGuard Node можно настроить с помощью переменных окружения. Все настройки можно установить в файле `.env` или непосредственно как переменные окружения.
+
+<Callout type="warn">
+  PasarGuard Node в настоящее время находится на стадии тестирования/разработки. Используйте на свой страх и риск.
+</Callout>
 
 ## Переменные окружения
 
-### Базовые настройки
+### Основные настройки
 
 | Переменная | Тип | По умолчанию | Описание |
 |----------|------|---------|-------------|
-| `SESSION_ID` | string | `random_uuid` | Токен аутентификации для доступа к API |
-| `HOST` | string | `0.0.0.0` | Адрес хоста сервера |
-| `PORT` | int | `443` | Номер порта сервера |
+| `API_KEY` | string | - | UUID для аутентификации доступа к API (обязательно) |
+| `NODE_HOST` | string | `127.0.0.1` | Адрес хоста для привязки приложения |
+| `SERVICE_PORT` | int | `62050` | Порт для привязки приложения |
+| `SERVICE_PROTOCOL` | string | `grpc` | Протокол подключения (`grpc` или `rest`, рекомендуется: `grpc`) |
 | `DEBUG` | bool | `false` | Включить режим отладки для подробного логирования |
 
-### Конфигурация SSL/TLS
+### Настройка SSL/TLS
 
 | Переменная | Тип | По умолчанию | Описание |
 |----------|------|---------|-------------|
-| `TLS_ENABLE` | bool | `true` | Включить TLS/SSL |
-| `TLS_CERT_FILE` | string | `./cert/server.crt` | Путь к SSL-сертификату |
-| `TLS_KEY_FILE` | string | `./cert/server.key` | Путь к закрытому ключу SSL |
+| `SSL_CERT_FILE` | string | - | Путь к файлу SSL сертификата |
+| `SSL_KEY_FILE` | string | - | Путь к файлу приватного ключа SSL |
 
-### Конфигурация бэкенда
-
-| Переменная | Тип | По умолчанию | Описание |
-|----------|------|---------|-------------|
-| `BACKEND_TYPE` | string | `xray` | Тип ядра бэкенда (xray, sing-box, v2ray) |
-| `BACKEND_KEEP_ALIVE` | int | `60` | Держать бэкенд активным X секунд после последнего соединения |
-| `BACKEND_LOG_LEVEL` | string | `warning` | Уровень логирования бэкенда (debug, info, warning, error) |
-
-### Конфигурация API
+### Конфигурация Xray
 
 | Переменная | Тип | По умолчанию | Описание |
 |----------|------|---------|-------------|
-| `API_ENABLE_REST` | bool | `true` | Включить REST API |
-| `API_ENABLE_GRPC` | bool | `true` | Включить gRPC API |
-| `GRPC_PORT` | int | `50051` | Порт сервера gRPC |
+| `XRAY_EXECUTABLE_PATH` | string | `/usr/local/bin/xray` | Путь к исполняемому файлу Xray |
+| `XRAY_ASSETS_PATH` | string | `/usr/local/share/xray` | Путь к директории с ресурсами Xray |
 
-### Настройки производительности
-
-| Переменная | Тип | По умолчанию | Описание |
-|----------|------|---------|-------------|
-| `MAX_CONNECTIONS` | int | `10000` | Максимум одновременных соединений |
-| `STATS_INTERVAL` | int | `60` | Интервал обновления статистики (секунды) |
-| `LOG_BUFFER_SIZE` | int | `1000` | Размер буфера лога |
+<Callout type="info">
+  **Поддерживаемые ядра:**
+  - ✅ xray-core
+  - ❌ sing-box (не поддерживается)
+  - ❌ v2ray-core (не поддерживается)
+</Callout>
 
 ---
 
 ## Примеры конфигурации
 
-### Базовый файл `.env`
+### Базовая настройка
 
 ```bash
-# Базовые настройки
-SESSION_ID=your-secure-session-id-here
-HOST=0.0.0.0
-PORT=443
+# Core Settings
+API_KEY=your-uuid-here
+NODE_HOST=127.0.0.1
+SERVICE_PORT=62050
+SERVICE_PROTOCOL=grpc
 DEBUG=false
 
-# Конфигурация SSL
-TLS_ENABLE=true
-TLS_CERT_FILE=./cert/server.crt
-TLS_KEY_FILE=./cert/server.key
+# SSL Configuration
+SSL_CERT_FILE=/path/to/ssl_cert.pem
+SSL_KEY_FILE=/path/to/ssl_key.pem
 
-# Бэкенд
-BACKEND_TYPE=xray
-BACKEND_KEEP_ALIVE=60
-BACKEND_LOG_LEVEL=warning
-
-# API
-API_ENABLE_REST=true
-API_ENABLE_GRPC=true
-GRPC_PORT=50051
+# Xray Paths (defaults usually work)
+XRAY_EXECUTABLE_PATH=/usr/local/bin/xray
+XRAY_ASSETS_PATH=/usr/local/share/xray
 ```
 
-### Файл `.env` для Docker
+### Настройка для продакшена
 
 ```bash
-SESSION_ID=your-secure-session-id-here
-PORT=443
-TLS_ENABLE=true
-BACKEND_TYPE=xray
+# Core Settings
+API_KEY=change-this-to-a-secure-uuid
+NODE_HOST=0.0.0.0
+SERVICE_PORT=62050
+SERVICE_PROTOCOL=grpc
 DEBUG=false
+
+# SSL - Use valid certificates
+SSL_CERT_FILE=/etc/ssl/certs/your-domain.pem
+SSL_KEY_FILE=/etc/ssl/private/your-domain-key.pem
+
+# Xray Configuration
+XRAY_EXECUTABLE_PATH=/usr/local/bin/xray
+XRAY_ASSETS_PATH=/usr/local/share/xray
 ```
 
-### Файл `.env` для продакшена
+### Настройка Docker Compose
+
+При использовании Docker вы можете установить переменные окружения в файле `docker-compose.yml` или использовать файл `.env`:
 
 ```bash
-# Настройки для продакшена
-SESSION_ID=change-this-to-a-secure-random-string
-HOST=0.0.0.0
-PORT=443
-DEBUG=false
-
-# SSL - Используйте действительные сертификаты
-TLS_ENABLE=true
-TLS_CERT_FILE=/etc/ssl/certs/your-domain.crt
-TLS_KEY_FILE=/etc/ssl/private/your-domain.key
-
-# Оптимизация бэкенда
-BACKEND_TYPE=xray
-BACKEND_KEEP_ALIVE=120
-BACKEND_LOG_LEVEL=warning
-
-# Производительность
-MAX_CONNECTIONS=50000
-STATS_INTERVAL=30
-LOG_BUFFER_SIZE=2000
-
-# API
-API_ENABLE_REST=true
-API_ENABLE_GRPC=true
-GRPC_PORT=50051
+API_KEY=your-uuid-here
+SERVICE_PORT=62050
+SERVICE_PROTOCOL=grpc
+SSL_CERT_FILE=/app/certs/ssl_cert.pem
+SSL_KEY_FILE=/app/certs/ssl_key.pem
 ```
 
 ---
 
-## Конфигурация SSL-сертификата
+## Настройка SSL сертификата
 
 ### Генерация самоподписанного сертификата
 
-Для тестирования или внутреннего использования:
+Для тестирования или внутреннего использования создайте самоподписанный сертификат:
 
 ```bash
-make generate_server_cert CN=example.com SAN="DNS:example.com,IP:YOUR_IP"
+openssl req -x509 -newkey rsa:4096 -keyout ssl_key.pem \
+  -out ssl_cert.pem -days 36500 -nodes \
+  -subj "/CN=your-server-ip-or-domain" \
+  -addext "subjectAltName = DNS:your-domain.com,IP:your.server.ip"
+```
+
+Затем настройте пути:
+
+```bash
+SSL_CERT_FILE=/path/to/ssl_cert.pem
+SSL_KEY_FILE=/path/to/ssl_key.pem
 ```
 
 ### Использование сертификата Let's Encrypt
@@ -146,48 +135,38 @@ sudo apt-get install certbot
 sudo certbot certonly --standalone -d your-domain.com
 ```
 
-3. Обновите `.env`:
+3. Обновите переменные окружения:
 ```bash
-TLS_CERT_FILE=/etc/letsencrypt/live/your-domain.com/fullchain.pem
-TLS_KEY_FILE=/etc/letsencrypt/live/your-domain.com/privkey.pem
+SSL_CERT_FILE=/etc/letsencrypt/live/your-domain.com/fullchain.pem
+SSL_KEY_FILE=/etc/letsencrypt/live/your-domain.com/privkey.pem
 ```
 
-### Использование пользовательского сертификата
+### Использование собственного сертификата
 
 Если у вас есть свой сертификат:
 
 ```bash
-TLS_CERT_FILE=/path/to/your/certificate.crt
-TLS_KEY_FILE=/path/to/your/private.key
+SSL_CERT_FILE=/path/to/your/certificate.pem
+SSL_KEY_FILE=/path/to/your/private-key.pem
 ```
 
 ---
 
-## Конфигурация, специфичная для бэкенда
+## Рекомендации по безопасности
 
-### Ядро Xray
+### Генерация безопасного API ключа
 
-При использовании Xray в качестве бэкенда:
-
-```bash
-BACKEND_TYPE=xray
-BACKEND_LOG_LEVEL=warning
-```
-
-Конфигурация Xray обрабатывается автоматически нодом на основе пользователей и входящих соединений, которые вы определяете через API.
-
----
-
-## Лучшие практики безопасности
-
-### Генерация безопасного SESSION_ID
+Сгенерируйте безопасный UUID для `API_KEY`:
 
 ```bash
-# Linux/macOS
-openssl rand -hex 32
-
-# Или используйте UUID
+# Using uuidgen (Linux/macOS)
 uuidgen
+
+# Using Python
+python3 -c "import uuid; print(uuid.uuid4())"
+
+# Using OpenSSL
+openssl rand -hex 16 | awk '{print substr($1,1,8)"-"substr($1,9,4)"-"substr($1,13,4)"-"substr($1,17,4)"-"substr($1,21,12)}'
 ```
 
 ### Права доступа к файлам
@@ -195,24 +174,44 @@ uuidgen
 Убедитесь в правильных правах для конфиденциальных файлов:
 
 ```bash
-# Файлы сертификатов
-chmod 600 ./cert/server.key
-chmod 644 ./cert/server.crt
+# Certificate files
+chmod 600 /path/to/ssl_key.pem
+chmod 644 /path/to/ssl_cert.pem
 
-# Файл окружения
+# Environment file
 chmod 600 .env
 ```
 
-### Конфигурация брандмауэра
+### Настройка файрвола
 
 Открывайте только необходимые порты:
 
 ```bash
-# Разрешить только порт нода
-sudo ufw allow YOUR_PORT/tcp
+# Allow only node port
+sudo ufw allow 62050/tcp
 
-# Блокировать ненужные порты
+# Enable firewall
 sudo ufw enable
+```
+
+---
+
+## Конфигурация протокола
+
+### gRPC (Рекомендуется)
+
+gRPC - рекомендуемый протокол для лучшей производительности и меньшей задержки:
+
+```bash
+SERVICE_PROTOCOL=grpc
+```
+
+### REST API
+
+REST API также поддерживается, но может иметь большие накладные расходы:
+
+```bash
+SERVICE_PROTOCOL=rest
 ```
 
 ---
@@ -223,22 +222,16 @@ sudo ufw enable
 
 **Порт уже используется:**
 ```bash
-# Измените порт в .env
-PORT=8443
+# Change the port
+SERVICE_PORT=62051
 ```
 
-**Ошибки сертификата:**
+### Режим отладки
+
+Включите режим отладки для подробного логирования:
+
 ```bash
-# Проверьте наличие файлов сертификата
-ls -la ./cert/
-
-# Проверьте действительность сертификата
-openssl x509 -in ./cert/server.crt -text -noout
+DEBUG=true
 ```
 
-**Отказано в доступе:**
-```bash
-# Запустите с sudo или измените порт на > 1024
-PORT=8443
-```
-
+Это предоставит детальные логи для помощи в устранении проблем.

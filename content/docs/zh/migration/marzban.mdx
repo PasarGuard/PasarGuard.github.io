@@ -23,6 +23,8 @@ icon: ArrowRightLeft
 
 首先，停止所有正在运行的 Marzban 容器：
 
+#### 停止服务命令
+
 ```bash
 cd /opt/marzban
 docker compose down
@@ -32,6 +34,8 @@ docker compose down
 
 将 Marzban 主目录名称更改为 PasarGuard：
 
+#### 目录重命名命令
+
 ```bash
 sudo mv /opt/marzban /opt/pasarguard
 ```
@@ -40,6 +44,8 @@ sudo mv /opt/marzban /opt/pasarguard
 
 同时更改数据目录名称：
 
+#### 数据目录重命名命令
+
 ```bash
 sudo mv /var/lib/marzban /var/lib/pasarguard
 ```
@@ -47,6 +53,8 @@ sudo mv /var/lib/marzban /var/lib/pasarguard
 ### 4. 重命名 MySQL 目录（如果使用）
 
 如果您使用 MySQL 并且有 Marzban 数据库的专用目录：
+
+#### MySQL 目录重命名命令
 
 ```bash
 sudo mv /var/lib/mysql/marzban /var/lib/mysql/pasarguard
@@ -211,6 +219,8 @@ services:
 
 确保您对新目录具有必要的权限：
 
+#### 权限更新命令
+
 ```bash
 sudo chown -R $USER:$USER /opt/pasarguard
 sudo chmod -R 755 /opt/pasarguard
@@ -219,6 +229,8 @@ sudo chmod -R 755 /opt/pasarguard
 ### 8. 安装 PasarGuard 管理脚本
 
 安装 PasarGuard 管理脚本以便于管理：
+
+#### 脚本安装命令
 
 ```bash
 sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install-script
@@ -230,6 +242,8 @@ sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasargua
 
 现在使用新配置启动 PasarGuard：
 
+#### 启动命令
+
 ```bash
 pasarguard up
 ```
@@ -237,6 +251,8 @@ pasarguard up
 ### 10. 验证迁移
 
 检查所有服务是否正常运行：
+
+#### 验证命令
 
 ```bash
 pasarguard status
@@ -250,7 +266,7 @@ pasarguard status
 
 > 💡 **提示**: 大多数问题可以通过检查文件权限和路径配置来解决。
 
-**1. 权限被拒绝 (Permission Denied)**
+**1. 权限被拒绝**
 确保您使用适当的权限运行命令（需要时使用 sudo）。
 
 **2. 数据库连接问题**

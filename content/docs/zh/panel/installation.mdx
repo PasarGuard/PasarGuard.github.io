@@ -4,6 +4,15 @@ description: PasarGuard 安装说明。
 icon: Download
 ---
 
+## 安装选项
+
+PasarGuard 面板支持多个数据库后端：
+
+- **TimescaleDB** - 针对时间序列数据和分析进行优化（**推荐**）
+- **PostgreSQL** - 高级功能和可扩展性
+- **MariaDB** - MySQL 的开源替代品
+- **MySQL** - 适合生产环境
+- **SQLite** - 适合小规模部署和测试
 
 ### 安装 PasarGuard
 
@@ -11,33 +20,30 @@ icon: Download
   以下命令将安装预发布版本（alpha/beta）
 </Alert>
 
-<Tabs items={['SQLite', 'MySQL', 'MariaDB', 'PostgreSQL']}>
-  <Tab value="SQLite">
-    ### SQLite 安装
-
+<Tabs items={['TimescaleDB (Recommended)', 'PostgreSQL', 'MySQL', 'MariaDB', 'SQLite']}>
+  <Tab value="TimescaleDB (Recommended)">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --pre-release
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database timescaledb --pre-release
+    ```
+  </Tab>
+  <Tab value="PostgreSQL">
+    ```bash
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database postgresql --pre-release
     ```
   </Tab>
   <Tab value="MySQL">
-    ### MySQL 安装
-
     ```bash
     sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mysql --pre-release
     ```
   </Tab>
   <Tab value="MariaDB">
-    ### MariaDB 安装
-
     ```bash
     sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mariadb --pre-release
     ```
   </Tab>
-  <Tab value="PostgreSQL">
-    ### PostgreSQL 安装
-
+  <Tab value="SQLite">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database postgresql --pre-release
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --pre-release
     ```
   </Tab>
 </Tabs>
@@ -68,7 +74,7 @@ http://localhost:8000/dashboard/
 接下来，您需要通过以下命令创建一个 sudo 管理员来登录 PasarGuard 仪表板
 
 ```bash
-pasarguard cli admin create --sudo
+pasarguard tui
 ```
 
 就是这样！您可以使用这些凭据登录到您的仪表板
@@ -78,4 +84,3 @@ pasarguard cli admin create --sudo
 ```bash
 pasarguard --help
 ```
-
