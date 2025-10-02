@@ -32,6 +32,14 @@ docker compose down
 
 ### 2. 重命名主目录
 
+如果 PasarGuard 目录已存在，请删除它们：
+
+#### 目录删除命令
+
+```bash
+rm -r /opt/pasarguard /var/lib/pasarguard /var/lib/mysql/pasarguard
+```
+
 将 Marzban 主目录名称更改为 PasarGuard：
 
 #### 目录重命名命令
@@ -60,6 +68,15 @@ sudo mv /var/lib/marzban /var/lib/pasarguard
 sudo mv /var/lib/mysql/marzban /var/lib/mysql/pasarguard
 ```
 
+<Alert type="info">
+如果您遇到“无此文件或目录”错误，可能是因为 MySQL 目录不同。请使用以下命令：
+```bash
+mkdir -p /var/lib/mysql/pasarguard
+mv /var/lib/pasarguard/mysql/* /var/lib/mysql/pasarguard
+rm -r /var/lib/pasarguard/mysql
+```
+</Alert>
+
 ### 5. 更新环境变量
 
 转到新的 PasarGuard 目录并更新环境文件：
@@ -77,6 +94,10 @@ sudo sed -i 's|/var/lib/marzban|/var/lib/pasarguard|g' .env
 <Alert type="warning">
 如果您使用的是旧版本（0.8.4 或更低），还需要更改 SQL 驱动程序：
 </Alert>
+
+```bash
+nano .env
+```
 
 <Tabs items={['SQLite', 'MySQL']}>
   <Tab value="SQLite">
@@ -96,7 +117,7 @@ sudo sed -i 's|/var/lib/marzban|/var/lib/pasarguard|g' .env
 
     ❌ 旧版本
     ```bash
-    SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:DB_PASSWORD@127.0.0.1/pasarguard"
+    SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:DB_PASSWORD@127.0.0.1/marzban"
     ```
     ✅ 新版本
     ```bash
@@ -170,7 +191,7 @@ services:
     network_mode: host
     command: --bind-address=127.0.0.1 --mysqlx-bind-address=127.0.0.1 --disable-log-bin
     environment:
-      MYSQL_DATABASE: marzban
+      MYSQL_DATABASE: pasarguard
     volumes:
       - /var/lib/mysql/pasarguard:/var/lib/mysql
 ```
@@ -207,23 +228,83 @@ services:
 <td data-label="之后"><code>/var/lib/pasarguard:/var/lib/pasarguard</code></td>
 </tr>
 <tr>
-<td data-label="部分"><strong>MySQL 卷</strong></td>
-<td data-label="之前"><code>/var/lib/mysql/marzban:/var/lib/mysql</code></td>
-<td data-label="之后"><code>/var/lib/mysql/pasarguard:/var/lib/mysql</code></td>
+<td data-label="Section"><strong>MySQL 数据库</strong></td>
+<td data-label="Before"><code>marzban</code></td>
+<td data-label="After"><code>pasarguard</code></td>
+</tr>
+<tr>
+<td data-label="Section"><strong>MySQL 卷</strong></td>
+<td data-label="Before"><code>/var/lib/mysql/marzban:/var/lib/mysql</code></td>
+<td data-label="After"><code>/var/lib/mysql/pasarguard:/var/lib/mysql</code></td>
 </tr>
 </tbody>
 </table>
 </div>
 
-### 7. 更新文件权限
+<Alert type="info">
+显然，如果您使用的是 SQLite 数据库，则不应在文件中添加 MySQL 代码行。只需将示例与您的文件进行比较并应用更改即可。
+</Alert>
 
-确保您对新目录具有必要的权限：
+### 7. 将 Marzban MySQL 数据库更改为 PasarGuard（如果使用）
 
-#### 权限更新命令
+如果您使用的是 SQLite 数据库，请跳过此步骤。
+如果您使用的是 MySQL 数据库，请导出 Marzban 数据库，以便稍后将其导入为 PasarGuard 数据库。
+
+#### 导出 Marzban 数据库命令
+
+#### 运行 Mysql
 
 ```bash
-sudo chown -R $USER:$USER /opt/pasarguard
-sudo chmod -R 755 /opt/pasarguard
+cd /opt/pasarguard && docker compose up -d mysql
+```
+
+#### 转储数据库
+系统将要求您输入数据库密码。请使用 `.env` 文件中 `MYSQL_ROOT_PASSWORD` 的值。
+
+```bash
+docker compose exec mysql mysqldump -u root -p -h 127.0.0.1 --databases marzban > "/opt/pasarguard/pasarguard.sql"
+```
+
+<Alert type="info">
+如果遇到“访问被拒绝”错误，请尝试使用 `marzban` 用户，并使用 `.env` 文件中的 `MYSQL_PASSWORD` 值：
+```bash
+docker compose exec mysql mysqldump -u marzban -p -h 127.0.0.1 --databases marzban > "/opt/pasarguard/pasarguard.sql"
+```
+</Alert>
+
+#### 编辑数据库信息
+
+此步骤对于确保在 MySQL 中创建 pasarguard 数据库至关重要。
+以下命令将在两行重要内容中将“marzban”替换为“pasarguard”：
+
+```bash
+sed -i '/^CREATE DATABASE/s/marzban/pasarguard/;/^USE/s/marzban/pasarguard/' /opt/pasarguard/pasarguard.sql
+```
+
+#### 导入 PasarGuard 数据库
+
+要导入新数据库，请将此命令中的数据库密码替换为“.env”文件中的“MYSQL_ROOT_PASSWORD”值：
+
+```bash
+docker compose exec -T mysql mysql -u root -p"MYSQL_ROOT_PASSWORD" -h 127.0.0.1 < "/opt/pasarguard/pasarguard.sql"
+```
+
+替代方法：
+您可以使用“phpmyadmin”导入数据库。将 `phpmyadmin` 服务添加到您的 Docker Compose 文件并重启。
+使用文本编辑器编辑 marzban.sql 备份文件，并在开头几行（`CREATE DATABASE` 和 `USE` 行）中将 `marzban` 替换为 `pasarguard`。
+保存文件，最后使用 `phpmyadmin` 导入。
+
+#### 删除 Marzban 数据库
+
+系统将要求您输入数据库密码。请使用 `.env` 文件中的 `MYSQL_ROOT_PASSWORD` 值。
+
+<Alert type="warning">
+请确保您已备份数据，并准备好在出现问题时恢复数据。
+</Alert>
+
+```bash
+rm /opt/pasarguard/pasarguard.sql
+docker compose exec mysql mysql -u root -p -e "DROP DATABASE marzban;"
 ```
 
 ### 8. 安装 PasarGuard 管理脚本
@@ -245,7 +326,7 @@ sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasargua
 #### 启动命令
 
 ```bash
-pasarguard up
+pasarguard restart
 ```
 
 ### 10. 验证迁移
