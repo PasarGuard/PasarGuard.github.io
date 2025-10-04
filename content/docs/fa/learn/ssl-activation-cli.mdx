@@ -1,0 +1,197 @@
+---
+title: فعال‌سازی SSL
+navigation: فعال‌سازی SSL
+icon: Lock
+---
+
+# فعال‌سازی SSL در پاسارگارد
+
+با فعال‌سازی SSL در پاسارگارد، داشبورد و لینک اشتراک‌گذاری از طریق https در دسترس خواهند بود.
+در ادامه چند روش مختلف برای فعال‌سازی SSL در پاسارگارد را از ساده به پیچیده توضیح می‌دهیم.
+
+<Callout type="info">
+در تمام مثال‌های زیر فایل‌های `docker-compose.yml` و `.env` در مسیر `/opt/PasarGuard` و فایل `xray_config.json` در مسیر `/var/lib/PasarGuard` قرار دارند.
+
+اگر پاسارگارد را به‌صورت دستی نصب کرده‌اید، باید تغییرات لازم را خودتان اعمال کنید.
+</Callout>
+
+## فعال‌سازی SSL با Caddy
+
+در این روش نیازی به ایجاد دستی گواهی SSL نیست — Caddy همهٔ کارها را برای شما انجام می‌دهد.
+
+### تغییر در `docker-compose.yml`
+
+فایل `docker-compose.yml` را به صورت زیر ویرایش کنید:
+
+```yml {9-10,12-22,24-25}
+services:
+  PasarGuard:
+    image: PasarGuard/panel:latest
+    restart: always
+    env_file: .env
+    network_mode: host
+    volumes:
+      - /var/lib/PasarGuard:/var/lib/PasarGuard
+    depends_on:
+      - caddy
+
+  caddy:
+    image: caddy
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/lib/PasarGuard:/var/lib/PasarGuard
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_volume:/data
+      - caddy_volume:/config
+
+volumes:
+  caddy_volume:
+```
+
+### ایجاد فایل `Caddyfile`
+
+یک فایل جدید به نام `Caddyfile` در مسیر `/opt/pasarguard` بسازید و `YOUR_DOMAIN` را با دامنه یا زیردامنهٔ مدنظر خود جایگزین کنید.
+
+<Callout type="warn">
+نام فایل `Caddyfile` باید با حرف بزرگ `C` شروع شود.
+</Callout>
+
+```caddy
+YOUR_DOMAIN {
+	reverse_proxy unix//var/lib/pasarguard/pasarguard.socket
+}
+```
+
+<Callout type="warn">
+اگر می‌خواهید دامنهٔ اشتراک (subscription) با دامنهٔ پنل متفاوت باشد، محتوای بالا را برای هر دامنه/زیردامنه تکرار کرده و `YOUR_DOMAIN` را در هر مورد جایگزین کنید.
+</Callout>
+
+### تنظیم متغیرهای محیطی
+
+متغیرهای زیر را در فایل `.env` تنظیم کنید.
+
+`YOUR_DOMAIN` را با دامنه یا زیردامنهٔ موردنظر جایگزین کنید.
+
+```env
+UVICORN_UDS = /var/lib/pasarguard/pasarguard.socket
+XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
+```
+
+### راه‌اندازی مجدد پاسارگارد
+
+پاسارگارد را ری‌استارت کنید:
+
+```bash
+PasarGuard restart
+```
+
+حالا داشبورد پاسارگارد از طریق https و دامنه/زیردامنهٔ شما در دسترس خواهد بود.
+
+## فعال‌سازی SSL با Uvicorn
+
+پاسارگارد به‌صورت پیش‌فرض با `Uvicorn` اجرا می‌شود. `Uvicorn` همچنین امکان تعریف فایل‌های گواهی SSL را فراهم می‌کند.
+
+### دریافت گواهی SSL
+
+ابتدا باید فایل‌های گواهی برای دامنه یا زیردامنهٔ خود را تهیه کنید. برای این کار به آموزش [صدور گواهی SSL](ssl-certificate-cli) مراجعه کنید.
+
+### تنظیم متغیرهای محیطی
+
+پس از ایجاد فایل‌های گواهی، متغیرهای زیر را در فایل `.env` تنظیم کنید.
+
+`YOUR_DOMAIN` را با دامنه یا زیردامنهٔ موردنظر جایگزین کنید.
+
+```env
+UVICORN_PORT = 443
+UVICORN_SSL_CERTFILE = "/var/lib/PasarGuard/certs/YOUR_DOMAIN.cer"
+UVICORN_SSL_KEYFILE = "/var/lib/PasarGuard/certs/YOUR_DOMAIN.cer.key"
+XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
+```
+
+حالا داشبورد پاسارگارد از طریق https و دامنه/زیردامنهٔ شما در دسترس خواهد بود.
+
+## فعال‌سازی SSL با HAProxy
+
+`HAProxy` یکی از ابزارهای مناسب برای این کار است. در این روش با کمک `HAProxy`، پاسارگارد را از طریق https اجرا می‌کنیم.
+
+### دریافت گواهی SSL
+
+ابتدا باید فایل‌های گواهی برای دامنه یا زیردامنهٔ خود را تهیه کنید. برای این کار به آموزش [صدور گواهی SSL](ssl-certificate-cli) مراجعه کنید.
+
+### تغییر در `docker-compose.yml`
+
+فایل `docker-compose.yml` را به صورت زیر ویرایش کنید:
+
+```yml {9-10,12-20}
+services:
+  PasarGuard:
+      image: gozargah/PasarGuard:latest
+      restart: always
+      env_file: .env
+      network_mode: host
+      volumes:
+        - /var/lib/PasarGuard:/var/lib/PasarGuard
+      depends_on:
+        - haproxy
+    
+  haproxy:
+    image: haproxy:latest
+    restart: always
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+      - /var/lib/PasarGuard:/var/lib/PasarGuard
+    ports:
+      - 80:80
+      - 443:443
+```
+
+### ایجاد `haproxy.cfg`
+
+یک فایل جدید به نام `haproxy.cfg` در مسیر `/opt/PasarGuard` بسازید و `YOUR_DOMAIN` را با دامنه یا زیردامنهٔ مدنظر جایگزین کنید.
+
+```cfg
+defaults
+  mode tcp
+  timeout client 30s
+  timeout connect 4s
+  timeout server 30s
+
+global
+  maxconn 10000000
+
+frontend http_frontend
+  bind *:80
+  mode http
+  redirect scheme https code 301 if !{ ssl_fc }
+
+frontend https_frontend
+  bind *:443 ssl crt /var/lib/PasarGuard/certs/YOUR_DOMAIN.cer
+  default_backend PasarGuard_backend
+
+backend PasarGuard_backend
+  server PasarGuard /var/lib/pasarguard/pasarguard.socket
+```
+
+### تنظیم متغیرهای محیطی
+
+متغیرهای زیر را در فایل `.env` تنظیم کنید.
+
+`YOUR_DOMAIN` را با دامنه یا زیردامنهٔ موردنظر جایگزین کنید.
+
+```env
+UVICORN_UDS = /var/lib/pasarguard/pasarguard.socket
+XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
+```
+
+### راه‌اندازی مجدد پاسارگارد
+
+پاسارگارد را ری‌استارت کنید:
+
+```bash
+PasarGuard restart
+```
+
+حالا داشبورد پاسارگارد از طریق https و دامنه/زیردامنهٔ شما در دسترس خواهد بود.
