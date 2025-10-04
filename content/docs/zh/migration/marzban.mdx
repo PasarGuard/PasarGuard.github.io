@@ -95,6 +95,8 @@ sudo sed -i 's|/var/lib/marzban|/var/lib/pasarguard|g' .env
 如果您使用的是旧版本（0.8.4 或更低），还需要更改 SQL 驱动程序：
 </Alert>
 
+打开 `.env` 文件：
+
 ```bash
 nano .env
 ```
@@ -104,11 +106,11 @@ nano .env
     ### SQLite 驱动程序更新
 
     ❌ 旧版本
-    ```bash
+    ```dotenv
     SQLALCHEMY_DATABASE_URL = "sqlite:///db.sqlite3"
     ```
     ✅ 新版本
-    ```bash
+    ```dotenv
     SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///db.sqlite3"
     ```
   </Tab>
@@ -116,14 +118,72 @@ nano .env
     ### MySQL 驱动程序更新
 
     ❌ 旧版本
-    ```bash
+    ```dotenv
     SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:DB_PASSWORD@127.0.0.1/marzban"
     ```
     ✅ 新版本
-    ```bash
+    ```dotenv
     SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://root:DB_PASSWORD@127.0.0.1/pasarguard"
     ```
   </Tab>
+</Tabs>
+
+### 其他更改
+
+#### 将 v2ray 模板重命名为 xray 模板
+
+如果您使用的是自定义 v2ray 模板，则还应使用以下命令更改其目录：
+
+```bash
+mv /var/lib/pasarguard/templates/v2ray /var/lib/pasarguard/templates/xray
+```
+
+#### 更新 xray-config 证书目录
+
+如果您有 TLS 入站，则需要更新您的 `xray_config.json` 并将证书目录从 marzban 更改为 pasarguard：
+
+```bash
+nano /var/lib/pasarguard/xray_config.json
+```
+
+更改后，您的 `.env` 文件和 `xray_config.json` 应如下所示：
+
+<Tabs items={['XRAY_SUBSCRIPTION_TEMPLATE', 'Xray 证书目录']}>
+<Tab value="XRAY_SUBSCRIPTION_TEMPLATE">
+### 更新 `.env` 中的 Xray 模板
+
+❌ 旧版本
+```dotenv
+V2RAY_SUBSCRIPTION_TEMPLATE = "v2ray/default.json"
+```
+✅ 新增版本
+```dotenv
+XRAY_SUBSCRIPTION_TEMPLATE = "xray/default.json"
+```
+</Tab>
+
+<Tab value="Xray 证书目录">
+### 更新 xray_config.json 中的证书目录
+
+❌ 旧版本
+    ```json
+          "certificates": [
+            {
+              "certificateFile": "/var/lib/marzban/certs/example.com/fullchain.pem",
+              "keyFile": "/var/lib/marzban/certs/example.com/key.pem"
+            }
+          ],
+    ```
+    ✅ 新增版本
+    ```json
+          "certificates": [
+            {
+              "certificateFile": "/var/lib/pasarguard/certs/example.com/fullchain.pem",
+              "keyFile": "/var/lib/pasarguard/certs/example.com/key.pem"
+            }
+          ],
+    ```
+</Tab>
 </Tabs>
 
 ### 6. 更新 Docker Compose 文件
@@ -262,13 +322,13 @@ cd /opt/pasarguard && docker compose up -d mysql
 系统将要求您输入数据库密码。请使用 `.env` 文件中 `MYSQL_ROOT_PASSWORD` 的值。
 
 ```bash
-docker compose exec mysql mysqldump -u root -p -h 127.0.0.1 --databases marzban > "/opt/pasarguard/pasarguard.sql"
+docker compose exec mysql mysqldump -u root -p -h 127.0.0.1 --databases marzban > "/opt/pasarguard/marzban.sql"
 ```
 
 <Alert type="info">
 如果遇到“访问被拒绝”错误，请尝试使用 `marzban` 用户，并使用 `.env` 文件中的 `MYSQL_PASSWORD` 值：
 ```bash
-docker compose exec mysql mysqldump -u marzban -p -h 127.0.0.1 --databases marzban > "/opt/pasarguard/pasarguard.sql"
+docker compose exec mysql mysqldump -u marzban -p -h 127.0.0.1 --databases marzban > "/opt/pasarguard/marzban.sql"
 ```
 </Alert>
 
@@ -278,7 +338,7 @@ docker compose exec mysql mysqldump -u marzban -p -h 127.0.0.1 --databases marzb
 以下命令将在两行重要内容中将“marzban”替换为“pasarguard”：
 
 ```bash
-sed -i '/^CREATE DATABASE/s/marzban/pasarguard/;/^USE/s/marzban/pasarguard/' /opt/pasarguard/pasarguard.sql
+sed -i '/^CREATE DATABASE/s/marzban/pasarguard/;/^USE/s/marzban/pasarguard/' /opt/pasarguard/marzban.sql
 ```
 
 #### 导入 PasarGuard 数据库
@@ -286,12 +346,12 @@ sed -i '/^CREATE DATABASE/s/marzban/pasarguard/;/^USE/s/marzban/pasarguard/' /op
 要导入新数据库，请将此命令中的数据库密码替换为“.env”文件中的“MYSQL_ROOT_PASSWORD”值：
 
 ```bash
-docker compose exec -T mysql mysql -u root -p"MYSQL_ROOT_PASSWORD" -h 127.0.0.1 < "/opt/pasarguard/pasarguard.sql"
+docker compose exec -T mysql mysql -u root -p"MYSQL_ROOT_PASSWORD" -h 127.0.0.1 < "/opt/pasarguard/marzban.sql"
 ```
 
-替代方法：
+**替代方法：**
 您可以使用“phpmyadmin”导入数据库。将 `phpmyadmin` 服务添加到您的 Docker Compose 文件并重启。
-使用文本编辑器编辑 marzban.sql 备份文件，并在开头几行（`CREATE DATABASE` 和 `USE` 行）中将 `marzban` 替换为 `pasarguard`。
+使用文本编辑器编辑 `marzban.sql` 备份文件，并在开头几行（`CREATE DATABASE` 和 `USE` 行）中将 `marzban` 替换为 `pasarguard`。
 保存文件，最后使用 `phpmyadmin` 导入。
 
 #### 删除 Marzban 数据库
@@ -303,7 +363,7 @@ docker compose exec -T mysql mysql -u root -p"MYSQL_ROOT_PASSWORD" -h 127.0.0.1 
 </Alert>
 
 ```bash
-rm /opt/pasarguard/pasarguard.sql
+rm /opt/pasarguard/marzban.sql
 docker compose exec mysql mysql -u root -p -e "DROP DATABASE marzban;"
 ```
 
@@ -382,6 +442,7 @@ marzban up
 
 成功迁移后：
 
+- 📡 PasarGuard 节点：安装并连接 PasarGuard 节点。PasarGuard 本身不运行 Xray-Core。
 - **📊 更新监控**: 如果您有监控工具，请将它们连接到新路径。
 - **💾 更新备份**: 确保您的备份脚本已更新为从新目录进行备份。
 - **🧪 测试所有功能**: 彻底测试所有面板功能以确保一切正常工作。
