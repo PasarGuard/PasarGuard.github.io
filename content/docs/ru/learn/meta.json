@@ -1,0 +1,10 @@
+{
+  "title": "Learn",
+  "description": "Step-by-step guides for advanced configurations",
+  "pages": [
+    "ssl-certificate",
+    "ssl-activation",
+    "warp"
+  ],
+  "icon": "BookOpen"
+}

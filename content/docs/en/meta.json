@@ -6,6 +6,7 @@
     "panel",
     "node",
     "cli-tui",
+    "learn",
     "migration"
   ]
 }

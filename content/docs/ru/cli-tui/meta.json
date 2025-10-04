@@ -1,6 +1,6 @@
 {
-  "title": "CLI и TUI",
-  "description": "Инструменты командной строки и текстового интерфейса",
+  "title": "CLI & TUI",
+  "description": "Command-line and Text User Interface tools",
   "pages": [
     "index"
   ],

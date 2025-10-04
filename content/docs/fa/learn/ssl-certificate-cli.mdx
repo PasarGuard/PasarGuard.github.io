@@ -1,0 +1,187 @@
+---
+title: SSL Certificate Issuance
+navigation: SSL Certificate
+icon: Shield
+---
+
+# SSL Certificate Issuance
+
+The following tutorials are for obtaining SSL certificates for use with pasarguard using the command line (CLI).
+
+<Callout type="warn">
+Certificate files must be accessible at `/var/lib/pasarguard/certs` for pasarguard to access them.
+
+In all examples below, files will be installed at this location.
+</Callout>
+
+<Callout type="warn">
+You must register DNS records for your domain before obtaining an SSL certificate.
+</Callout>
+
+## Obtaining Certificate with acme.sh
+
+### Installing Prerequisites
+
+Install socat using the following command for standalone mode:
+
+```bash
+apt install curl socat -y
+```
+
+<Callout type="info">
+If you have already installed socat, you don't need to perform this step.
+</Callout>
+
+### Installing acme.sh
+
+Install [acme.sh](https://github.com/acmesh-official/acme.sh) with the following command.
+
+Replace `YOUR_EMAIL` with your email address.
+
+<Callout type="info">
+If you have already installed acme.sh, you don't need to perform this step.
+</Callout>
+
+```bash
+curl https://get.acme.sh | sh -s email=YOUR_EMAIL
+```
+
+### Obtaining Certificate
+
+To obtain a certificate, execute the following commands in order.
+
+Replace `YOUR_DOMAIN` with your desired domain or subdomain.
+
+```bash
+export DOMAIN=YOUR_DOMAIN
+
+mkdir -p /var/lib/pasarguard/certs
+
+~/.acme.sh/acme.sh \
+  --issue --force --standalone -d "$DOMAIN" \
+  --fullchain-file "/var/lib/pasarguard/certs/$DOMAIN.cer" \
+  --key-file "/var/lib/pasarguard/certs/$DOMAIN.cer.key"
+```
+
+## Obtaining Certificate for Cloudflare Domain
+
+If your domain is registered on Cloudflare and the above methods don't work, use manual mode.
+
+Replace `example.com` with your domain.
+
+title: صدور گواهی SSL
+navigation: گواهی SSL
+icon: Shield
+
+## صدور گواهی SSL
+
+راهنمای زیر نحوهٔ دریافت گواهی‌های SSL برای استفاده با پاسارگارد از طریق خط فرمان (CLI) را نشان می‌دهد.
+
+<Callout type="warn">
+فایل‌های گواهی باید قابل دسترسی در مسیر `/var/lib/pasarguard/certs` باشند تا پاسارگارد بتواند از آن‌ها استفاده کند.
+
+در تمام مثال‌های زیر فایل‌ها در این مسیر نصب خواهند شد.
+</Callout>
+
+<Callout type="warn">
+قبل از درخواست گواهی، باید رکوردهای DNS مربوط به دامنهٔ خود را ثبت کنید.
+</Callout>
+
+## دریافت گواهی با acme.sh
+
+### نصب پیش‌نیازها
+
+برای حالت standalone بستهٔ `socat` را نصب کنید:
+
+```bash
+apt install curl socat -y
+```
+
+<Callout type="info">
+اگر قبلاً `socat` را نصب کرده‌اید، نیازی به تکرار این مرحله نیست.
+</Callout>
+
+### نصب acme.sh
+
+ابزار [acme.sh](https://github.com/acmesh-official/acme.sh) را به‌صورت زیر نصب کنید.
+
+`YOUR_EMAIL` را با آدرس ایمیل خود جایگزین کنید.
+
+<Callout type="info">
+اگر قبلاً `acme.sh` را نصب کرده‌اید، این مرحله را رد کنید.
+</Callout>
+
+```bash
+curl https://get.acme.sh | sh -s email=YOUR_EMAIL
+```
+
+### درخواست گواهی
+
+برای دریافت گواهی دستورات زیر را به‌ترتیب اجرا کنید.
+
+`YOUR_DOMAIN` را با دامنه یا زیردامنهٔ موردنظر جایگزین کنید.
+
+```bash
+export DOMAIN=YOUR_DOMAIN
+
+mkdir -p /var/lib/pasarguard/certs
+
+~/.acme.sh/acme.sh \
+  --issue --force --standalone -d "$DOMAIN" \
+  --fullchain-file "/var/lib/pasarguard/certs/$DOMAIN.cer" \
+  --key-file "/var/lib/pasarguard/certs/$DOMAIN.cer.key"
+```
+
+## دریافت گواهی برای دامنه‌های Cloudflare
+
+اگر دامنه‌تان در Cloudflare ثبت شده و روش‌های بالا جواب نداد، از حالت دستی (manual) استفاده کنید.
+
+`example.com` را با دامنهٔ خود جایگزین کنید.
+
+### نصب acme.sh
+
+پس از نصب acme، مراحل زیر را اجرا کنید:
+
+```bash
+curl https://get.acme.sh | sh -s email=YOUR_EMAIL
+```
+
+### مرحلهٔ ۱: درخواست گواهی
+
+```bash
+~/.acme.sh/acme.sh --issue -d example.com --dns \
+ --yes-I-know-dns-manual-mode-enough-go-ahead-please
+```
+
+پس از اجرا، دو مقدار به شما نمایش داده می‌شود (مطابق تصویر):
+
+![image](https://github.com/Gozargah/gozargah.github.io/assets/67644313/538c8341-fa77-4b06-96a4-73c29f3e0ded)
+
+### مرحلهٔ ۲: تنظیم رکورد DNS
+
+به Cloudflare مراجعه کرده و یک رکورد TXT بسازید و مقادیر نمایش داده‌شده را وارد کنید (مطابق تصویر):
+
+![image](https://github.com/Gozargah/gozargah.github.io/assets/67644313/dad9c59a-da1f-440b-aa6e-ad524aff212a)
+
+### مرحلهٔ ۳: دریافت نهایی گواهی
+
+گواهی نهایی را با دستور زیر دریافت کنید:
+
+```bash
+~/.acme.sh/acme.sh --renew -d example.com \
+  --yes-I-know-dns-manual-mode-enough-go-ahead-please
+```
+
+### مسیر فایل‌ها
+
+در نهایت فایل گواهی دامنه شما در مسیر زیر قرار خواهد داشت:
+
+```
+/root/.acme.sh/example.com_ecc/fullchain.cer
+```
+
+و کلید خصوصی در مسیر زیر ذخیره خواهد شد:
+
+```
+/root/.acme.sh/example.com_ecc/example.com.key
+```
