@@ -5,6 +5,7 @@
     "...introduction",
     "panel",
     "node",
+    "cli-tui",
     "migration"
   ]
 }
