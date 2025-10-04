@@ -32,6 +32,14 @@ docker compose down
 
 ### 2. Переименуйте основную директорию
 
+Удалите каталоги PasarGuard, если они уже существуют:
+
+#### Команда удаления каталогов
+
+```bash
+rm -r /opt/pasarguard /var/lib/pasarguard /var/lib/mysql/pasarguard
+```
+
 Измените название основной директории Marzban на PasarGuard:
 
 #### Команда переименования директории
@@ -60,6 +68,15 @@ sudo mv /var/lib/marzban /var/lib/pasarguard
 sudo mv /var/lib/mysql/marzban /var/lib/mysql/pasarguard
 ```
 
+<Alert type="info">
+Если вы столкнулись с ошибкой «Нет такого файла или каталога», это может быть связано с тем, что каталог MySQL отличается. Вместо этого используйте следующую команду:
+```bash
+mkdir -p /var/lib/mysql/pasarguard
+mv /var/lib/pasarguard/mysql/* /var/lib/mysql/pasarguard
+rm -r /var/lib/pasarguard/mysql
+```
+</Alert>
+
 ### 5. Обновите переменные окружения
 
 Перейдите в новую директорию PasarGuard и обновите файл окружения:
@@ -77,6 +94,10 @@ sudo sed -i 's|/var/lib/marzban|/var/lib/pasarguard|g' .env
 <Alert type="warning">
 Если вы используете старую версию (0.8.4 или ниже), вам также нужно изменить SQL-драйвер:
 </Alert>
+
+```bash
+nano .env
+```
 
 <Tabs items={['SQLite', 'MySQL']}>
   <Tab value="SQLite">
@@ -96,7 +117,7 @@ sudo sed -i 's|/var/lib/marzban|/var/lib/pasarguard|g' .env
 
     ❌ Старый
     ```bash
-    SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:DB_PASSWORD@127.0.0.1/pasarguard"
+    SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:DB_PASSWORD@127.0.0.1/marzban"
     ```
     ✅ Новый
     ```bash
@@ -170,7 +191,7 @@ services:
     network_mode: host
     command: --bind-address=127.0.0.1 --mysqlx-bind-address=127.0.0.1 --disable-log-bin
     environment:
-      MYSQL_DATABASE: marzban
+      MYSQL_DATABASE: pasarguard
     volumes:
       - /var/lib/mysql/pasarguard:/var/lib/mysql
 ```
@@ -207,7 +228,12 @@ services:
 <td data-label="После"><code>/var/lib/pasarguard:/var/lib/pasarguard</code></td>
 </tr>
 <tr>
-<td data-label="Секция"><strong>Том MySQL</strong></td>
+<td data-label="Раздел"><strong>База данных MySQL</strong></td>
+<td data-label="До"><code>marzban</code></td>
+<td data-label="После"><code>pasarguard</code></td>
+</tr>
+<tr>
+<td data-label="Раздел"><strong>Том MySQL</strong></td>
 <td data-label="До"><code>/var/lib/mysql/marzban:/var/lib/mysql</code></td>
 <td data-label="После"><code>/var/lib/mysql/pasarguard:/var/lib/mysql</code></td>
 </tr>
@@ -215,15 +241,72 @@ services:
 </table>
 </div>
 
-### 7. Обновите права доступа к файлам
+<Alert type="info">
+Очевидно, если вы используете базу данных SQLite, вам не следует добавлять строки MySQL в свой файл. Просто сравните пример со своим файлом и примените изменения.
+</Alert>
 
-Убедитесь, что у вас есть необходимые права для новых директорий:
+### 7. Измените базу данных Marzban MySQL на PasarGuard (если используется).
 
-#### Команды обновления прав доступа
+Если вы используете базу данных SQLite, пропустите этот шаг.
+
+Если вы используете базу данных MySQL, экспортируйте базу данных Marzban, чтобы её можно было позже импортировать как базу данных PasarGuard.
+
+#### Команды экспорта базы данных Marzban
+
+#### Запуск MySQL
 
 ```bash
-sudo chown -R $USER:$USER /opt/pasarguard
-sudo chmod -R 755 /opt/pasarguard
+cd /opt/pasarguard && docker compose up -d mysql
+```
+
+#### Вывод базы данных
+Вам будет предложено ввести пароль базы данных. Используйте значение `MYSQL_ROOT_PASSWORD` из файла `.env`.
+
+```bash
+docker compose exec mysql mysqldump -u root -p -h 127.0.0.1 --databases marzban > "/opt/pasarguard/pasarguard.sql"
+```
+
+<Alert type="info">
+Если вы столкнулись с ошибкой «Отказано в доступе», попробуйте использовать пользователя `marzban` со значением `MYSQL_PASSWORD` из файла `.env`:
+```bash
+docker compose exec mysql mysqldump -u marzban -p -h 127.0.0.1 --databases marzban > "/opt/pasarguard/pasarguard.sql"
+```
+</Alert>
+
+#### Изменение информации о базе данных
+
+Этот шаг крайне важен для создания базы данных pasarguard в MySQL.
+Следующая команда заменит «marzban» на «pasarguard» в двух важных строках:
+
+```bash
+sed -i '/^CREATE DATABASE/s/marzban/pasarguard/;/^USE/s/marzban/pasarguard/' /opt/pasarguard/pasarguard.sql
+```
+
+#### Импорт базы данных PasarGuard
+
+Чтобы импортировать новую базу данных, замените пароль базы данных в этой команде на значение `MYSQL_ROOT_PASSWORD` из файла `.env`:
+
+```bash
+docker compose exec -T mysql mysql -u root -p"MYSQL_ROOT_PASSWORD" -h 127.0.0.1 < "/opt/pasarguard/pasarguard.sql"
+```
+
+Альтернативный метод:
+Вы можете импортировать базу данных с помощью `phpmyadmin`. Добавьте службу `phpmyadmin` в файл Docker Compose и перезапустите его.
+Отредактируйте файл резервной копии marzban.sql в текстовом редакторе, заменив `marzban` на `pasarguard` в начальных строках (строки `CREATE DATABASE` и `USE`).
+
+Сохраните файл и импортируйте его с помощью `phpmyadmin`.
+
+#### Удаление базы данных Marzban
+
+Вам будет предложено ввести пароль базы данных. Используйте значение `MYSQL_ROOT_PASSWORD` из файла `.env`.
+
+<Alert type="warning">
+Убедитесь, что у вас есть резервная копия данных, и будьте готовы восстановить их в случае возникновения проблем.
+</Alert>
+
+```bash
+rm /opt/pasarguard/pasarguard.sql
+docker compose exec mysql mysql -u root -p -e "DROP DATABASE marzban;"
 ```
 
 ### 8. Установите скрипт управления PasarGuard
@@ -245,7 +328,7 @@ sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasargua
 #### Команда запуска
 
 ```bash
-pasarguard up
+pasarguard restart
 ```
 
 ### 10. Проверьте миграцию
