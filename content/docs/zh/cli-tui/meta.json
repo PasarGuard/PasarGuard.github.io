@@ -1,0 +1,8 @@
+{
+  "title": "CLI 和 TUI",
+  "description": "命令行和文本用户界面工具",
+  "pages": [
+    "index"
+  ],
+  "icon": "Terminal"
+}

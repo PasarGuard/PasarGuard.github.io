@@ -1,0 +1,8 @@
+{
+  "title": "CLI и TUI",
+  "description": "Инструменты командной строки и текстового интерфейса",
+  "pages": [
+    "index"
+  ],
+  "icon": "Terminal"
+}

@@ -1,0 +1,155 @@
+---
+title: CLI & TUI
+navigation: CLI & TUI
+icon: Terminal
+---
+
+# PasarGuard CLI & TUI
+
+Modern command-line and text-based user interface tools for managing PasarGuard with efficiency and style.
+
+## Overview
+
+PasarGuard provides two powerful command-line tools for system administration:
+
+- **CLI (Command-Line Interface)** - Type-safe, feature-rich commands for automation and scripting
+- **TUI (Text User Interface)** - Interactive, visual terminal interface for hands-on management
+
+Both tools are built with modern Python frameworks and provide secure, efficient access to all PasarGuard management functions.
+
+---
+
+## CLI - Command-Line Interface
+
+A modern, type-safe command-line interface for managing PasarGuard, built with Typer.
+
+### Features
+
+- 🎯 **Type-safe CLI** with rich output formatting
+- 📊 **Beautiful tables and panels** for data visualization
+- 🔒 **Secure admin management** with interactive prompts
+- 📈 **System status monitoring** and diagnostics
+- ⌨️ **Interactive prompts** with confirmations for safety
+
+### Installation
+
+The CLI is included with PasarGuard and can be used directly:
+
+```bash
+pasarguard cli --help
+
+# Or from the project root
+uv run pasarguard-cli.py --help
+```
+
+### Usage
+
+#### General Commands
+
+```bash
+# Show version
+pasarguard cli version
+
+# Show help
+pasarguard cli --help
+```
+
+#### Admin Management
+
+```bash
+# List all admins
+pasarguard cli admins --list
+
+# Create new admin
+pasarguard cli admins --create username
+
+# Delete admin
+pasarguard cli admins --delete username
+
+# Modify admin (password and sudo status)
+pasarguard cli admins --modify username
+
+# Reset admin usage statistics
+pasarguard cli admins --reset-usage username
+```
+
+#### System Information
+
+```bash
+# Show system status
+pasarguard cli system
+```
+
+### Examples
+
+**Creating a new admin:**
+```bash
+pasarguard cli admins --create john_admin
+# You'll be prompted to enter password and sudo permissions
+```
+
+**Listing all admins with formatted output:**
+```bash
+pasarguard cli admins --list
+# Displays a beautiful table with admin details
+```
+
+---
+
+## TUI - Text User Interface
+
+A modern, interactive command-line interface for managing PasarGuard, built with Textual.
+
+### Features
+
+- 🎯 **Interactive TUI** with mouse and keyboard support
+- 📱 **Responsive design** with dark mode support
+- ⌨️ **Keyboard shortcuts** for quick navigation
+- 🔄 **Real-time updates** and live data refresh
+- 📊 **Rich data visualization** with colors and formatting
+- 🔒 **Secure admin management** with visual feedback
+
+### Starting the TUI
+
+```bash
+pasarguard tui
+```
+
+Once launched, you'll see a beautiful interactive interface with navigation panels, data tables, and action buttons.
+
+### Keyboard Shortcuts
+
+#### Global Commands
+
+- `q` - Quit the application
+- `?` - Show help and keyboard shortcuts
+- `Tab` - Navigate between panels
+- `Shift+Tab` - Navigate backwards
+- `Escape` - Cancel current action
+
+#### Admin Section
+
+- `c` - Create new admin
+- `m` - Modify admin
+- `r` - Reset admin usage statistics
+- `d` - Delete admin
+- `i` - Import admins from environment variables
+
+### Admin Management
+
+The TUI provides a visual interface for all admin operations:
+
+- **Create** - Interactive forms for new admin accounts
+- **Modify** - Edit admin passwords and permissions
+- **Delete** - Safe deletion with confirmation prompts
+- **Reset Usage** - Clear usage statistics for admins
+- **Import** - Bulk import admins from environment variables
+- **View Details** - Detailed admin information and status
+
+### Navigation Tips
+
+1. Use **arrow keys** or **mouse** to navigate
+2. Press **Enter** to select items or confirm actions
+3. Use **Tab** to move between input fields
+4. Press **Escape** to cancel dialogs
+5. Press **?** anytime to see available shortcuts
