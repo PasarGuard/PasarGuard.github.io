@@ -95,6 +95,8 @@ sudo sed -i 's|/var/lib/marzban|/var/lib/pasarguard|g' .env
 Если вы используете старую версию (0.8.4 или ниже), вам также нужно изменить SQL-драйвер:
 </Alert>
 
+Откройте файл `.env`:
+
 ```bash
 nano .env
 ```
@@ -104,11 +106,11 @@ nano .env
     ### Обновление драйвера SQLite
 
     ❌ Старый
-    ```bash
+    ```dotenv
     SQLALCHEMY_DATABASE_URL = "sqlite:///db.sqlite3"
     ```
     ✅ Новый
-    ```bash
+    ```dotenv
     SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///db.sqlite3"
     ```
   </Tab>
@@ -116,14 +118,72 @@ nano .env
     ### Обновление драйвера MySQL
 
     ❌ Старый
-    ```bash
+    ```dotenv
     SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:DB_PASSWORD@127.0.0.1/marzban"
     ```
     ✅ Новый
-    ```bash
+    ```dotenv
     SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://root:DB_PASSWORD@127.0.0.1/pasarguard"
     ```
   </Tab>
+</Tabs>
+
+### Другие изменения
+
+#### Переименование шаблона v2ray в xray
+
+Если вы используете пользовательский шаблон v2ray, вам также следует изменить его каталог с помощью этой команды:
+
+```bash
+mv /var/lib/pasarguard/templates/v2ray /var/lib/pasarguard/templates/xray
+```
+
+#### Обновление каталогов сертификатов xray-config
+
+Если у вас есть входящий трафик TLS, вам необходимо обновить файл `xray_config.json` и изменить каталоги сертификатов с marzban на pasarguard:
+
+```bash
+nano /var/lib/pasarguard/xray_config.json
+```
+
+После изменений ваши файлы `.env` и `xray_config.json` должны выглядеть примерно так:
+
+<Tabs items={['XRAY_SUBSCRIPTION_TEMPLATE', 'Каталоги сертификатов Xray']}>
+<Tab value="XRAY_SUBSCRIPTION_TEMPLATE">
+### Обновить шаблон Xray в `.env`
+
+❌ Старый
+```dotenv
+V2RAY_SUBSCRIPTION_TEMPLATE = "v2ray/default.json"
+```
+✅ Новый
+```dotenv
+XRAY_SUBSCRIPTION_TEMPLATE = "xray/default.json"
+```
+</Tab>
+
+<Tab value="Каталоги сертификатов Xray">
+### Обновите каталоги сертификатов в xray_config.json
+
+❌ Старый
+    ```json
+          "certificates": [
+            {
+              "certificateFile": "/var/lib/marzban/certs/example.com/fullchain.pem",
+              "keyFile": "/var/lib/marzban/certs/example.com/key.pem"
+            }
+          ],
+    ```
+    ✅ Новый
+    ```json
+          "certificates": [
+            {
+              "certificateFile": "/var/lib/pasarguard/certs/example.com/fullchain.pem",
+              "keyFile": "/var/lib/pasarguard/certs/example.com/key.pem"
+            }
+          ],
+    ```
+</Tab>
 </Tabs>
 
 ### 6. Обновите файл Docker Compose
@@ -263,13 +323,13 @@ cd /opt/pasarguard && docker compose up -d mysql
 Вам будет предложено ввести пароль базы данных. Используйте значение `MYSQL_ROOT_PASSWORD` из файла `.env`.
 
 ```bash
-docker compose exec mysql mysqldump -u root -p -h 127.0.0.1 --databases marzban > "/opt/pasarguard/pasarguard.sql"
+docker compose exec mysql mysqldump -u root -p -h 127.0.0.1 --databases marzban > "/opt/pasarguard/marzban.sql"
 ```
 
 <Alert type="info">
 Если вы столкнулись с ошибкой «Отказано в доступе», попробуйте использовать пользователя `marzban` со значением `MYSQL_PASSWORD` из файла `.env`:
 ```bash
-docker compose exec mysql mysqldump -u marzban -p -h 127.0.0.1 --databases marzban > "/opt/pasarguard/pasarguard.sql"
+docker compose exec mysql mysqldump -u marzban -p -h 127.0.0.1 --databases marzban > "/opt/pasarguard/marzban.sql"
 ```
 </Alert>
 
@@ -279,7 +339,7 @@ docker compose exec mysql mysqldump -u marzban -p -h 127.0.0.1 --databases marzb
 Следующая команда заменит «marzban» на «pasarguard» в двух важных строках:
 
 ```bash
-sed -i '/^CREATE DATABASE/s/marzban/pasarguard/;/^USE/s/marzban/pasarguard/' /opt/pasarguard/pasarguard.sql
+sed -i '/^CREATE DATABASE/s/marzban/pasarguard/;/^USE/s/marzban/pasarguard/' /opt/pasarguard/marzban.sql
 ```
 
 #### Импорт базы данных PasarGuard
@@ -287,12 +347,12 @@ sed -i '/^CREATE DATABASE/s/marzban/pasarguard/;/^USE/s/marzban/pasarguard/' /op
 Чтобы импортировать новую базу данных, замените пароль базы данных в этой команде на значение `MYSQL_ROOT_PASSWORD` из файла `.env`:
 
 ```bash
-docker compose exec -T mysql mysql -u root -p"MYSQL_ROOT_PASSWORD" -h 127.0.0.1 < "/opt/pasarguard/pasarguard.sql"
+docker compose exec -T mysql mysql -u root -p"MYSQL_ROOT_PASSWORD" -h 127.0.0.1 < "/opt/pasarguard/marzban.sql"
 ```
 
-Альтернативный метод:
+**Альтернативный метод:**
 Вы можете импортировать базу данных с помощью `phpmyadmin`. Добавьте службу `phpmyadmin` в файл Docker Compose и перезапустите его.
-Отредактируйте файл резервной копии marzban.sql в текстовом редакторе, заменив `marzban` на `pasarguard` в начальных строках (строки `CREATE DATABASE` и `USE`).
+Отредактируйте файл резервной копии `marzban.sql` в текстовом редакторе, заменив `marzban` на `pasarguard` в начальных строках (строки `CREATE DATABASE` и `USE`).
 
 Сохраните файл и импортируйте его с помощью `phpmyadmin`.
 
@@ -305,7 +365,7 @@ docker compose exec -T mysql mysql -u root -p"MYSQL_ROOT_PASSWORD" -h 127.0.0.1 
 </Alert>
 
 ```bash
-rm /opt/pasarguard/pasarguard.sql
+rm /opt/pasarguard/marzban.sql
 docker compose exec mysql mysql -u root -p -e "DROP DATABASE marzban;"
 ```
 
@@ -384,6 +444,7 @@ marzban up
 
 После успешной миграции:
 
+- **📡 Узлы PasarGuard**: Установка и подключение узлов PasarGuard. Сам PasarGuard не использует Xray-Core.
 - **📊 Обновите мониторинг**: Если у вас есть инструменты мониторинга, подключите их к новым путям.
 - **💾 Обновите резервные копии**: Убедитесь, что ваши скрипты резервного копирования обновлены для резервного копирования из новых директорий.
 - **🧪 Протестируйте все функции**: Тщательно протестируйте все функции панели, чтобы убедиться, что все работает правильно.
