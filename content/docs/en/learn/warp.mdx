@@ -20,7 +20,12 @@ Note that Warp configs have a maximum connection limit of 5 simultaneous devices
 2. Rename the `Asset` file to `wgcf`.
 3. Now enter `cmd.exe` in the File Explorer address bar.
 
-![image](https://github.com/Gozargah/gozargah.github.io/assets/50927468/fb9f3eae-8390-45a5-a7b3-c50db4aa82a1)
+<ImageZoom
+  src="/images/learn/warp-cmd-terminal.png"
+  alt="Opening command terminal in File Explorer"
+  width={800}
+  height={400}
+/>
 
 4. In the opened terminal, enter `wgcf.exe`.
 5. Execute `wgcf.exe register` once, then `wgcf.exe generate`.
@@ -148,7 +153,7 @@ sudo apt install wireguard
 
 Then add `Table = off` to the Wireguard file as shown in the example:
 
-```conf
+```ini
 [Interface]
 PrivateKey = Your_Private_Key
 Address = 172.16.0.2/32

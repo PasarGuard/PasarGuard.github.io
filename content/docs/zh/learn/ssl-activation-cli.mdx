@@ -1,27 +1,25 @@
 ---
-title: SSL Activation
-navigation: SSL Activation
+title: SSL 激活
+navigation: SSL 激活
 icon: Lock
 ---
 
-# SSL Activation in PasarGuard
-
-By enabling SSL in PasarGuard, the dashboard and subscription link will be accessible via https.
-There are different approaches to enabling SSL in PasarGuard, which we'll cover below in order from simple to complex.
+在 PasarGuard 中启用 SSL 后，面板和订阅链接将可通过 https 访问。
+在 PasarGuard 中启用 SSL 有不同的方法，我们将按从简单到复杂的顺序介绍这些方法。
 
 <Callout type="info">
-In all examples below, the `docker-compose.yml` and `.env` files can be found at `/opt/PasarGuard`, and `xray_config.json` at `/var/lib/PasarGuard`.
+在下面的所有示例中，`docker-compose.yml` 和 `.env` 文件位于 `/opt/PasarGuard`，`xray_config.json` 位于 `/var/lib/PasarGuard`。
 
-If you installed PasarGuard manually, you'll need to make the necessary changes yourself.
+如果您手动安装了 PasarGuard，则需要自行进行必要的更改。
 </Callout>
 
-## SSL Activation with Caddy
+## 使用 Caddy 激活 SSL
 
-In this method, you don't need to create an SSL certificate - Caddy does all the work for you!
+使用此方法，您不需要创建 SSL 证书 - Caddy 会为您完成所有工作！
 
-### Modifying docker-compose.yml
+### 修改 docker-compose.yml
 
-Modify the `docker-compose.yml` file as follows:
+按如下方式修改 `docker-compose.yml` 文件：
 
 ```yml {9-10,12-22,24-25}
 services:
@@ -51,79 +49,79 @@ volumes:
   caddy_volume:
 ```
 
-### Creating Caddyfile
+### 创建 Caddyfile
 
-Create a new file named `Caddyfile` at `/opt/pasarguard` and replace `YOUR_DOMAIN` with your desired domain or subdomain.
+在 `/opt/pasarguard` 创建一个名为 `Caddyfile` 的新文件，并将 `YOUR_DOMAIN` 替换为您所需的域名或子域名。
 
 <Callout type="warn">
-The first letter in the `Caddyfile` filename must be uppercase `C`.
+`Caddyfile` 文件名中的第一个字母必须是大写的 `C`。
 </Callout>
 
-```caddy
+```nginx
 YOUR_DOMAIN {
 	reverse_proxy unix//var/lib/pasarguard/pasarguard.socket
 }
 ```
 
 <Callout type="warn">
-If you want the subscription domain or subdomain to be different from the panel, duplicate the above content in your Caddyfile and replace both domains or subdomains in place of `YOUR_DOMAIN`.
+如果您希望订阅域名或子域名与面板不同，请在 Caddyfile 中复制上述内容，并将两个域名或子域名都替换为 `YOUR_DOMAIN`。
 </Callout>
 
-### Setting Environment Variables
+### 设置环境变量
 
-Set the following variables in the `.env` file.
+在 `.env` 文件中设置以下变量。
 
-Replace `YOUR_DOMAIN` with your desired domain or subdomain.
+将 `YOUR_DOMAIN` 替换为您所需的域名或子域名。
 
-```env
+```bash
 UVICORN_UDS = /var/lib/pasarguard/pasarguard.socket
 XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
 ```
 
-### Restarting PasarGuard
+### 重启 PasarGuard
 
-Restart PasarGuard:
+重启 PasarGuard：
 
 ```bash
 PasarGuard restart
 ```
 
-Now the PasarGuard dashboard will be accessible at your domain or subdomain address via https.
+现在 PasarGuard 面板将可通过 https 在您的域名或子域名地址上访问。
 
-## SSL Activation with Uvicorn
+## 使用 Uvicorn 激活 SSL
 
-PasarGuard runs with `Uvicorn` by default. `Uvicorn` also allows you to define SSL certificate files.
+PasarGuard 默认使用 `Uvicorn` 运行。`Uvicorn` 还允许您定义 SSL 证书文件。
 
-### Obtaining SSL Certificate
+### 获取 SSL 证书
 
-First, you need to obtain certificate files for your domain or subdomain. For this, see the [SSL Certificate Issuance](ssl-certificate-cli) tutorial.
+首先，您需要为您的域名或子域名获取证书文件。有关此内容，请参阅 [SSL 证书签发](ssl-certificate-cli) 教程。
 
-### Setting Environment Variables
+### 设置环境变量
 
-After creating the SSL certificate files, set the following variables in the `.env` file.
+创建 SSL 证书文件后，在 `.env` 文件中设置以下变量。
 
-Replace `YOUR_DOMAIN` with your desired domain or subdomain.
+将 `YOUR_DOMAIN` 替换为您所需的域名或子域名。
 
-```env
+```bash
 UVICORN_PORT = 443
 UVICORN_SSL_CERTFILE = "/var/lib/PasarGuard/certs/YOUR_DOMAIN.cer"
 UVICORN_SSL_KEYFILE = "/var/lib/PasarGuard/certs/YOUR_DOMAIN.cer.key"
 XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
 ```
 
-Now the PasarGuard dashboard will be accessible at your domain or subdomain address via https.
+现在 PasarGuard 面板将可通过 https 在您的域名或子域名地址上访问。
 
-## SSL Activation with HAProxy
+## 使用 HAProxy 激活 SSL
 
-`HAProxy` is one of the best tools for this task. In this method, we run PasarGuard on https with the help of `HAProxy`.
+`HAProxy` 是此任务的最佳工具之一。在此方法中，我们借助 `HAProxy` 在 https 上运行 PasarGuard。
 
-### Obtaining SSL Certificate
+### 获取 SSL 证书
 
-First, you need to obtain certificate files for your domain or subdomain. For this, see the [SSL Certificate Issuance](ssl-certificate-cli) tutorial.
+首先，您需要为您的域名或子域名获取证书文件。有关此内容，请参阅 [SSL 证书签发](ssl-certificate-cli) 教程。
 
-### Modifying docker-compose.yml
+### 修改 docker-compose.yml
 
-Modify the `docker-compose.yml` file as follows:
+按如下方式修改 `docker-compose.yml` 文件：
 
 ```yml {9-10,12-20}
 services:
@@ -148,11 +146,11 @@ services:
       - 443:443
 ```
 
-### Creating haproxy.cfg
+### 创建 haproxy.cfg
 
-Create a new file named `haproxy.cfg` at `/opt/PasarGuard` and replace `YOUR_DOMAIN` with your desired domain or subdomain.
+在 `/opt/PasarGuard` 创建一个名为 `haproxy.cfg` 的新文件，并将 `YOUR_DOMAIN` 替换为您所需的域名或子域名。
 
-```cfg
+```ini
 defaults
   mode tcp
   timeout client 30s
@@ -175,23 +173,23 @@ backend PasarGuard_backend
   server PasarGuard /var/lib/pasarguard/pasarguard.socket
 ```
 
-### Setting Environment Variables
+### 设置环境变量
 
-Set the following variables in the `.env` file.
+在 `.env` 文件中设置以下变量。
 
-Replace `YOUR_DOMAIN` with your desired domain or subdomain.
+将 `YOUR_DOMAIN` 替换为您所需的域名或子域名。
 
-```env
+```bash
 UVICORN_UDS = /var/lib/pasarguard/pasarguard.socket
 XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
 ```
 
-### Restarting PasarGuard
+### 重启 PasarGuard
 
-Restart PasarGuard:
+重启 PasarGuard：
 
 ```bash
 PasarGuard restart
 ```
 
-Now the PasarGuard dashboard will be accessible at your domain or subdomain address via https.
+现在 PasarGuard 面板将可通过 https 在您的域名或子域名地址上访问。

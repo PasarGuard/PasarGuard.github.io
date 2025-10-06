@@ -2,7 +2,8 @@
   "title": "CLI & TUI",
   "description": "Command-line and Text User Interface tools",
   "pages": [
-    "index"
+    "cli",
+    "tui"
   ],
   "icon": "Terminal"
 }

@@ -1,79 +1,8 @@
 ---
-title: SSL Certificate Issuance
-navigation: SSL Certificate
-icon: Shield
----
-
-# SSL Certificate Issuance
-
-The following tutorials are for obtaining SSL certificates for use with pasarguard using the command line (CLI).
-
-<Callout type="warn">
-Certificate files must be accessible at `/var/lib/pasarguard/certs` for pasarguard to access them.
-
-In all examples below, files will be installed at this location.
-</Callout>
-
-<Callout type="warn">
-You must register DNS records for your domain before obtaining an SSL certificate.
-</Callout>
-
-## Obtaining Certificate with acme.sh
-
-### Installing Prerequisites
-
-Install socat using the following command for standalone mode:
-
-```bash
-apt install curl socat -y
-```
-
-<Callout type="info">
-If you have already installed socat, you don't need to perform this step.
-</Callout>
-
-### Installing acme.sh
-
-Install [acme.sh](https://github.com/acmesh-official/acme.sh) with the following command.
-
-Replace `YOUR_EMAIL` with your email address.
-
-<Callout type="info">
-If you have already installed acme.sh, you don't need to perform this step.
-</Callout>
-
-```bash
-curl https://get.acme.sh | sh -s email=YOUR_EMAIL
-```
-
-### Obtaining Certificate
-
-To obtain a certificate, execute the following commands in order.
-
-Replace `YOUR_DOMAIN` with your desired domain or subdomain.
-
-```bash
-export DOMAIN=YOUR_DOMAIN
-
-mkdir -p /var/lib/pasarguard/certs
-
-~/.acme.sh/acme.sh \
-  --issue --force --standalone -d "$DOMAIN" \
-  --fullchain-file "/var/lib/pasarguard/certs/$DOMAIN.cer" \
-  --key-file "/var/lib/pasarguard/certs/$DOMAIN.cer.key"
-```
-
-## Obtaining Certificate for Cloudflare Domain
-
-If your domain is registered on Cloudflare and the above methods don't work, use manual mode.
-
-Replace `example.com` with your domain.
-
 title: صدور گواهی SSL
 navigation: گواهی SSL
 icon: Shield
-
-## صدور گواهی SSL
+---
 
 راهنمای زیر نحوهٔ دریافت گواهی‌های SSL برای استفاده با پاسارگارد از طریق خط فرمان (CLI) را نشان می‌دهد.
 
@@ -155,13 +84,23 @@ curl https://get.acme.sh | sh -s email=YOUR_EMAIL
 
 پس از اجرا، دو مقدار به شما نمایش داده می‌شود (مطابق تصویر):
 
-![image](https://github.com/Gozargah/gozargah.github.io/assets/67644313/538c8341-fa77-4b06-96a4-73c29f3e0ded)
+<ImageZoom
+  src="/images/learn/ssl-cloudflare-dns-values.png"
+  alt="مقادیر تأیید DNS از Cloudflare"
+  width={800}
+  height={400}
+/>
 
 ### مرحلهٔ ۲: تنظیم رکورد DNS
 
 به Cloudflare مراجعه کرده و یک رکورد TXT بسازید و مقادیر نمایش داده‌شده را وارد کنید (مطابق تصویر):
 
-![image](https://github.com/Gozargah/gozargah.github.io/assets/67644313/dad9c59a-da1f-440b-aa6e-ad524aff212a)
+<ImageZoom
+  src="/images/learn/ssl-cloudflare-txt-record.png"
+  alt="ساخت رکورد TXT در Cloudflare"
+  width={800}
+  height={400}
+/>
 
 ### مرحلهٔ ۳: دریافت نهایی گواهی
 

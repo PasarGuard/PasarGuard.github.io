@@ -1,6 +1,7 @@
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Step, Steps } from 'fumadocs-ui/components/steps';
+import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
 import type { MDXComponents } from 'mdx/types';
 import { LocalizedCard } from '@/components/LocalizedCard';
 
@@ -61,6 +62,7 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     Card: LocalizedCard,
     Alert,
     Field,
+    ImageZoom,
     ...components,
   };
 }

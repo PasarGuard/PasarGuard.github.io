@@ -4,8 +4,6 @@ navigation: SSL Certificate
 icon: Shield
 ---
 
-# SSL Certificate Issuance
-
 The following tutorials are for obtaining SSL certificates for use with pasarguard using the command line (CLI).
 
 <Callout type="warn">
@@ -86,13 +84,23 @@ curl https://get.acme.sh | sh -s email=YOUR_EMAIL
 
 After execution, you will receive two values as shown in the image below:
 
-![image](https://github.com/Gozargah/gozargah.github.io/assets/67644313/538c8341-fa77-4b06-96a4-73c29f3e0ded)
+<ImageZoom
+  src="/images/learn/ssl-cloudflare-dns-values.png"
+  alt="Cloudflare DNS verification values"
+  width={800}
+  height={400}
+/>
 
 ### Step 2: Configure DNS Record
 
 Go to Cloudflare and create a TXT record, entering the values as shown in the image below:
 
-![image](https://github.com/Gozargah/gozargah.github.io/assets/67644313/dad9c59a-da1f-440b-aa6e-ad524aff212a)
+<ImageZoom
+  src="/images/learn/ssl-cloudflare-txt-record.png"
+  alt="Creating TXT record in Cloudflare"
+  width={800}
+  height={400}
+/>
 
 ### Step 3: Obtain Certificate
 

@@ -2,8 +2,8 @@
   "title": "Learn",
   "description": "Step-by-step guides for advanced configurations",
   "pages": [
-    "ssl-certificate",
-    "ssl-activation",
+    "ssl-certificate-cli",
+    "ssl-activation-cli",
     "warp"
   ],
   "icon": "BookOpen"

@@ -1,56 +1,54 @@
 ---
-title: SSL Certificate Issuance
-navigation: SSL Certificate
+title: SSL 证书签发
+navigation: SSL 证书
 icon: Shield
 ---
 
-# SSL Certificate Issuance
-
-The following tutorials are for obtaining SSL certificates for use with pasarguard using the command line (CLI).
+以下教程适用于通过命令行 (CLI) 获取用于 PasarGuard 的 SSL 证书。
 
 <Callout type="warn">
-Certificate files must be accessible at `/var/lib/pasarguard/certs` for pasarguard to access them.
+证书文件必须可在 `/var/lib/pasarguard/certs` 访问，以便 PasarGuard 可以使用它们。
 
-In all examples below, files will be installed at this location.
+在下面的所有示例中，文件将安装在此位置。
 </Callout>
 
 <Callout type="warn">
-You must register DNS records for your domain before obtaining an SSL certificate.
+在获取 SSL 证书之前，您必须为域名注册 DNS 记录。
 </Callout>
 
-## Obtaining Certificate with acme.sh
+## 使用 acme.sh 获取证书
 
-### Installing Prerequisites
+### 安装先决条件
 
-Install socat using the following command for standalone mode:
+使用以下命令安装 socat 以使用独立模式：
 
 ```bash
 apt install curl socat -y
 ```
 
 <Callout type="info">
-If you have already installed socat, you don't need to perform this step.
+如果您已经安装了 socat，则无需执行此步骤。
 </Callout>
 
-### Installing acme.sh
+### 安装 acme.sh
 
-Install [acme.sh](https://github.com/acmesh-official/acme.sh) with the following command.
+使用以下命令安装 [acme.sh](https://github.com/acmesh-official/acme.sh)。
 
-Replace `YOUR_EMAIL` with your email address.
+将 `YOUR_EMAIL` 替换为您的电子邮件地址。
 
 <Callout type="info">
-If you have already installed acme.sh, you don't need to perform this step.
+如果您已经安装了 acme.sh，则无需执行此步骤。
 </Callout>
 
 ```bash
 curl https://get.acme.sh | sh -s email=YOUR_EMAIL
 ```
 
-### Obtaining Certificate
+### 获取证书
 
-To obtain a certificate, execute the following commands in order.
+要获取证书，请按顺序执行以下命令。
 
-Replace `YOUR_DOMAIN` with your desired domain or subdomain.
+将 `YOUR_DOMAIN` 替换为您所需的域名或子域名。
 
 ```bash
 export DOMAIN=YOUR_DOMAIN
@@ -63,55 +61,65 @@ mkdir -p /var/lib/pasarguard/certs
   --key-file "/var/lib/pasarguard/certs/$DOMAIN.cer.key"
 ```
 
-## Obtaining Certificate for Cloudflare Domain
+## 为 Cloudflare 域名获取证书
 
-If your domain is registered on Cloudflare and the above methods don't work, use manual mode.
+如果您的域名在 Cloudflare 上注册且上述方法不起作用，请使用手动模式。
 
-Replace `example.com` with your domain.
+将 `example.com` 替换为您的域名。
 
-### Installing acme.sh
+### 安装 acme.sh
 
-After installing acme, execute the following steps:
+安装 acme 后，执行以下步骤：
 
 ```bash
 curl https://get.acme.sh | sh -s email=YOUR_EMAIL
 ```
 
-### Step 1: Request Certificate
+### 步骤 1：申请证书
 
 ```bash
 ~/.acme.sh/acme.sh --issue -d example.com --dns \
  --yes-I-know-dns-manual-mode-enough-go-ahead-please
 ```
 
-After execution, you will receive two values as shown in the image below:
+执行后，您将收到两个值，如下图所示：
 
-![image](https://github.com/Gozargah/gozargah.github.io/assets/67644313/538c8341-fa77-4b06-96a4-73c29f3e0ded)
+<ImageZoom
+  src="/images/learn/ssl-cloudflare-dns-values.png"
+  alt="Cloudflare DNS 验证值"
+  width={800}
+  height={400}
+/>
 
-### Step 2: Configure DNS Record
+### 步骤 2：配置 DNS 记录
 
-Go to Cloudflare and create a TXT record, entering the values as shown in the image below:
+前往 Cloudflare 并创建 TXT 记录，输入如下图所示的值：
 
-![image](https://github.com/Gozargah/gozargah.github.io/assets/67644313/dad9c59a-da1f-440b-aa6e-ad524aff212a)
+<ImageZoom
+  src="/images/learn/ssl-cloudflare-txt-record.png"
+  alt="在 Cloudflare 中创建 TXT 记录"
+  width={800}
+  height={400}
+/>
 
-### Step 3: Obtain Certificate
+### 步骤 3：获取证书
 
-Obtain the certificate with the following command:
+使用以下命令获取证书：
 
 ```bash
 ~/.acme.sh/acme.sh --renew -d example.com \
   --yes-I-know-dns-manual-mode-enough-go-ahead-please
 ```
 
-### File Paths
+### 文件路径
 
-Finally, your domain certificate file will be at:
+最终，您的域名证书文件将位于：
 
 ```
 /root/.acme.sh/example.com_ecc/fullchain.cer
 ```
 
-And the private key file will be saved at:
+私钥文件将保存在：
 
 ```
 /root/.acme.sh/example.com_ecc/example.com.key

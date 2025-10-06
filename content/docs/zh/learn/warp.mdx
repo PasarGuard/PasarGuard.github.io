@@ -1,113 +1,116 @@
 ---
-title: CloudFlare Warp Activation
+title: CloudFlare Warp 激活
 navigation: CloudFlare Warp
 icon: Cloud
 ---
 
-# CloudFlare Warp Activation
-
-Using this tutorial, you can bypass certain restrictions imposed by large companies like Google and Spotify on your IP and use their services without issues.
+使用本教程，您可以绕过 Google 和 Spotify 等大公司对您的 IP 施加的某些限制，并无问题地使用它们的服务。
 
 <Callout type="warn">
-Note that Warp configs have a maximum connection limit of 5 simultaneous devices. To solve this issue, you can use multiple configs.
+请注意，Warp 配置最多支持 5 个设备同时连接。要解决此问题，您可以使用多个配置。
 </Callout>
 
-## Step 1: Creating Wireguard Config
+## 步骤 1：创建 Wireguard 配置
 
-### Method 1: Using Windows
+### 方法 1：使用 Windows
 
-1. First, download the required `Asset` from the [releases](https://github.com/ViRb3/wgcf/releases) section. This file varies depending on your processor.
-2. Rename the `Asset` file to `wgcf`.
-3. Now enter `cmd.exe` in the File Explorer address bar.
+1. 首先，从 [releases](https://github.com/ViRb3/wgcf/releases) 部分下载所需的 `Asset`。此文件因您的处理器而异。
+2. 将 `Asset` 文件重命名为 `wgcf`。
+3. 现在在文件资源管理器地址栏中输入 `cmd.exe`。
 
-![image](https://github.com/Gozargah/gozargah.github.io/assets/50927468/fb9f3eae-8390-45a5-a7b3-c50db4aa82a1)
+<ImageZoom
+  src="/images/learn/warp-cmd-terminal.png"
+  alt="在文件资源管理器中打开命令终端"
+  width={800}
+  height={400}
+/>
 
-4. In the opened terminal, enter `wgcf.exe`.
-5. Execute `wgcf.exe register` once, then `wgcf.exe generate`.
-6. A new file named `wgcf-profile.conf` will be created - this is the `Wireguard` config we need.
-7. Your config is ready and you can use it.
+4. 在打开的终端中，输入 `wgcf.exe`。
+5. 执行 `wgcf.exe register` 一次，然后执行 `wgcf.exe generate`。
+6. 将创建一个名为 `wgcf-profile.conf` 的新文件 - 这就是我们需要的 `Wireguard` 配置。
+7. 您的配置已准备就绪，您可以使用它。
 
-### Method 2: Using Linux
+### 方法 2：使用 Linux
 
-First, download the required `Asset` from the [releases](https://github.com/ViRb3/wgcf/releases) section. This file varies depending on your processor.
+首先，从 [releases](https://github.com/ViRb3/wgcf/releases) 部分下载所需的 `Asset`。此文件因您的处理器而异。
 
-You can do this using the `wget` command.
+您可以使用 `wget` 命令执行此操作。
 
-#### For AMD64 architecture processors:
+#### 对于 AMD64 架构处理器：
 
 ```bash
 wget https://github.com/ViRb3/wgcf/releases/download/v2.2.22/wgcf_2.2.22_linux_amd64
 ```
 
-#### For ARM64 architecture processors:
+#### 对于 ARM64 架构处理器：
 
 ```bash
 wget https://github.com/ViRb3/wgcf/releases/download/v2.2.22/wgcf_2.2.22_linux_arm64
 ```
 
-Move the file to `/usr/bin/` and rename it to `wgcf`.
+将文件移动到 `/usr/bin/` 并将其重命名为 `wgcf`。
 
-#### For AMD64 architecture processors:
+#### 对于 AMD64 架构处理器：
 
 ```bash
 mv wgcf_2.2.22_linux_amd64 /usr/bin/wgcf
 chmod +x /usr/bin/wgcf
 ```
 
-#### For ARM64 architecture processors:
+#### 对于 ARM64 架构处理器：
 
 ```bash
 mv wgcf_2.2.22_linux_arm64 /usr/bin/wgcf
 chmod +x /usr/bin/wgcf
 ```
 
-Then create the config using these 2 commands:
+然后使用这 2 个命令创建配置：
 
 ```bash
 wgcf register
 wgcf generate
 ```
 
-A file named `wgcf-profile.conf` will be created - this is the config we need.
+将创建一个名为 `wgcf-profile.conf` 的文件 - 这就是我们需要的配置。
 
-## Step 2: Using Warp+ (Optional)
+## 步骤 2：使用 Warp+（可选）
 
-To obtain a license and use Warp+, you can get a `license_key` through [this](https://t.me/generatewarpplusbot) Telegram bot.
+要获取许可证并使用 Warp+，您可以通过[这个](https://t.me/generatewarpplusbot) Telegram 机器人获取 `license_key`。
 
-After obtaining the `license_key`, you need to replace it in the `wgcf-account.toml` file.
+获取 `license_key` 后，您需要在 `wgcf-account.toml` 文件中替换它。
 
 <Callout type="info">
-You can make this change in Linux with `nano` and in Windows with `Notepad` or any other software.
+您可以在 Linux 中使用 `nano` 进行此更改，在 Windows 中使用 `Notepad` 或任何其他软件。
 </Callout>
 
 <Callout type="info" title="Windows">
-To use commands on Windows, you need to use `wgcf.exe` instead of `wgcf`.
+要在 Windows 上使用命令，您需要使用 `wgcf.exe` 而不是 `wgcf`。
 </Callout>
 
-Then update the config information:
+然后更新配置信息：
 
 ```bash
 wgcf update
 ```
 
-Then create a new config file:
+然后创建一个新的配置文件：
 
 ```bash
 wgcf generate
 ```
 
-## Step 3: Activating Warp on PasarGuard
+## 步骤 3：在 PasarGuard 中激活 Warp
 
-### Method 1: Using Xray Core
+### 方法 1：使用 Xray Core
 
 <Callout type="warn">
-- This method is only recommended for Xray version 1.8.3 or higher. In older versions, you may encounter Memory Leak issues.
-- If your `Xray` version is lower than this, you can upgrade your `Xray` version using the Xray-core version change tutorial.
+- 此方法仅推荐用于 Xray 版本 1.8.3 或更高版本。在较旧的版本中，您可能会遇到内存泄漏问题。
+- 如果您的 `Xray` 版本低于此版本，您可以使用 Xray-core 版本更改教程升级您的 `Xray` 版本。
 </Callout>
 
-Go to Core Setting in the PasarGuard panel.
+转到 PasarGuard 面板中的 Core Setting。
 
-First, add an outbound like the example and place the `wgcf-profile.conf` file information in it.
+首先，添加一个像示例一样的 outbound，并将 `wgcf-profile.conf` 文件信息放入其中。
 
 ```json
 {
@@ -129,26 +132,26 @@ First, add an outbound like the example and place the `wgcf-profile.conf` file i
 ```
 
 <Callout type="info">
-If you want all traffic to pass through Warp by default, place this Outbound first and you don't need to perform the next step.
+如果您希望默认情况下所有流量都通过 Warp，请将此 Outbound 放在首位，您无需执行下一步。
 </Callout>
 
-### Method 2: Using Wireguard Core
+### 方法 2：使用 Wireguard Core
 
-First, install the Wireguard prerequisites on the server:
+首先，在服务器上安装 Wireguard 先决条件：
 
 ```bash
 sudo apt install wireguard-dkms wireguard-tools resolvconf
 ```
 
-If you're using Ubuntu 24, use the following command to install Wireguard:
+如果您使用的是 Ubuntu 24，请使用以下命令安装 Wireguard：
 
 ```bash
 sudo apt install wireguard
 ```
 
-Then add `Table = off` to the Wireguard file as shown in the example:
+然后将 `Table = off` 添加到 Wireguard 文件中，如示例所示：
 
-```conf
+```ini
 [Interface]
 PrivateKey = Your_Private_Key
 Address = 172.16.0.2/32
@@ -164,32 +167,32 @@ Endpoint = engage.cloudflareclient.com:2408
 ```
 
 <Callout type="warn">
-If you don't add `Table = off`, your server access will be cut off and you won't be able to connect to the server. You'll need to access the server through your datacenter's website and disconnect from `Warp` to be able to establish a normal connection again.
+如果您不添加 `Table = off`，您的服务器访问将被切断，您将无法连接到服务器。您需要通过数据中心的网站访问服务器并断开与 `Warp` 的连接，才能再次建立正常连接。
 </Callout>
 
-Then rename the file from `wgcf-profile.conf` to `warp.conf`.
+然后将文件从 `wgcf-profile.conf` 重命名为 `warp.conf`。
 
-Place the file in the `/etc/wireguard` folder on the server:
+将文件放在服务器上的 `/etc/wireguard` 文件夹中：
 
 ```bash
 sudo mv wgcf-profile.conf /etc/wireguard/warp.conf
 ```
 
-Enable Wireguard with the following command:
+使用以下命令启用 Wireguard：
 
 ```bash
 sudo systemctl enable --now wg-quick@warp
 ```
 
-You can also disable `Warp` with this command:
+您也可以使用此命令禁用 `Warp`：
 
 ```bash
 sudo systemctl disable --now wg-quick@warp
 ```
 
-Go to Core Setting in the PasarGuard panel.
+转到 PasarGuard 面板中的 Core Setting。
 
-First, add an outbound like the example:
+首先，添加一个像示例一样的 outbound：
 
 ```json
 {
@@ -205,12 +208,12 @@ First, add an outbound like the example:
 ```
 
 <Callout type="info">
-If you want all traffic to pass through Warp by default, place this Outbound first and you don't need to perform the next step.
+如果您希望默认情况下所有流量都通过 Warp，请将此 Outbound 放在首位，您无需执行下一步。
 </Callout>
 
-## Step 4: Routing Configuration
+## 步骤 4：路由配置
 
-First, add a `rule` in the `routing` section like the example:
+首先，在 `routing` 部分添加一个 `rule`，如示例所示：
 
 ```json
 {
@@ -220,7 +223,7 @@ First, add a `rule` in the `routing` section like the example:
 }
 ```
 
-Now add your desired websites like the example:
+现在添加您想要的网站，如示例所示：
 
 ```json
 {
@@ -237,9 +240,9 @@ Now add your desired websites like the example:
 }
 ```
 
-Save the changes - you can now use `Warp`.
+保存更改 - 您现在可以使用 `Warp`。
 
 ### PasarGuard Node
 
-- If you're using `Warp` with the xray core, you don't need to make changes to the node - it will be applied automatically.
-- If you're using the `Wireguard` core, you need to perform step three, method two on the node as well.
+- 如果您使用 xray 核心的 `Warp`，则无需对节点进行更改 - 它将自动应用。
+- 如果您使用 `Wireguard` 核心，则还需要在节点上执行步骤三，方法二。

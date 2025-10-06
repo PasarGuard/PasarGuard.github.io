@@ -1,56 +1,54 @@
 ---
-title: SSL Certificate Issuance
-navigation: SSL Certificate
+title: Выпуск SSL-сертификата
+navigation: SSL-сертификат
 icon: Shield
 ---
 
-# SSL Certificate Issuance
-
-The following tutorials are for obtaining SSL certificates for use with pasarguard using the command line (CLI).
+Следующие инструкции предназначены для получения SSL-сертификатов для использования с PasarGuard через командную строку (CLI).
 
 <Callout type="warn">
-Certificate files must be accessible at `/var/lib/pasarguard/certs` for pasarguard to access them.
+Файлы сертификатов должны быть доступны по пути `/var/lib/pasarguard/certs`, чтобы PasarGuard мог их использовать.
 
-In all examples below, files will be installed at this location.
+Во всех примерах ниже файлы будут установлены в этом месте.
 </Callout>
 
 <Callout type="warn">
-You must register DNS records for your domain before obtaining an SSL certificate.
+Вы должны зарегистрировать DNS-записи для вашего домена перед получением SSL-сертификата.
 </Callout>
 
-## Obtaining Certificate with acme.sh
+## Получение сертификата с помощью acme.sh
 
-### Installing Prerequisites
+### Установка предварительных требований
 
-Install socat using the following command for standalone mode:
+Установите socat с помощью следующей команды для автономного режима:
 
 ```bash
 apt install curl socat -y
 ```
 
 <Callout type="info">
-If you have already installed socat, you don't need to perform this step.
+Если вы уже установили socat, вам не нужно выполнять этот шаг.
 </Callout>
 
-### Installing acme.sh
+### Установка acme.sh
 
-Install [acme.sh](https://github.com/acmesh-official/acme.sh) with the following command.
+Установите [acme.sh](https://github.com/acmesh-official/acme.sh) с помощью следующей команды.
 
-Replace `YOUR_EMAIL` with your email address.
+Замените `YOUR_EMAIL` на ваш адрес электронной почты.
 
 <Callout type="info">
-If you have already installed acme.sh, you don't need to perform this step.
+Если вы уже установили acme.sh, вам не нужно выполнять этот шаг.
 </Callout>
 
 ```bash
 curl https://get.acme.sh | sh -s email=YOUR_EMAIL
 ```
 
-### Obtaining Certificate
+### Получение сертификата
 
-To obtain a certificate, execute the following commands in order.
+Чтобы получить сертификат, выполните следующие команды по порядку.
 
-Replace `YOUR_DOMAIN` with your desired domain or subdomain.
+Замените `YOUR_DOMAIN` на желаемый домен или поддомен.
 
 ```bash
 export DOMAIN=YOUR_DOMAIN
@@ -63,55 +61,65 @@ mkdir -p /var/lib/pasarguard/certs
   --key-file "/var/lib/pasarguard/certs/$DOMAIN.cer.key"
 ```
 
-## Obtaining Certificate for Cloudflare Domain
+## Получение сертификата для домена Cloudflare
 
-If your domain is registered on Cloudflare and the above methods don't work, use manual mode.
+Если ваш домен зарегистрирован в Cloudflare и вышеуказанные методы не работают, используйте ручной режим.
 
-Replace `example.com` with your domain.
+Замените `example.com` на ваш домен.
 
-### Installing acme.sh
+### Установка acme.sh
 
-After installing acme, execute the following steps:
+После установки acme выполните следующие шаги:
 
 ```bash
 curl https://get.acme.sh | sh -s email=YOUR_EMAIL
 ```
 
-### Step 1: Request Certificate
+### Шаг 1: Запрос сертификата
 
 ```bash
 ~/.acme.sh/acme.sh --issue -d example.com --dns \
  --yes-I-know-dns-manual-mode-enough-go-ahead-please
 ```
 
-After execution, you will receive two values as shown in the image below:
+После выполнения вы получите два значения, как показано на изображении ниже:
 
-![image](https://github.com/Gozargah/gozargah.github.io/assets/67644313/538c8341-fa77-4b06-96a4-73c29f3e0ded)
+<ImageZoom
+  src="/images/learn/ssl-cloudflare-dns-values.png"
+  alt="Значения для проверки DNS Cloudflare"
+  width={800}
+  height={400}
+/>
 
-### Step 2: Configure DNS Record
+### Шаг 2: Настройка DNS-записи
 
-Go to Cloudflare and create a TXT record, entering the values as shown in the image below:
+Перейдите в Cloudflare и создайте TXT-запись, введя значения, как показано на изображении ниже:
 
-![image](https://github.com/Gozargah/gozargah.github.io/assets/67644313/dad9c59a-da1f-440b-aa6e-ad524aff212a)
+<ImageZoom
+  src="/images/learn/ssl-cloudflare-txt-record.png"
+  alt="Создание TXT-записи в Cloudflare"
+  width={800}
+  height={400}
+/>
 
-### Step 3: Obtain Certificate
+### Шаг 3: Получение сертификата
 
-Obtain the certificate with the following command:
+Получите сертификат с помощью следующей команды:
 
 ```bash
 ~/.acme.sh/acme.sh --renew -d example.com \
   --yes-I-know-dns-manual-mode-enough-go-ahead-please
 ```
 
-### File Paths
+### Пути к файлам
 
-Finally, your domain certificate file will be at:
+В итоге файл сертификата вашего домена будет находиться по адресу:
 
 ```
 /root/.acme.sh/example.com_ecc/fullchain.cer
 ```
 
-And the private key file will be saved at:
+А файл закрытого ключа будет сохранен по адресу:
 
 ```
 /root/.acme.sh/example.com_ecc/example.com.key

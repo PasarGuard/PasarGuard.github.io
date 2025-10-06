@@ -1,10 +1,8 @@
 ---
-title: CloudFlare Warp Activation
+title: فعال‌سازی CloudFlare Warp
 navigation: CloudFlare Warp
 icon: Cloud
 ---
-
-## فعال‌سازی CloudFlare Warp
 
 با دنبال کردن این راهنما می‌توانید از محدودیت‌هایی که برخی سرویس‌های بزرگ مثل Google و Spotify روی IP اعمال می‌کنند عبور کرده و بدون مشکل از سرویس‌های آن‌ها استفاده کنید.
 
@@ -20,7 +18,12 @@ icon: Cloud
 2. فایل دانلودشده را به نام `wgcf` تغییر نام دهید.
 3. در نوار آدرس File Explorer عبارت `cmd.exe` را وارد کنید.
 
-![image](https://github.com/Gozargah/gozargah.github.io/assets/50927468/fb9f3eae-8390-45a5-a7b3-c50db4aa82a1)
+<ImageZoom
+  src="/images/learn/warp-cmd-terminal.png"
+  alt="باز کردن ترمینال در File Explorer"
+  width={800}
+  height={400}
+/>
 
 4. در ترمینال بازشده `wgcf.exe` را اجرا کنید.
 5. یک‌بار `wgcf.exe register` و سپس `wgcf.exe generate` را اجرا کنید.
@@ -148,7 +151,7 @@ sudo apt install wireguard
 
 سپس `Table = off` را به فایل Wireguard اضافه کنید همان‌طور که در مثال آمده است:
 
-```conf
+```ini
 [Interface]
 PrivateKey = Your_Private_Key
 Address = 172.16.0.2/32

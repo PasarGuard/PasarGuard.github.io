@@ -4,8 +4,6 @@ navigation: SSL Activation
 icon: Lock
 ---
 
-# SSL Activation in PasarGuard
-
 By enabling SSL in PasarGuard, the dashboard and subscription link will be accessible via https.
 There are different approaches to enabling SSL in PasarGuard, which we'll cover below in order from simple to complex.
 
@@ -59,7 +57,7 @@ Create a new file named `Caddyfile` at `/opt/pasarguard` and replace `YOUR_DOMAI
 The first letter in the `Caddyfile` filename must be uppercase `C`.
 </Callout>
 
-```caddy
+```nginx
 YOUR_DOMAIN {
 	reverse_proxy unix//var/lib/pasarguard/pasarguard.socket
 }
@@ -75,7 +73,7 @@ Set the following variables in the `.env` file.
 
 Replace `YOUR_DOMAIN` with your desired domain or subdomain.
 
-```env
+```bash
 UVICORN_UDS = /var/lib/pasarguard/pasarguard.socket
 XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
 ```
@@ -104,7 +102,7 @@ After creating the SSL certificate files, set the following variables in the `.e
 
 Replace `YOUR_DOMAIN` with your desired domain or subdomain.
 
-```env
+```bash
 UVICORN_PORT = 443
 UVICORN_SSL_CERTFILE = "/var/lib/PasarGuard/certs/YOUR_DOMAIN.cer"
 UVICORN_SSL_KEYFILE = "/var/lib/PasarGuard/certs/YOUR_DOMAIN.cer.key"
@@ -152,7 +150,7 @@ services:
 
 Create a new file named `haproxy.cfg` at `/opt/PasarGuard` and replace `YOUR_DOMAIN` with your desired domain or subdomain.
 
-```cfg
+```ini
 defaults
   mode tcp
   timeout client 30s
@@ -181,7 +179,7 @@ Set the following variables in the `.env` file.
 
 Replace `YOUR_DOMAIN` with your desired domain or subdomain.
 
-```env
+```bash
 UVICORN_UDS = /var/lib/pasarguard/pasarguard.socket
 XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
 ```

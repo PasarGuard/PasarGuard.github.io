@@ -1,113 +1,116 @@
 ---
-title: CloudFlare Warp Activation
+title: Активация CloudFlare Warp
 navigation: CloudFlare Warp
 icon: Cloud
 ---
 
-# CloudFlare Warp Activation
-
-Using this tutorial, you can bypass certain restrictions imposed by large companies like Google and Spotify on your IP and use their services without issues.
+С помощью этого руководства вы можете обойти определенные ограничения, наложенные крупными компаниями, такими как Google и Spotify, на ваш IP и использовать их сервисы без проблем.
 
 <Callout type="warn">
-Note that Warp configs have a maximum connection limit of 5 simultaneous devices. To solve this issue, you can use multiple configs.
+Обратите внимание, что конфигурации Warp имеют максимальное ограничение подключения 5 одновременных устройств. Чтобы решить эту проблему, вы можете использовать несколько конфигураций.
 </Callout>
 
-## Step 1: Creating Wireguard Config
+## Шаг 1: Создание конфигурации Wireguard
 
-### Method 1: Using Windows
+### Метод 1: Использование Windows
 
-1. First, download the required `Asset` from the [releases](https://github.com/ViRb3/wgcf/releases) section. This file varies depending on your processor.
-2. Rename the `Asset` file to `wgcf`.
-3. Now enter `cmd.exe` in the File Explorer address bar.
+1. Сначала загрузите необходимый `Asset` из раздела [releases](https://github.com/ViRb3/wgcf/releases). Этот файл зависит от вашего процессора.
+2. Переименуйте файл `Asset` в `wgcf`.
+3. Теперь введите `cmd.exe` в адресной строке проводника.
 
-![image](https://github.com/Gozargah/gozargah.github.io/assets/50927468/fb9f3eae-8390-45a5-a7b3-c50db4aa82a1)
+<ImageZoom
+  src="/images/learn/warp-cmd-terminal.png"
+  alt="Открытие командного терминала в проводнике"
+  width={800}
+  height={400}
+/>
 
-4. In the opened terminal, enter `wgcf.exe`.
-5. Execute `wgcf.exe register` once, then `wgcf.exe generate`.
-6. A new file named `wgcf-profile.conf` will be created - this is the `Wireguard` config we need.
-7. Your config is ready and you can use it.
+4. В открывшемся терминале введите `wgcf.exe`.
+5. Выполните `wgcf.exe register` один раз, затем `wgcf.exe generate`.
+6. Будет создан новый файл с именем `wgcf-profile.conf` - это конфигурация `Wireguard`, которая нам нужна.
+7. Ваша конфигурация готова, и вы можете её использовать.
 
-### Method 2: Using Linux
+### Метод 2: Использование Linux
 
-First, download the required `Asset` from the [releases](https://github.com/ViRb3/wgcf/releases) section. This file varies depending on your processor.
+Сначала загрузите необходимый `Asset` из раздела [releases](https://github.com/ViRb3/wgcf/releases). Этот файл зависит от вашего процессора.
 
-You can do this using the `wget` command.
+Вы можете сделать это с помощью команды `wget`.
 
-#### For AMD64 architecture processors:
+#### Для процессоров архитектуры AMD64:
 
 ```bash
 wget https://github.com/ViRb3/wgcf/releases/download/v2.2.22/wgcf_2.2.22_linux_amd64
 ```
 
-#### For ARM64 architecture processors:
+#### Для процессоров архитектуры ARM64:
 
 ```bash
 wget https://github.com/ViRb3/wgcf/releases/download/v2.2.22/wgcf_2.2.22_linux_arm64
 ```
 
-Move the file to `/usr/bin/` and rename it to `wgcf`.
+Переместите файл в `/usr/bin/` и переименуйте его в `wgcf`.
 
-#### For AMD64 architecture processors:
+#### Для процессоров архитектуры AMD64:
 
 ```bash
 mv wgcf_2.2.22_linux_amd64 /usr/bin/wgcf
 chmod +x /usr/bin/wgcf
 ```
 
-#### For ARM64 architecture processors:
+#### Для процессоров архитектуры ARM64:
 
 ```bash
 mv wgcf_2.2.22_linux_arm64 /usr/bin/wgcf
 chmod +x /usr/bin/wgcf
 ```
 
-Then create the config using these 2 commands:
+Затем создайте конфигурацию с помощью этих 2 команд:
 
 ```bash
 wgcf register
 wgcf generate
 ```
 
-A file named `wgcf-profile.conf` will be created - this is the config we need.
+Будет создан файл с именем `wgcf-profile.conf` - это конфигурация, которая нам нужна.
 
-## Step 2: Using Warp+ (Optional)
+## Шаг 2: Использование Warp+ (Необязательно)
 
-To obtain a license and use Warp+, you can get a `license_key` through [this](https://t.me/generatewarpplusbot) Telegram bot.
+Чтобы получить лицензию и использовать Warp+, вы можете получить `license_key` через [этого](https://t.me/generatewarpplusbot) Telegram-бота.
 
-After obtaining the `license_key`, you need to replace it in the `wgcf-account.toml` file.
+После получения `license_key` вам нужно заменить его в файле `wgcf-account.toml`.
 
 <Callout type="info">
-You can make this change in Linux with `nano` and in Windows with `Notepad` or any other software.
+Вы можете внести это изменение в Linux с помощью `nano`, а в Windows с помощью `Notepad` или любого другого программного обеспечения.
 </Callout>
 
 <Callout type="info" title="Windows">
-To use commands on Windows, you need to use `wgcf.exe` instead of `wgcf`.
+Чтобы использовать команды в Windows, вам нужно использовать `wgcf.exe` вместо `wgcf`.
 </Callout>
 
-Then update the config information:
+Затем обновите информацию о конфигурации:
 
 ```bash
 wgcf update
 ```
 
-Then create a new config file:
+Затем создайте новый файл конфигурации:
 
 ```bash
 wgcf generate
 ```
 
-## Step 3: Activating Warp on PasarGuard
+## Шаг 3: Активация Warp в PasarGuard
 
-### Method 1: Using Xray Core
+### Метод 1: Использование Xray Core
 
 <Callout type="warn">
-- This method is only recommended for Xray version 1.8.3 or higher. In older versions, you may encounter Memory Leak issues.
-- If your `Xray` version is lower than this, you can upgrade your `Xray` version using the Xray-core version change tutorial.
+- Этот метод рекомендуется только для Xray версии 1.8.3 или выше. В более старых версиях у вас могут возникнуть проблемы с утечкой памяти.
+- Если ваша версия `Xray` ниже этой, вы можете обновить версию `Xray` с помощью руководства по изменению версии Xray-core.
 </Callout>
 
-Go to Core Setting in the PasarGuard panel.
+Перейдите в Core Setting в панели PasarGuard.
 
-First, add an outbound like the example and place the `wgcf-profile.conf` file information in it.
+Сначала добавьте outbound, как в примере, и поместите в него информацию из файла `wgcf-profile.conf`.
 
 ```json
 {
@@ -129,26 +132,26 @@ First, add an outbound like the example and place the `wgcf-profile.conf` file i
 ```
 
 <Callout type="info">
-If you want all traffic to pass through Warp by default, place this Outbound first and you don't need to perform the next step.
+Если вы хотите, чтобы весь трафик по умолчанию проходил через Warp, поместите этот Outbound первым, и вам не нужно будет выполнять следующий шаг.
 </Callout>
 
-### Method 2: Using Wireguard Core
+### Метод 2: Использование Wireguard Core
 
-First, install the Wireguard prerequisites on the server:
+Сначала установите предварительные требования Wireguard на сервере:
 
 ```bash
 sudo apt install wireguard-dkms wireguard-tools resolvconf
 ```
 
-If you're using Ubuntu 24, use the following command to install Wireguard:
+Если вы используете Ubuntu 24, используйте следующую команду для установки Wireguard:
 
 ```bash
 sudo apt install wireguard
 ```
 
-Then add `Table = off` to the Wireguard file as shown in the example:
+Затем добавьте `Table = off` в файл Wireguard, как показано в примере:
 
-```conf
+```ini
 [Interface]
 PrivateKey = Your_Private_Key
 Address = 172.16.0.2/32
@@ -164,32 +167,32 @@ Endpoint = engage.cloudflareclient.com:2408
 ```
 
 <Callout type="warn">
-If you don't add `Table = off`, your server access will be cut off and you won't be able to connect to the server. You'll need to access the server through your datacenter's website and disconnect from `Warp` to be able to establish a normal connection again.
+Если вы не добавите `Table = off`, доступ к вашему серверу будет отключен, и вы не сможете подключиться к серверу. Вам нужно будет получить доступ к серверу через веб-сайт вашего дата-центра и отключиться от `Warp`, чтобы снова установить нормальное соединение.
 </Callout>
 
-Then rename the file from `wgcf-profile.conf` to `warp.conf`.
+Затем переименуйте файл с `wgcf-profile.conf` на `warp.conf`.
 
-Place the file in the `/etc/wireguard` folder on the server:
+Поместите файл в папку `/etc/wireguard` на сервере:
 
 ```bash
 sudo mv wgcf-profile.conf /etc/wireguard/warp.conf
 ```
 
-Enable Wireguard with the following command:
+Включите Wireguard с помощью следующей команды:
 
 ```bash
 sudo systemctl enable --now wg-quick@warp
 ```
 
-You can also disable `Warp` with this command:
+Вы также можете отключить `Warp` с помощью этой команды:
 
 ```bash
 sudo systemctl disable --now wg-quick@warp
 ```
 
-Go to Core Setting in the PasarGuard panel.
+Перейдите в Core Setting в панели PasarGuard.
 
-First, add an outbound like the example:
+Сначала добавьте outbound, как в примере:
 
 ```json
 {
@@ -205,12 +208,12 @@ First, add an outbound like the example:
 ```
 
 <Callout type="info">
-If you want all traffic to pass through Warp by default, place this Outbound first and you don't need to perform the next step.
+Если вы хотите, чтобы весь трафик по умолчанию проходил через Warp, поместите этот Outbound первым, и вам не нужно будет выполнять следующий шаг.
 </Callout>
 
-## Step 4: Routing Configuration
+## Шаг 4: Конфигурация маршрутизации
 
-First, add a `rule` in the `routing` section like the example:
+Сначала добавьте `rule` в разделе `routing`, как в примере:
 
 ```json
 {
@@ -220,7 +223,7 @@ First, add a `rule` in the `routing` section like the example:
 }
 ```
 
-Now add your desired websites like the example:
+Теперь добавьте нужные вам веб-сайты, как в примере:
 
 ```json
 {
@@ -237,9 +240,9 @@ Now add your desired websites like the example:
 }
 ```
 
-Save the changes - you can now use `Warp`.
+Сохраните изменения - теперь вы можете использовать `Warp`.
 
 ### PasarGuard Node
 
-- If you're using `Warp` with the xray core, you don't need to make changes to the node - it will be applied automatically.
-- If you're using the `Wireguard` core, you need to perform step three, method two on the node as well.
+- Если вы используете `Warp` с ядром xray, вам не нужно вносить изменения в узел - это будет применено автоматически.
+- Если вы используете ядро `Wireguard`, вам нужно выполнить шаг три, метод два на узле также.

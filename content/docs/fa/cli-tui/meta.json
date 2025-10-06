@@ -2,7 +2,8 @@
   "title": "CLI و TUI",
   "description": "ابزارهای خط فرمان و رابط کاربری متنی",
   "pages": [
-    "index"
+    "cli",
+    "tui"
   ],
   "icon": "Terminal"
 }
