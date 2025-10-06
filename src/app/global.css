@@ -127,6 +127,18 @@
   * {
     @apply border-border;
   }
+  
+  /* Prevent white screen flash on load */
+  html {
+    background-color: hsl(240 5% 96%);
+    color-scheme: light;
+  }
+  
+  html.dark {
+    background-color: hsl(240 2% 11%);
+    color-scheme: dark;
+  }
+  
   body {
     @apply bg-background text-foreground;
   }

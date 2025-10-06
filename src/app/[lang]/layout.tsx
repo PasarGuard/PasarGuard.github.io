@@ -36,6 +36,24 @@ export default async function LangLayout({
       className={`${inter.variable} ${vazirMatn.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <meta name="color-scheme" content="light dark" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const theme = localStorage.getItem('theme') || 
+                               (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                  document.documentElement.classList.add(theme);
+                  document.documentElement.style.colorScheme = theme;
+                  document.documentElement.style.backgroundColor = theme === 'dark' ? 'hsl(240 2% 11%)' : 'hsl(240 5% 96%)';
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={`flex flex-col min-h-screen ${inter.variable} ${vazirMatn.variable} ${isRTL ? 'font-vazir' : 'font-inter'}`}>
         <NextThemeProvider
           attribute="class"

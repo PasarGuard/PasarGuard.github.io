@@ -6,81 +6,81 @@ icon: Terminal
 
 # PasarGuard CLI
 
-Modern command-line tools for managing PasarGuard with efficiency and style.
+Современные инструменты командной строки для управления PasarGuard с эффективностью и стилем.
 
 ---
 
-## CLI - Command-Line Interface
+## CLI - Интерфейс командной строки
 
-A modern, type-safe command-line interface for managing PasarGuard, built with Typer.
+Современный типобезопасный интерфейс командной строки для управления PasarGuard, созданный с помощью Typer.
 
-### Features
+### Возможности
 
-- 🎯 **Type-safe CLI** with rich output formatting
-- 📊 **Beautiful tables and panels** for data visualization
-- 🔒 **Secure admin management** with interactive prompts
-- 📈 **System status monitoring** and diagnostics
-- ⌨️ **Interactive prompts** with confirmations for safety
+- 🎯 **Типобезопасный CLI** с расширенным форматированием вывода
+- 📊 **Красивые таблицы и панели** для визуализации данных
+- 🔒 **Безопасное управление администраторами** с интерактивными запросами
+- 📈 **Мониторинг состояния системы** и диагностика
+- ⌨️ **Интерактивные запросы** с подтверждениями для безопасности
 
-### Installation
+### Установка
 
-The CLI is included with PasarGuard and can be used directly:
+CLI включен в PasarGuard и может использоваться напрямую:
 
 ```bash
 pasarguard cli --help
 
-# Or from the project root
+# Или из корневой директории проекта
 uv run pasarguard-cli.py --help
 ```
 
-### Usage
+### Использование
 
-#### General Commands
+#### Общие команды
 
 ```bash
-# Show version
+# Показать версию
 pasarguard cli version
 
-# Show help
+# Показать справку
 pasarguard cli --help
 ```
 
-#### Admin Management
+#### Управление администраторами
 
 ```bash
-# List all admins
+# Список всех администраторов
 pasarguard cli admins --list
 
-# Create new admin
+# Создать нового администратора
 pasarguard cli admins --create username
 
-# Delete admin
+# Удалить администратора
 pasarguard cli admins --delete username
 
-# Modify admin (password and sudo status)
+# Изменить администратора (пароль и статус sudo)
 pasarguard cli admins --modify username
 
-# Reset admin usage statistics
+# Сбросить статистику использования администратора
 pasarguard cli admins --reset-usage username
 ```
 
-#### System Information
+#### Информация о системе
 
 ```bash
-# Show system status
+# Показать состояние системы
 pasarguard cli system
 ```
 
-### Examples
+### Примеры
 
-**Creating a new admin:**
+**Создание нового администратора:**
 ```bash
 pasarguard cli admins --create john_admin
-# You'll be prompted to enter password and sudo permissions
+# Вам будет предложено ввести пароль и разрешения sudo
 ```
 
-**Listing all admins with formatted output:**
+**Вывод списка всех администраторов с форматированием:**
 ```bash
 pasarguard cli admins --list
-# Displays a beautiful table with admin details
+# Отображает красивую таблицу с данными администраторов
 ```

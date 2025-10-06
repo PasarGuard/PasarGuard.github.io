@@ -6,81 +6,81 @@ icon: Terminal
 
 # PasarGuard CLI
 
-Modern command-line tools for managing PasarGuard with efficiency and style.
+现代化的命令行工具，用于高效且优雅地管理 PasarGuard。
 
 ---
 
-## CLI - Command-Line Interface
+## CLI - 命令行界面
 
-A modern, type-safe command-line interface for managing PasarGuard, built with Typer.
+一个现代的类型安全命令行界面，用于管理 PasarGuard，使用 Typer 构建。
 
-### Features
+### 功能特性
 
-- 🎯 **Type-safe CLI** with rich output formatting
-- 📊 **Beautiful tables and panels** for data visualization
-- 🔒 **Secure admin management** with interactive prompts
-- 📈 **System status monitoring** and diagnostics
-- ⌨️ **Interactive prompts** with confirmations for safety
+- 🎯 **类型安全的 CLI** 具有丰富的输出格式
+- 📊 **精美的表格和面板** 用于数据可视化
+- 🔒 **安全的管理员管理** 具有交互式提示
+- 📈 **系统状态监控** 和诊断
+- ⌨️ **交互式提示** 具有确认功能以确保安全
 
-### Installation
+### 安装
 
-The CLI is included with PasarGuard and can be used directly:
+CLI 包含在 PasarGuard 中，可以直接使用：
 
 ```bash
 pasarguard cli --help
 
-# Or from the project root
+# 或从项目根目录
 uv run pasarguard-cli.py --help
 ```
 
-### Usage
+### 使用方法
 
-#### General Commands
+#### 常规命令
 
 ```bash
-# Show version
+# 显示版本
 pasarguard cli version
 
-# Show help
+# 显示帮助
 pasarguard cli --help
 ```
 
-#### Admin Management
+#### 管理员管理
 
 ```bash
-# List all admins
+# 列出所有管理员
 pasarguard cli admins --list
 
-# Create new admin
+# 创建新管理员
 pasarguard cli admins --create username
 
-# Delete admin
+# 删除管理员
 pasarguard cli admins --delete username
 
-# Modify admin (password and sudo status)
+# 修改管理员（密码和 sudo 状态）
 pasarguard cli admins --modify username
 
-# Reset admin usage statistics
+# 重置管理员使用统计
 pasarguard cli admins --reset-usage username
 ```
 
-#### System Information
+#### 系统信息
 
 ```bash
-# Show system status
+# 显示系统状态
 pasarguard cli system
 ```
 
-### Examples
+### 示例
 
-**Creating a new admin:**
+**创建新管理员：**
 ```bash
 pasarguard cli admins --create john_admin
-# You'll be prompted to enter password and sudo permissions
+# 系统将提示您输入密码和 sudo 权限
 ```
 
-**Listing all admins with formatted output:**
+**列出所有管理员并格式化输出：**
 ```bash
 pasarguard cli admins --list
-# Displays a beautiful table with admin details
+# 显示一个包含管理员详细信息的精美表格
 ```
