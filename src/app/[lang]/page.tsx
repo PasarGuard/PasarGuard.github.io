@@ -109,7 +109,7 @@ export default async function LocaleHomePage({ params }: { params: Promise<{ lan
   // Validate if the lang parameter is a valid language
   if (!validLanguages.includes(lang)) {
     // Redirect to English if invalid language
-    redirect('/en');
+    redirect('/fa');
   }
   
   const translations = loadTranslations(lang);
