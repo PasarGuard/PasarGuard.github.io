@@ -132,9 +132,9 @@ export default async function LocaleHomePage({ params }: { params: Promise<{ lan
               className="inline-block"
             >
               <Badge variant="secondary" className="px-4 py-2 text-sm font-medium hover:bg-secondary/80 transition-colors cursor-pointer">
-                <ArrowRight className="w-3 h-3 mr-2" />
+                <ArrowRight className={`w-3 h-3 ${isRTL ? 'ml-2 rotate-180' : 'mr-2'}`} />
                 {translations.version}
-                <div className="w-2 h-2 bg-primary rounded-full ml-2"></div>
+                <div className={`w-2 h-2 bg-primary rounded-full ${isRTL ? 'mr-2' : 'ml-2'}`}></div>
               </Badge>
             </Link>
           </div>
@@ -158,7 +158,7 @@ export default async function LocaleHomePage({ params }: { params: Promise<{ lan
             </Button>
             <Button asChild variant="outline" size="lg" className="px-8 py-3 text-lg font-semibold">
               <Link href="https://github.com/PasarGuard" target="_blank" rel="noopener noreferrer">
-                <Github className="w-5 h-5 mr-2" />
+                <Github className={`w-5 h-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                 {translations.github}
               </Link>
             </Button>
@@ -167,52 +167,58 @@ export default async function LocaleHomePage({ params }: { params: Promise<{ lan
           {/* Feature Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl w-full">
             {/* Panel Card */}
-            <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <Box className="w-8 h-8 text-primary" />
-                  <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </div>
-                <CardTitle className="text-2xl">{translations.panel.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-sm leading-relaxed">
-                  {translations.panel.description}
-                </CardDescription>
-              </CardContent>
-            </Card>
+            <Link href={`/${lang}/panel`} className="block">
+              <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer h-full">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <Box className="w-8 h-8 text-primary" />
+                    <ArrowRight className={`w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors ${isRTL ? 'rotate-180' : ''}`} />
+                  </div>
+                  <CardTitle className="text-2xl">{translations.panel.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-sm leading-relaxed">
+                    {translations.panel.description}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            </Link>
 
             {/* Node Card */}
-            <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <Network className="w-8 h-8 text-primary" />
-                  <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </div>
-                <CardTitle className="text-2xl">{translations.node.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-sm leading-relaxed">
-                  {translations.node.description}
-                </CardDescription>
-              </CardContent>
-            </Card>
+            <Link href={`/${lang}/node`} className="block">
+              <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer h-full">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <Network className="w-8 h-8 text-primary" />
+                    <ArrowRight className={`w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors ${isRTL ? 'rotate-180' : ''}`} />
+                  </div>
+                  <CardTitle className="text-2xl">{translations.node.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-sm leading-relaxed">
+                    {translations.node.description}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            </Link>
 
             {/* Commands Card */}
-            <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer md:col-span-2 lg:col-span-1">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <Terminal className="w-8 h-8 text-primary" />
-                  <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </div>
-                <CardTitle className="text-2xl">{translations.commands.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-sm leading-relaxed">
-                  {translations.commands.description}
-                </CardDescription>
-              </CardContent>
-            </Card>
+            <Link href={`/${lang}/cli-tui`} className="block md:col-span-2 lg:col-span-1">
+              <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer h-full">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <Terminal className="w-8 h-8 text-primary" />
+                    <ArrowRight className={`w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors ${isRTL ? 'rotate-180' : ''}`} />
+                  </div>
+                  <CardTitle className="text-2xl">{translations.commands.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-sm leading-relaxed">
+                    {translations.commands.description}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
         </div>
         
