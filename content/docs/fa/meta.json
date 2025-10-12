@@ -5,8 +5,10 @@
     "...introduction",
     "panel",
     "node",
+    "xray",
     "cli-tui",
     "learn",
-    "migration"
+    "migration",
+    "...faq"
   ]
 }

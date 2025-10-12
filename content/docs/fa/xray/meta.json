@@ -1,0 +1,11 @@
+{
+  "title": "هسته Xray",
+  "description": "تنظیمات هسته Xray",
+  "pages": [
+    "dns",
+    "inbounds",
+    "outbounds",
+    "routing-and-rules"
+  ],
+  "icon": "Atom"
+}

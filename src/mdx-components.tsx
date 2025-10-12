@@ -4,6 +4,7 @@ import { Step, Steps } from 'fumadocs-ui/components/steps';
 import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
 import type { MDXComponents } from 'mdx/types';
 import { LocalizedCard } from '@/components/LocalizedCard';
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
 // Custom Cards component for Fumadocs
 function Cards({ children }: { children: React.ReactNode }) {
@@ -63,6 +64,8 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     Alert,
     Field,
     ImageZoom,
+    Accordion,
+    Accordions,
     ...components,
   };
 }
