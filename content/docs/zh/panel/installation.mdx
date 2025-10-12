@@ -16,34 +16,30 @@ PasarGuard 面板支持多个数据库后端：
 
 ### 安装 PasarGuard
 
-<Alert type="warning">
-  以下命令将安装预发布版本（alpha/beta）
-</Alert>
-
 <Tabs items={['TimescaleDB (Recommended)', 'PostgreSQL', 'MySQL', 'MariaDB', 'SQLite']}>
   <Tab value="TimescaleDB (Recommended)">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database timescaledb --pre-release
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database timescaledb
     ```
   </Tab>
   <Tab value="PostgreSQL">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database postgresql --pre-release
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database postgresql
     ```
   </Tab>
   <Tab value="MySQL">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mysql --pre-release
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mysql
     ```
   </Tab>
   <Tab value="MariaDB">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mariadb --pre-release
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mariadb
     ```
   </Tab>
   <Tab value="SQLite">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --pre-release
+    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install
     ```
   </Tab>
 </Tabs>
