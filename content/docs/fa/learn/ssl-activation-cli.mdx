@@ -8,7 +8,7 @@ icon: Lock
 در ادامه چند روش مختلف برای فعال‌سازی SSL در پاسارگارد را از ساده به پیچیده توضیح می‌دهیم.
 
 <Callout type="info">
-در تمام مثال‌های زیر فایل‌های `docker-compose.yml` و `.env` در مسیر `/opt/PasarGuard` و فایل `xray_config.json` در مسیر `/var/lib/PasarGuard` قرار دارند.
+در تمام مثال‌های زیر فایل‌های `docker-compose.yml` و `.env` در مسیر `/opt/pasarguard` و فایل `xray_config.json` در مسیر `/var/lib/pasarguard` قرار دارند.
 
 اگر پاسارگارد را به‌صورت دستی نصب کرده‌اید، باید تغییرات لازم را خودتان اعمال کنید.
 </Callout>
@@ -23,13 +23,13 @@ icon: Lock
 
 ```yml {9-10,12-22,24-25}
 services:
-  PasarGuard:
-    image: PasarGuard/panel:latest
+  pasarguard:
+    image: pasarguard/Panel:latest
     restart: always
     env_file: .env
     network_mode: host
     volumes:
-      - /var/lib/PasarGuard:/var/lib/PasarGuard
+      - /var/lib/pasarguard:/var/lib/pasarguard
     depends_on:
       - caddy
 
@@ -40,7 +40,7 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - /var/lib/PasarGuard:/var/lib/PasarGuard
+      - /var/lib/pasarguard:/var/lib/pasarguard
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_volume:/data
       - caddy_volume:/config
@@ -104,8 +104,8 @@ PasarGuard restart
 
 ```bash
 UVICORN_PORT = 443
-UVICORN_SSL_CERTFILE = "/var/lib/PasarGuard/certs/YOUR_DOMAIN.cer"
-UVICORN_SSL_KEYFILE = "/var/lib/PasarGuard/certs/YOUR_DOMAIN.cer.key"
+UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/certs/YOUR_DOMAIN.cer"
+UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/certs/YOUR_DOMAIN.cer.key"
 XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
 ```
 
@@ -126,12 +126,12 @@ XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
 ```yml {9-10,12-20}
 services:
   PasarGuard:
-      image: gozargah/PasarGuard:latest
+      image: pasarguard/panel:latest
       restart: always
       env_file: .env
       network_mode: host
       volumes:
-        - /var/lib/PasarGuard:/var/lib/PasarGuard
+        - /var/lib/pasarguard:/var/lib/pasarguard
       depends_on:
         - haproxy
     
@@ -140,7 +140,7 @@ services:
     restart: always
     volumes:
       - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
-      - /var/lib/PasarGuard:/var/lib/PasarGuard
+      - /var/lib/pasarguard:/var/lib/pasarguard
     ports:
       - 80:80
       - 443:443
@@ -166,7 +166,7 @@ frontend http_frontend
   redirect scheme https code 301 if !{ ssl_fc }
 
 frontend https_frontend
-  bind *:443 ssl crt /var/lib/PasarGuard/certs/YOUR_DOMAIN.cer
+  bind *:443 ssl crt /var/lib/pasarguard/certs/YOUR_DOMAIN.cer
   default_backend PasarGuard_backend
 
 backend PasarGuard_backend

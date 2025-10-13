@@ -8,7 +8,7 @@ icon: Lock
 在 PasarGuard 中启用 SSL 有不同的方法，我们将按从简单到复杂的顺序介绍这些方法。
 
 <Callout type="info">
-在下面的所有示例中，`docker-compose.yml` 和 `.env` 文件位于 `/opt/PasarGuard`，`xray_config.json` 位于 `/var/lib/PasarGuard`。
+在下面的所有示例中，`docker-compose.yml` 和 `.env` 文件位于 `/opt/pasarguard`，`xray_config.json` 位于 `/var/lib/pasarguard`。
 
 如果您手动安装了 PasarGuard，则需要自行进行必要的更改。
 </Callout>
@@ -23,13 +23,13 @@ icon: Lock
 
 ```yml {9-10,12-22,24-25}
 services:
-  PasarGuard:
-    image: PasarGuard/panel:latest
+  pasarguard:
+    image: pasarguard/panel:latest
     restart: always
     env_file: .env
     network_mode: host
     volumes:
-      - /var/lib/PasarGuard:/var/lib/PasarGuard
+      - /var/lib/pasarguard:/var/lib/pasarguard
     depends_on:
       - caddy
 
@@ -40,7 +40,7 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - /var/lib/PasarGuard:/var/lib/PasarGuard
+      - /var/lib/pasarguard:/var/lib/pasarguard
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_volume:/data
       - caddy_volume:/config
@@ -104,8 +104,8 @@ PasarGuard 默认使用 `Uvicorn` 运行。`Uvicorn` 还允许您定义 SSL 证�
 
 ```bash
 UVICORN_PORT = 443
-UVICORN_SSL_CERTFILE = "/var/lib/PasarGuard/certs/YOUR_DOMAIN.cer"
-UVICORN_SSL_KEYFILE = "/var/lib/PasarGuard/certs/YOUR_DOMAIN.cer.key"
+UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/certs/YOUR_DOMAIN.cer"
+UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/certs/YOUR_DOMAIN.cer.key"
 XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
 ```
 
@@ -125,13 +125,13 @@ XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
 
 ```yml {9-10,12-20}
 services:
-  PasarGuard:
-      image: gozargah/PasarGuard:latest
+  pasarguard:
+      image: pasarguard/panel:latest
       restart: always
       env_file: .env
       network_mode: host
       volumes:
-        - /var/lib/PasarGuard:/var/lib/PasarGuard
+        - /var/lib/pasarguard:/var/lib/pasarguard
       depends_on:
         - haproxy
     
@@ -140,7 +140,7 @@ services:
     restart: always
     volumes:
       - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
-      - /var/lib/PasarGuard:/var/lib/PasarGuard
+      - /var/lib/pasarguard:/var/lib/pasarguard
     ports:
       - 80:80
       - 443:443
@@ -148,7 +148,7 @@ services:
 
 ### 创建 haproxy.cfg
 
-在 `/opt/PasarGuard` 创建一个名为 `haproxy.cfg` 的新文件，并将 `YOUR_DOMAIN` 替换为您所需的域名或子域名。
+在 `/opt/pasarguard` 创建一个名为 `haproxy.cfg` 的新文件，并将 `YOUR_DOMAIN` 替换为您所需的域名或子域名。
 
 ```ini
 defaults
@@ -166,7 +166,7 @@ frontend http_frontend
   redirect scheme https code 301 if !{ ssl_fc }
 
 frontend https_frontend
-  bind *:443 ssl crt /var/lib/PasarGuard/certs/YOUR_DOMAIN.cer
+  bind *:443 ssl crt /var/lib/pasarguard/certs/YOUR_DOMAIN.cer
   default_backend PasarGuard_backend
 
 backend PasarGuard_backend
