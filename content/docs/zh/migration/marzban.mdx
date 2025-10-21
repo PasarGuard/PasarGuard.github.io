@@ -4,20 +4,30 @@ icon: ArrowRightLeft
 ---
 
 <Alert type="warning">
-此指南适用于 Marzban 版本 `beta-3` 及以下。
+本指南适用于 Marzban beta-3 及以下版本。
 </Alert>
 
-此指南将帮助您将数据、设置和用户账户从 Marzban 迁移到 PasarGuard，而不会丢失任何内容。
+本指南将帮助您将数据、设置和用户帐户从 Marzban 迁移到 PasarGuard，且不会丢失任何内容。
+
+解释了两种迁移方法。您可以选择您更舒服的一个。
+
+- [从现有 Marzban 安装迁移](/zh/migration/marzban/#迁移步骤当前安装)
+
+保留所有现有设置和文件。不需要新服务器。但稍微复杂一些，涉及更多命令。
+
+- [通过全新 PasarGuard 安装进行迁移](/zh/migration/marzban/#迁移步骤全新安装)
+
+更简单、更快，命令更少。但需要新的服务器，并且迁移后需要手动配置一些设置。
 
 ## 先决条件
 
-> ⚠️ **重要**: 在开始迁移过程之前，请始终备份您的完整数据。
+> ⚠️ **重要**：在开始迁移过程之前，请务必完整备份您的数据。
 
-- 确保您对服务器具有 root 访问权限。
+- 确保您拥有服务器的 root 权限。
 - 备份您当前的 Marzban 安装。
-- 检查是否安装了 Docker 和 Docker Compose。
+- 检查 Docker 和 Docker Compose 是否已安装。
 
-## 迁移步骤
+## 迁移步骤：当前安装
 
 ### 1. 停止 Marzban 服务
 
@@ -60,7 +70,7 @@ sudo mv /var/lib/marzban /var/lib/pasarguard
 
 ### 4. 重命名 MySQL 目录（如果使用）
 
-如果您使用 MySQL 并且有 Marzban 数据库的专用目录：
+如果您使用的是 MySQL 或 MariaDB，并且有专门用于 Marzban 数据库的目录：
 
 #### MySQL 目录重命名命令
 
@@ -69,7 +79,7 @@ sudo mv /var/lib/mysql/marzban /var/lib/mysql/pasarguard
 ```
 
 <Alert type="info">
-如果您遇到“无此文件或目录”错误，可能是因为 MySQL 目录不同。请使用以下命令：
+如果您遇到“无此文件或目录”错误，可能是因为 MySQL 目录不同。请改用以下命令：
 ```bash
 mkdir -p /var/lib/mysql/pasarguard
 mv /var/lib/pasarguard/mysql/* /var/lib/mysql/pasarguard
@@ -79,26 +89,26 @@ rm -r /var/lib/pasarguard/mysql
 
 ### 5. 更新环境变量
 
-转到新的 PasarGuard 目录并更新环境文件：
+进入新的 PasarGuard 目录并更新环境变量文件：
 
 ```bash
 cd /opt/pasarguard
 ```
 
-使用简单命令更新 `.env` 文件中引用的所有路径：
+使用以下命令更新 `.env` 文件中引用的所有路径：
 
 ```bash
 sudo sed -i 's|/var/lib/marzban|/var/lib/pasarguard|g' .env
 ```
 
 <Alert type="warning">
-如果您使用的是旧版本（0.8.4 或更低），还需要更改 SQL 驱动程序：
+如果您使用的是旧版本（0.8.4 或更低版本），则还需要更改 SQL 驱动程序：
 </Alert>
 
-打开 `.env` 文件：
+打开 `.env` 文件文件：
 
 ```bash
-nano .env
+nano.env
 ```
 
 <Tabs items={['SQLite', 'MySQL']}>
@@ -107,32 +117,36 @@ nano .env
 
     ❌ 旧版本
     ```dotenv
-    SQLALCHEMY_DATABASE_URL = "sqlite:///db.sqlite3"
+    SQLALCHEMY_DATABASE_URL = "sqlite:////var/lib/marzban/db.sqlite3"
     ```
     ✅ 新版本
     ```dotenv
-    SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///db.sqlite3"
+    SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
     ```
   </Tab>
   <Tab value="MySQL">
     ### MySQL 驱动程序更新
+    对于 MariaDB，请遵循与 MySQL 相同的步骤。
+    > ⚠️ **警告**：在此示例中，`MYSQL_ROOT_PASSWORD` 应替换为 `.env` 文件中的值。
 
     ❌ 旧版本
     ```dotenv
-    SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:DB_PASSWORD@127.0.0.1/marzban"
+    SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:MYSQL_ROOT_PASSWORD@127.0.0.1/marzban"
     ```
     ✅ 新版本
     ```dotenv
-    SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://root:DB_PASSWORD@127.0.0.1/pasarguard"
+    SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://root:MYSQL_ROOT_PASSWORD@127.0.0.1/pasarguard"
     ```
   </Tab>
 </Tabs>
 
-### 其他更改
+### 其他变更
 
-#### 将 v2ray 模板重命名为 xray 模板
+如果您在 `.env` 文件中使用了 `V2RAY_SUBSCRIPTION_TEMPLATE` 或配置了 `TLS Inbound`，则需要更新它们；否则，您可以跳过此步骤。
 
-如果您使用的是自定义 v2ray 模板，则还应使用以下命令更改其目录：
+#### 将 v2ray 目录重命名为 xray 目录命令
+
+使用以下命令将 v2ray 目录更改为 xray：
 
 ```bash
 mv /var/lib/pasarguard/templates/v2ray /var/lib/pasarguard/templates/xray
@@ -140,7 +154,7 @@ mv /var/lib/pasarguard/templates/v2ray /var/lib/pasarguard/templates/xray
 
 #### 更新 xray-config 证书目录
 
-如果您有 TLS 入站，则需要更新您的 `xray_config.json` 并将证书目录从 marzban 更改为 pasarguard：
+在 `xray_config.json` 文件中，将证书目录从 marzban 更新为 pasarguard：
 
 ```bash
 nano /var/lib/pasarguard/xray_config.json
@@ -148,22 +162,22 @@ nano /var/lib/pasarguard/xray_config.json
 
 更改后，您的 `.env` 文件和 `xray_config.json` 应如下所示：
 
-<Tabs items={['XRAY_SUBSCRIPTION_TEMPLATE', 'Xray 证书目录']}>
-<Tab value="XRAY_SUBSCRIPTION_TEMPLATE">
-### 更新 `.env` 中的 Xray 模板
+<Tabs items={['XRAY_SUBSCRIPTION_TEMPLATE', 'Xray-Config Certificate Directories']}>
+  <Tab value="XRAY_SUBSCRIPTION_TEMPLATE">
+    ### 更新 `.env` 文件中的 Xray 订阅模板
 
-❌ 旧版本
-```dotenv
-V2RAY_SUBSCRIPTION_TEMPLATE = "v2ray/default.json"
-```
-✅ 新增版本
-```dotenv
-XRAY_SUBSCRIPTION_TEMPLATE = "xray/default.json"
-```
-</Tab>
+    ❌ 旧版本
+    ```dotenv
+    V2RAY_SUBSCRIPTION_TEMPLATE = "v2ray/default.json"
+    ```
+    ✅ 全新版本
+    ```dotenv
+    XRAY_SUBSCRIPTION_TEMPLATE = "xray/default.json"
+    ```
+  </Tab>
 
-<Tab value="Xray 证书目录">
-### 更新 xray_config.json 中的证书目录
+  <Tab value="Xray-Config Certificate Directories">
+    ### 更新 `xray_config.json` 中的证书目录
 
 ❌ 旧版本
     ```json
@@ -174,7 +188,7 @@ XRAY_SUBSCRIPTION_TEMPLATE = "xray/default.json"
             }
           ],
     ```
-    ✅ 新增版本
+✅ 全新版本
     ```json
           "certificates": [
             {
@@ -183,7 +197,7 @@ XRAY_SUBSCRIPTION_TEMPLATE = "xray/default.json"
             }
           ],
     ```
-</Tab>
+  </Tab>
 </Tabs>
 
 ### 6. 更新 Docker Compose 文件
@@ -196,11 +210,56 @@ sudo nano docker-compose.yml
 
 #### Docker Compose 更改
 
-以下是显示必要更改的比较：
+以下是每个数据库所需更改的比较：
 
+<Accordions type="multiple">
+  <Accordion title="SQLite">
 <div className="grid md:grid-cols-2 gap-4">
 
 <div className="space-y-2">
+
+**❌ 修改前 (Marzban)**
+```yaml
+services:
+  marzban:
+    image: gozargah/marzban:latest
+    restart: always
+    env_file: .env
+    network_mode: host
+    volumes:
+      - /var/lib/marzban:/var/lib/marzban
+```
+
+</div>
+
+<div className="space-y-2">
+
+**✅ 修改后 (PasarGuard)**
+```yaml
+services:
+  pasarguard:
+    image: pasarguard/panel:latest
+    restart: always
+    env_file: .env
+    network_mode: host
+    volumes:
+      - /var/lib/pasarguard:/var/lib/pasarguard
+```
+
+</div>
+
+</div>
+
+</Accordion>
+
+<Accordion title="MySQL">
+  <Alert type="warning">
+    ⚠️ **警告**：如果您已经在使用 `mysql:latest` 镜像，请勿将其更改为 `mysql:lts` 镜像，因为这有时可能会导致问题。
+  </Alert>
+
+  <div className="grid md:grid-cols-2 gap-4">
+
+    <div className="space-y-2">
 
 **❌ 之前 (Marzban)**
 ```yaml
@@ -231,7 +290,7 @@ services:
 
 <div className="space-y-2">
 
-**✅ 之后 (PasarGuard)**
+**✅ 修改后 (PasarGuard)**
 ```yaml
 services:
   pasarguard:
@@ -259,6 +318,78 @@ services:
 </div>
 
 </div>
+
+  </Accordion>
+
+  <Accordion title="MariaDB">
+  <Alert type="warning">
+    ⚠️ **警告**：如果您已经在使用 `mariadb:latest` 镜像，请勿将其更改为 `mariadb:lts` 镜像，因为这有时可能会导致问题。
+  </Alert>
+
+  <div className="grid md:grid-cols-2 gap-4">
+
+    <div className="space-y-2">
+
+**❌ 之前 (Marzban)**
+```yaml
+services:
+  marzban:
+    image: gozargah/marzban:latest
+    restart: always
+    env_file: .env
+    network_mode: host
+    volumes:
+      - /var/lib/marzban:/var/lib/marzban
+    depends_on:
+      - mariadb
+
+  mariadb:
+    image: mariadb:lts
+    restart: always
+    env_file: .env
+    network_mode: host
+    command: --bind-address=127.0.0.1 --disable-log-bin
+    environment:
+      MYSQL_DATABASE: marzban
+    volumes:
+      - /var/lib/mysql/marzban:/var/lib/mysql
+```
+
+</div>
+
+<div className="space-y-2">
+
+**✅ 修改后 (PasarGuard)**
+```yaml
+services:
+  pasarguard:
+    image: pasarguard/panel:latest
+    restart: always
+    env_file: .env
+    network_mode: host
+    volumes:
+      - /var/lib/pasarguard:/var/lib/pasarguard
+    depends_on:
+      - mariadb
+
+  mariadb:
+    image: mariadb:lts
+    restart: always
+    env_file: .env
+    network_mode: host
+    command: --bind-address=127.0.0.1 --disable-log-bin
+    environment:
+      MYSQL_DATABASE: pasarguard
+    volumes:
+      - /var/lib/mysql/pasarguard:/var/lib/mysql
+```
+
+</div>
+
+</div>
+
+  </Accordion>
+</Accordions>
 
 #### 关键更改摘要：
 
@@ -288,48 +419,77 @@ services:
 <td data-label="之后"><code>/var/lib/pasarguard:/var/lib/pasarguard</code></td>
 </tr>
 <tr>
-<td data-label="Section"><strong>MySQL 数据库</strong></td>
-<td data-label="Before"><code>marzban</code></td>
-<td data-label="After"><code>pasarguard</code></td>
+<td data-label="部分"><strong>MySQL 数据库</strong></td>
+<td data-label="之前"><code>marzban</code></td>
+<td data-label="之后"><code>pasarguard</code></td>
 </tr>
 <tr>
-<td data-label="Section"><strong>MySQL 卷</strong></td>
-<td data-label="Before"><code>/var/lib/mysql/marzban:/var/lib/mysql</code></td>
-<td data-label="After"><code>/var/lib/mysql/pasarguard:/var/lib/mysql</code></td>
+<td data-label="部分"><strong>MySQL 卷</strong></td>
+<td data-label="之前"><code>/var/lib/mysql/marzban:/var/lib/mysql</code></td>
+<td data-label="之后"><code>/var/lib/mysql/pasarguard:/var/lib/mysql</code></td>
 </tr>
 </tbody>
 </table>
 </div>
 
-<Alert type="info">
-显然，如果您使用的是 SQLite 数据库，则不应在文件中添加 MySQL 代码行。只需将示例与您的文件进行比较并应用更改即可。
-</Alert>
-
 ### 7. 将 Marzban MySQL 数据库更改为 PasarGuard（如果使用）
 
 如果您使用的是 SQLite 数据库，请跳过此步骤。
-如果您使用的是 MySQL 数据库，请导出 Marzban 数据库，以便稍后将其导入为 PasarGuard 数据库。
 
-#### 导出 Marzban 数据库命令
+如果您使用的是 MySQL 或 MariaDB 数据库，请使用以下命令导出 Marzban 数据库，以便稍后将其导入为 PasarGuard 数据库。
 
-#### 运行 Mysql
+> ⚠️ **注意**：所有以下数据库迁移命令都应在 `/opt/pasarguard/` 目录中执行。
 
+#### 启动 MySQL 或 MariaDB
+
+首先，根据您使用的 MySQL 或 MariaDB 服务启动相应的服务。
+
+<Tabs items={['MySQL', 'MariaDB']}>
+  <Tab value="MySQL">
 ```bash
 cd /opt/pasarguard && docker compose up -d mysql
 ```
+  </Tab>
 
-#### 转储数据库
-系统将要求您输入数据库密码。请使用 `.env` 文件中 `MYSQL_ROOT_PASSWORD` 的值。
+  <Tab value="MariaDB">
+```bash
+cd /opt/pasarguard && docker compose up -d mariadb
+```
+  </Tab>
+</Tabs>
 
+#### 导出数据库
+导出 Marzban 数据库。系统将提示您输入数据库密码——请使用 `.env` 文件中 `MYSQL_ROOT_PASSWORD` 的值。
+
+<Tabs items={['MySQL', 'MariaDB']}>
+  <Tab value="MySQL">
 ```bash
 docker compose exec mysql mysqldump -u root -p -h 127.0.0.1 --databases marzban > "/opt/pasarguard/marzban.sql"
 ```
+  </Tab>
+
+  <Tab value="MariaDB">
+```bash
+docker compose exec mariadb mariadb-dump -u root -p -h 127.0.0.1 --databases marzban > "/opt/pasarguard/marzban.sql"
+```
+  </Tab>
+</Tabs>
 
 <Alert type="info">
-如果遇到“访问被拒绝”错误，请尝试使用 `marzban` 用户，并使用 `.env` 文件中的 `MYSQL_PASSWORD` 值：
+如果您遇到“访问被拒绝”错误，请尝试使用“marzban”用户并使用`.env`文件中的“MYSQL_PASSWORD”值：
+<Tabs items={['MySQL', 'MariaDB']}>
+  <Tab value="MySQL">
 ```bash
 docker compose exec mysql mysqldump -u marzban -p -h 127.0.0.1 --databases marzban > "/opt/pasarguard/marzban.sql"
 ```
+  </Tab>
+
+  <Tab value="MariaDB">
+```bash
+docker compose exec mariadb mariadb-dump -u marzban -p -h 127.0.0.1 --databases marzban > "/opt/pasarguard/marzban.sql"
+```
+  </Tab>
+</Tabs>
 </Alert>
 
 #### 编辑数据库信息
@@ -343,29 +503,75 @@ sed -i '/^CREATE DATABASE/s/marzban/pasarguard/;/^USE/s/marzban/pasarguard/' /op
 
 #### 导入 PasarGuard 数据库
 
-要导入新数据库，请将此命令中的数据库密码替换为“.env”文件中的“MYSQL_ROOT_PASSWORD”值：
+要导入新数据库，请将 `MYSQL_ROOT_PASSWORD` 替换为 `.env` 文件中的值，然后执行以下命令：
 
+<Tabs items={['MySQL', 'MariaDB']}>
+  <Tab value="MySQL">
 ```bash
 docker compose exec -T mysql mysql -u root -p"MYSQL_ROOT_PASSWORD" -h 127.0.0.1 < "/opt/pasarguard/marzban.sql"
 ```
+  </Tab>
 
-**替代方法：**
-您可以使用“phpmyadmin”导入数据库。将 `phpmyadmin` 服务添加到您的 Docker Compose 文件并重启。
-使用文本编辑器编辑 `marzban.sql` 备份文件，并在开头几行（`CREATE DATABASE` 和 `USE` 行）中将 `marzban` 替换为 `pasarguard`。
-保存文件，最后使用 `phpmyadmin` 导入。
+  <Tab value="MariaDB">
+```bash
+docker compose exec -T mariadb mariadb -u root -p"MYSQL_ROOT_PASSWORD" -h 127.0.0.1 < "/opt/pasarguard/marzban.sql"
+```
+  </Tab>
+</Tabs>
+
+<Callout type="warning">
+此过程可能需要一些时间才能完成。
+</Callout>
+
+<Alert type="success">
+如果您没有看到任何输出，这是一个好兆头。
+要验证数据库导入是否成功，请列出 MySQL 数据库——您应该在其中看到 `pasarguard`。
+
+将 `MYSQL_ROOT_PASSWORD` 替换为 `.env` 文件中的值，然后运行该命令。
+
+<Tabs items={['MySQL', 'MariaDB']}>
+  <Tab value="MySQL">
+```bash
+docker compose exec mysql mysql -u root -p"MYSQL_ROOT_PASSWORD" -e "SHOW DATABASES;"
+```
+  </Tab>
+
+  <Tab value="MariaDB">
+```bash
+docker compose exec mariadb mariadb -u root -p"MYSQL_ROOT_PASSWORD" -e "SHOW DATABASES;"
+```
+  </Tab>
+</Tabs>
+</Alert>
+
+如果您在运行数据库导入命令时遇到任何错误，则表示出现了问题——请检查您的数据库凭据，然后重试。
 
 #### 删除 Marzban 数据库
 
-系统将要求您输入数据库密码。请使用 `.env` 文件中的 `MYSQL_ROOT_PASSWORD` 值。
+由于我们不再需要 Marzban 数据库，因此可以将其删除。
+系统将提示您输入数据库密码——请使用 `.env` 文件中 `MYSQL_ROOT_PASSWORD` 的值。
 
-<Alert type="warning">
-请确保您已备份数据，并准备好在出现问题时恢复数据。
+<Alert type="error">
+⚠️ **注意**：
+以下命令将删除 Marzban 数据库。
+请确保您已完整备份数据，以便在出现任何问题时进行恢复。
 </Alert>
 
+<Tabs items={['MySQL', 'MariaDB']}>
+  <Tab value="MySQL">
 ```bash
 rm /opt/pasarguard/marzban.sql
 docker compose exec mysql mysql -u root -p -e "DROP DATABASE marzban;"
 ```
+  </Tab>
+
+  <Tab value="MariaDB">
+```bash
+rm /opt/pasarguard/marzban.sql
+docker compose exec mariadb mariadb -u root -p -e "DROP DATABASE marzban;"
+```
+  </Tab>
+</Tabs>
 
 ### 8. 安装 PasarGuard 管理脚本
 
@@ -401,22 +607,123 @@ pasarguard status
 
 打开您的面板 URL 以确保一切正常工作。
 
+## 迁移步骤：全新安装
+
+<Callout type="info">
+💬 **注意**：
+
+在此迁移方法中，您之前在 `.env` 文件中的设置将不会迁移到 PasarGuard，您需要手动配置。
+
+您可以查看 `.env` 文件中所有可配置变量，或参阅 [面板配置文档](/zh/panel/configuration/) 了解更多详情。
+
+某些设置（例如 Telegram 机器人、订阅 URL 前缀等）现在可以直接从仪表板设置中进行配置。
+</Callout>
+
+### 1. 安装 PasarGuard
+
+首先，使用与当前数据库对应的命令在新服务器上安装 PasarGuard，具体操作请参见 [Panel 安装文档](/zh/panel/installation/)。
+请务必仔细阅读相关说明。
+
+### 2. SSL 认证
+
+您需要在 PasarGuard 上启用 SSL 才能安全地访问仪表板。  
+请将您的 SSL 证书文件上传到您的服务器，并将其放置在 `/var/lib/pasarguard/certs/` 目录中。  
+如果您还没有 SSL 证书，您可以申请一个——请参阅 [SSL 激活文档](/zh/learn/ssl-activation-cli/)。
+
+SSL 证书准备就绪后，请在 `.env` 文件中使用 UVICORN_SSL 变量启用它。
+
+```bash
+pasarguard edit-env
+```
+
+### 3. 上传数据库
+
+现在，您需要将数据库上传到您的服务器。具体步骤取决于您使用的数据库。
+
+#### 导入 SQLite 数据库
+
+- 只需将 Marzban 中的 `db.sqlite3` 文件放入 `/var/lib/pasarguard/` 目录即可。
+
+#### 导入 MySQL 或 MariaDB 数据库
+
+如果您使用的是 MySQL 或 MariaDB 数据库，则需要使用 **phpMyAdmin** 应用程序导入数据库。请仔细遵循以下步骤：
+
+- 编辑数据库文件：
+
+您需要编辑 MySQL 或 MariaDB 数据库文件。
+使用文本编辑器打开 Marzban 备份中的 `marzban.sql` 文件。
+按照图中所示，将这两行中的 `marzban` 替换为 `pasarguard`，然后保存文件。
+
+<Callout type="tip">
+如果您的文件中没有这两行，请继续执行下一步。
+</Callout>
+
+<div className="grid md:grid-cols-2 gap-4">
+
+<div className="space-y-2">
+**❌ 之前**
+<img 
+  src="/images/migration/edit-mysql-database-1.png" 
+  alt="Edit MySQL Database 1" 
+  width="900"
+/>
+</div>
+
+<div className="space-y-2">
+**✅ 修改后**
+<img 
+  src="/images/migration/edit-mysql-database-2.png" 
+  alt="Edit MySQL Database 2" 
+  width="900"
+/>
+</div>
+
+</div>
+
+- 打开 **phpMyAdmin**：
+
+您可以在浏览器中通过 http://YOUR_SERVER_IP:8010 访问 **phpMyAdmin**。
+使用 `root` 用户和 `.env` 文件中的 `MYSQL_ROOT_PASSWORD` 值登录。
+
+- 删除表：
+
+如图所示，删除现有表：
+
+<img 
+  src="/images/migration/drop-mysql-tables.png" 
+  alt="Drop MySQL Tables" 
+  width="500" 
+  height="300"
+/>
+
+- 导入数据库：
+
+现在，在 **phpMyAdmin** 中导航到“导入”选项卡。在“选择文件”部分中选择您的 `marzban.sql` 文件，然后点击“导入”按钮。
+
+### 4. 重启 PasarGuard
+
+最后，重启 PasarGuard：
+
+```bash
+pasarguard restart
+```
+
 ## 故障排除
 
 ### 常见问题
 
 > 💡 **提示**: 大多数问题可以通过检查文件权限和路径配置来解决。
 
-**1. 权限被拒绝**
+**1. 权限被拒绝**:
 确保您使用适当的权限运行命令（需要时使用 sudo）。
 
-**2. 数据库连接问题**
+**2. 数据库连接问题**:
 如果您使用 MySQL，请检查数据库路径和登录信息是否正确更新。
 
-**3. 端口冲突**
+**3. 端口冲突**:
 确保没有其他服务使用相同的端口。
 
-**4. 缺少环境变量**
+**4. 缺少环境变量**:
 再次检查 `.env` 文件中的所有环境变量是否正确更新。
 
 ### 回滚
