@@ -1,0 +1,1275 @@
+---
+title: 设置指南
+description: PasarGuard 系统设置配置完整文档
+icon: Settings
+---
+
+## 目录
+
+1. [Telegram Bot 设置](#1-telegram-bot-设置)
+2. [Webhook 设置](#2-webhook-设置)
+3. [通知设置](#3-通知设置)
+4. [通知启用（细粒度控制）](#4-通知启用细粒度控制)
+5. [订阅设置](#5-订阅设置)（最重要）
+6. [常规设置](#6-常规设置)
+7. [完整配置示例](#完整配置示例)
+
+---
+
+## 1. Telegram Bot 设置
+
+配置 Telegram 机器人用于管理面板管理和用户交互。
+
+### 字段
+
+| 字段 | 类型 | 必需 | 默认值 | 描述 |
+|-------|------|----------|---------|-------------|
+| `enable` | boolean | 是 | `false` | 启用/禁用 Telegram 机器人功能 |
+| `token` | string | 启用时必需 | `null` | 从 [@BotFather](https://t.me/botfather) 获取的机器人令牌 |
+| `webhook_url` | string | Webhook 模式需要 | `null` | Webhook 端点的公共 HTTPS URL |
+| `webhook_secret` | string | Webhook 模式需要 | `null` | Webhook 安全密钥令牌 |
+| `proxy_url` | string | 否 | `null` | SOCKS5/HTTP 代理 URL（格式：`protocol://host:port`） |
+| `method` | string | 否 | `"webhook"` | 连接方法：`"webhook"` 或 `"long-polling"` |
+| `mini_app_login` | boolean | 否 | `true` | 启用 Telegram 小程序登录功能 |
+| `mini_app_web_url` | string | 否 | `""` | 小程序 Web 界面 URL |
+| `for_admins_only` | boolean | 否 | `true` | 仅限管理员用户访问机器人 |
+
+### 重要说明
+
+<Callout type="warning" title="需要启用内联模式">
+要启用机器人中的**实时用户搜索**功能，您必须在 @BotFather 中启用**内联模式**：
+1. 向 @BotFather 发送 `/setinline`
+2. 选择您的机器人
+3. 输入占位符文本（例如"搜索用户..."）
+</Callout>
+
+<Callout type="info" title="Webhook 与长轮询对比">
+**Webhook（推荐用于生产环境）**
+- ✅ 即时消息传递
+- ✅ 较低的服务器负载
+- ✅ 更可靠
+- ❌ 需要公共 HTTPS URL
+- ❌ 设置较复杂
+
+**长轮询（适合开发环境）**
+- ✅ 设置简单，无需公共 URL
+- ✅ 可在防火墙后运行
+- ❌ 较高延迟
+- ❌ 消耗更多服务器资源
+</Callout>
+
+### 使用案例
+
+<Tabs items={['生产环境 (Webhook)', '开发环境 (长轮询)', '防火墙后 (代理)']}>
+  <Tab value="生产环境 (Webhook)">
+    ```json
+    {
+      "telegram": {
+        "enable": true,
+        "token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+        "method": "webhook",
+        "webhook_url": "https://panel.example.com/api/telegram/webhook",
+        "webhook_secret": "your_random_secret_here",
+        "mini_app_login": true,
+        "mini_app_web_url": "https://panel.example.com",
+        "for_admins_only": true
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="开发环境 (长轮询)">
+    ```json
+    {
+      "telegram": {
+        "enable": true,
+        "token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+        "method": "long-polling",
+        "mini_app_login": false,
+        "for_admins_only": false
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="防火墙后 (代理)">
+    ```json
+    {
+      "telegram": {
+        "enable": true,
+        "token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+        "method": "long-polling",
+        "proxy_url": "socks5://proxy.example.com:1080",
+        "for_admins_only": true
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## 2. Webhook 设置
+
+配置外部 webhook 用于第三方集成（例如自定义监控系统）。
+
+### 字段
+
+| 字段 | 类型 | 必需 | 默认值 | 描述 |
+|-------|------|----------|---------|-------------|
+| `enable` | boolean | 是 | `false` | 启用/禁用 webhook 通知 |
+| `webhooks` | array | 启用时必需 | `[]` | Webhook 配置数组（每个包含 `url` 和 `secret`） |
+| `days_left` | array | 否 | `[]` | 过期警报的天数阈值（例如 `[3, 7, 14]`） |
+| `usage_percent` | array | 否 | `[]` | 使用百分比阈值（例如 `[80, 90, 100]`） |
+| `timeout` | integer | 否 | `10` | HTTP 请求超时时间（秒），必须 >0 |
+| `recurrent` | integer | 否 | `3600` | 定期检查间隔（秒），必须 >0 |
+| `proxy_url` | string | 否 | `null` | Webhook 请求的代理 URL |
+
+### 使用案例
+
+<Tabs items={['多 Webhook 设置', '仅关键警报']}>
+  <Tab value="多 Webhook 设置">
+    ```json
+    {
+      "webhook": {
+        "enable": true,
+        "webhooks": [
+          {
+            "url": "https://monitoring1.example.com/webhook",
+            "secret": "secret1"
+          },
+          {
+            "url": "https://monitoring2.example.com/webhook",
+            "secret": "secret2"
+          }
+        ],
+        "days_left": [1, 3, 7],
+        "usage_percent": [90, 100],
+        "timeout": 15,
+        "recurrent": 1800
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="仅关键警报">
+    ```json
+    {
+      "webhook": {
+        "enable": true,
+        "webhooks": [
+          {"url": "https://alerts.example.com/critical", "secret": "secret"}
+        ],
+        "days_left": [1, 3],
+        "usage_percent": [95, 100],
+        "timeout": 5,
+        "recurrent": 7200
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## 3. 通知设置
+
+配置 Telegram/Discord 通知，使用基于队列的传递系统处理系统事件。
+
+### 基本配置
+
+| 字段 | 类型 | 必需 | 默认值 | 描述 |
+|-------|------|----------|---------|-------------|
+| `notify_telegram` | boolean | 是 | `false` | 启用 Telegram 通知 |
+| `notify_discord` | boolean | 是 | `false` | 启用 Discord 通知 |
+| `telegram_api_token` | string | 如果启用 Telegram | `null` | Telegram 机器人 API 令牌 |
+| `telegram_chat_id` | integer | 如果启用 Telegram | `null` | 备用 Telegram 频道/聊天 ID |
+| `telegram_topic_id` | integer | 否 | `null` | 备用 Telegram 主题/话题 ID（用于论坛频道） |
+| `discord_webhook_url` | string | 如果启用 Discord | `null` | 备用 Discord webhook URL |
+| `proxy_url` | string | 否 | `null` | 通知 API 请求的代理 |
+| `max_retries` | integer | 否 | `3` | 失败通知的最大重试次数，必须 >1 |
+
+### 按实体类型分配通知频道
+
+您可以为不同的实体类型配置单独的 Telegram/Discord 频道。如果未配置，通知将回退到主频道。
+
+| 实体 | 描述 | 通知类型 |
+|--------|-------------|-------------------|
+| `channels.admin` | 管理员账户事件 | create, modify, delete, reset_usage, login |
+| `channels.core` | 核心配置事件 | create, modify, delete |
+| `channels.group` | 组/入站组事件 | create, modify, delete |
+| `channels.host` | 主机/入站配置 | create, modify, delete, modify_hosts |
+| `channels.node` | 节点服务器事件 | create, modify, delete, connect, error |
+| `channels.user` | 用户账户事件 | create, modify, delete, status_change, reset_data_usage, data_reset_by_next, subscription_revoked |
+| `channels.user_template` | 用户模板事件 | create, modify, delete |
+
+每个实体频道支持：
+```json
+{
+  "telegram_chat_id": -1001234567890,  // 可选：实体专用频道
+  "telegram_topic_id": 5,               // 可选：论坛频道中的主题 ID
+  "discord_webhook_url": "https://..."  // 可选：实体专用 Discord webhook
+}
+```
+
+<Callout type="info" title="基于队列的通知系统">
+**工作原理：**
+1. 通知被添加到内存队列中
+2. 后台工作进程按顺序逐个处理队列
+3. 自动遵守 Telegram/Discord API 的速率限制
+4. 失败的通知使用指数退避重试（最多 `max_retries` 次）
+5. 系统从 API 429 响应中提取 `retry_after`（不使用硬编码延迟）
+
+**优点：**
+- ✅ 在速率限制期间不会丢失通知
+- ✅ 临时故障时自动重试
+- ✅ 顺序传递保持消息顺序
+- ✅ 动态遵守 API 速率限制
+</Callout>
+
+### 使用案例
+
+<Tabs items={['单频道', '多频道', 'Telegram + Discord', '使用代理']}>
+  <Tab value="单频道">
+    ```json
+    {
+      "notification_settings": {
+        "notify_telegram": true,
+        "notify_discord": false,
+        "telegram_api_token": "987654321:XYZabcDEFghiJKLmno",
+        "telegram_chat_id": -1001234567890,
+        "max_retries": 3
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="多频道">
+    ```json
+    {
+      "notification_settings": {
+        "notify_telegram": true,
+        "telegram_api_token": "987654321:XYZabcDEFghiJKLmno",
+        "telegram_chat_id": -1001111111111,  // 备用/默认频道
+        "max_retries": 3,
+        "channels": {
+          "admin": {
+            "telegram_chat_id": -1002222222222,
+            "telegram_topic_id": 10
+          },
+          "user": {
+            "telegram_chat_id": -1003333333333,
+            "telegram_topic_id": 20
+          },
+          "node": {
+            "telegram_chat_id": -1004444444444
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Telegram + Discord">
+    ```json
+    {
+      "notification_settings": {
+        "notify_telegram": true,
+        "notify_discord": true,
+        "telegram_api_token": "987654321:XYZabcDEFghiJKLmno",
+        "telegram_chat_id": -1001234567890,
+        "discord_webhook_url": "https://discord.com/api/webhooks/123/abc",
+        "max_retries": 5,
+        "channels": {
+          "admin": {
+            "telegram_chat_id": -1005555555555  // Telegram 上的关键事件
+          },
+          "user": {
+            "discord_webhook_url": "https://discord.com/api/webhooks/456/def"  // Discord 上的用户事件
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="使用代理">
+    ```json
+    {
+      "notification_settings": {
+        "notify_telegram": true,
+        "telegram_api_token": "987654321:XYZabcDEFghiJKLmno",
+        "telegram_chat_id": -1001234567890,
+        "proxy_url": "socks5://proxy.internal:1080",
+        "max_retries": 3
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## 4. 通知启用（细粒度控制）
+
+精确控制每个实体发送哪些通知类型。这允许您通过禁用不必要的通知来减少干扰。
+
+### 结构概述
+
+```json
+{
+  "notification_enable": {
+    "admin": { /* AdminNotificationEnable */ },
+    "core": { /* BaseNotificationEnable */ },
+    "group": { /* BaseNotificationEnable */ },
+    "host": { /* HostNotificationEnable */ },
+    "node": { /* NodeNotificationEnable */ },
+    "user": { /* UserNotificationEnable */ },
+    "user_template": { /* BaseNotificationEnable */ }
+  }
+}
+```
+
+### 按实体划分的通知类型
+
+<Tabs items={['管理员', '核心', '组', '主机', '节点', '用户', '用户模板']}>
+  <Tab value="管理员">
+    **AdminNotificationEnable**
+
+    ```json
+    {
+      "admin": {
+        "create": true,       // 创建新管理员账户
+        "modify": true,       // 修改管理员账户
+        "delete": true,       // 删除管理员账户
+        "reset_usage": true,  // 重置管理员使用量
+        "login": true         // 管理员登录尝试（成功/失败）
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="核心">
+    **BaseNotificationEnable**
+
+    ```json
+    {
+      "core": {
+        "create": true,   // 创建新核心配置
+        "modify": true,   // 修改核心配置
+        "delete": true    // 删除核心配置
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="组">
+    **BaseNotificationEnable**
+
+    ```json
+    {
+      "group": {
+        "create": true,   // 创建新组
+        "modify": true,   // 修改组
+        "delete": true    // 删除组
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="主机">
+    **HostNotificationEnable**
+
+    ```json
+    {
+      "host": {
+        "create": true,       // 创建新主机/入站
+        "modify": true,       // 修改主机
+        "delete": true,       // 删除主机
+        "modify_hosts": true  // 批量主机修改
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="节点">
+    **NodeNotificationEnable**
+
+    ```json
+    {
+      "node": {
+        "create": true,   // 添加新节点
+        "modify": true,   // 修改节点配置
+        "delete": true,   // 移除节点
+        "connect": true,  // 节点连接成功
+        "error": true     // 节点连接错误
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="用户">
+    **UserNotificationEnable**
+
+    ```json
+    {
+      "user": {
+        "create": true,               // 创建新用户
+        "modify": true,               // 修改用户
+        "delete": true,               // 删除用户
+        "status_change": true,        // 用户状态更改（激活/过期/受限/禁用）
+        "reset_data_usage": true,     // 手动重置用户数据使用量
+        "data_reset_by_next": true,   // 下一个计划重置数据使用量
+        "subscription_revoked": true  // 撤销用户订阅访问权限
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="用户模板">
+    **BaseNotificationEnable**
+
+    ```json
+    {
+      "user_template": {
+        "create": true,   // 创建新模板
+        "modify": true,   // 修改模板
+        "delete": true    // 删除模板
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### 使用案例
+
+<Tabs items={['仅关键事件', '仅用户事件', '静默模式']}>
+  <Tab value="仅关键事件">
+    ```json
+    {
+      "notification_enable": {
+        "admin": {
+          "create": false,
+          "modify": false,
+          "delete": true,
+          "reset_usage": false,
+          "login": true
+        },
+        "core": {"create": false, "modify": false, "delete": true},
+        "group": {"create": false, "modify": false, "delete": false},
+        "host": {"create": false, "modify": false, "delete": true, "modify_hosts": false},
+        "node": {"create": false, "modify": false, "delete": false, "connect": false, "error": true},
+        "user": {
+          "create": false,
+          "modify": false,
+          "delete": true,
+          "status_change": true,
+          "reset_data_usage": false,
+          "data_reset_by_next": false,
+          "subscription_revoked": true
+        },
+        "user_template": {"create": false, "modify": false, "delete": false}
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="仅用户事件">
+    ```json
+    {
+      "notification_enable": {
+        "admin": {"create": false, "modify": false, "delete": false, "reset_usage": false, "login": false},
+        "core": {"create": false, "modify": false, "delete": false},
+        "group": {"create": false, "modify": false, "delete": false},
+        "host": {"create": false, "modify": false, "delete": false, "modify_hosts": false},
+        "node": {"create": false, "modify": false, "delete": false, "connect": false, "error": false},
+        "user": {
+          "create": true,
+          "modify": true,
+          "delete": true,
+          "status_change": true,
+          "reset_data_usage": true,
+          "data_reset_by_next": true,
+          "subscription_revoked": true
+        },
+        "user_template": {"create": false, "modify": false, "delete": false}
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="静默模式">
+    ```json
+    {
+      "notification_enable": {
+        "admin": {"create": false, "modify": false, "delete": false, "reset_usage": false, "login": false},
+        "core": {"create": false, "modify": false, "delete": false},
+        "group": {"create": false, "modify": false, "delete": false},
+        "host": {"create": false, "modify": false, "delete": false, "modify_hosts": false},
+        "node": {"create": false, "modify": false, "delete": false, "connect": false, "error": false},
+        "user": {
+          "create": false,
+          "modify": false,
+          "delete": false,
+          "status_change": false,
+          "reset_data_usage": false,
+          "data_reset_by_next": false,
+          "subscription_revoked": false
+        },
+        "user_template": {"create": false, "modify": false, "delete": false}
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## 5. 订阅设置
+
+<Callout type="tip" title="最重要的部分">
+配置用户如何访问和接收其订阅配置。本部分对于客户端正常运行至关重要。
+</Callout>
+
+### 核心字段
+
+| 字段 | 类型 | 必需 | 默认值 | 描述 |
+|-------|------|----------|---------|-------------|
+| `url_prefix` | string | 推荐 | `""` | 订阅链接的基础 URL（例如 `"https://sub.example.com"`） |
+| `update_interval` | integer | 否 | `12` | 向客户端显示的更新间隔（小时） |
+| `support_url` | string | 否 | `"https://t.me/"` | 客户端应用中显示的支持/联系 URL |
+| `profile_title` | string | 否 | `"Subscription"` | 订阅配置文件标题（支持变量） |
+| `announce` | string | 否 | `""` | 公告文本（最多 128 字符，仅 v2RayTun 和 Happ） |
+| `announce_url` | string | 否 | `""` | 更多公告信息的 URL |
+| `host_status_filter` | boolean | 是 | - | 根据用户状态过滤主机 |
+| `rules` | array | 是 | - | 用于自动配置的用户代理检测规则 |
+| `manual_sub_request` | object | 否 | 全部为 true | 启用/禁用手动格式请求 |
+| `applications` | array | 否 | `[]` | 带有导入 URL 的客户端应用配置 |
+
+### 配置文件标题变量
+
+`profile_title` 字段支持动态变量：
+
+| 变量 | 描述 | 示例输出 |
+|----------|-------------|----------------|
+| `{username}` | 用户名 | `john_doe` |
+| `{used_traffic}` | 已用流量（格式化） | `5.2 GB` |
+| `{data_limit}` | 数据限制（格式化） | `50 GB` |
+| `{data_left}` | 剩余数据（格式化） | `44.8 GB` |
+| `{expire_date}` | 过期日期 | `2024-12-31` |
+| `{expire_days}` | 到期天数 | `45` |
+| `{status}` | 用户状态 | `active` |
+| `{admin_username}` | 管理员用户名 | `admin1` |
+
+**示例：**
+```json
+{
+  "profile_title": "{username} | {data_limit} | 过期: {expire_days} 天"
+}
+```
+输出：`john_doe | 50 GB | 过期: 45 天`
+
+### 主机状态过滤器
+
+控制是否根据用户状态过滤主机。
+
+```json
+{
+  "host_status_filter": true  // 或 false
+}
+```
+
+**当设为 `true` 时：**
+- 用户只能看到与其当前状态匹配的主机
+- 允许您为不同的用户状态创建单独的主机组
+- 使用案例示例：活跃用户使用高级主机，暂停用户使用有限主机
+
+**当设为 `false` 时：**
+- 用户可以看到所有已启用的主机，无论其状态如何
+- 配置更简单，控制粒度较低
+
+<Callout type="warning" title="重要">
+当主机的状态字段为**空**（未配置）时，该主机将显示给**所有用户**，无论 `host_status_filter` 设置如何。
+</Callout>
+
+**示例场景：**
+```
+主机 A: status = [active, limited]
+主机 B: status = [active]
+主机 C: status = [on_hold]
+
+状态为 "active" 的用户：
+  - host_status_filter=true  → 看到主机 A、主机 B
+  - host_status_filter=false → 看到主机 A、主机 B、主机 C
+
+状态为 "on_hold" 的用户：
+  - host_status_filter=true  → 仅看到主机 C
+  - host_status_filter=false → 看到主机 A、主机 B、主机 C
+```
+
+### 客户端检测规则
+
+`rules` 数组定义如何根据 User-Agent 头检测客户端类型以及返回哪种配置格式。
+
+```json
+{
+  "rules": [
+    {
+      "pattern": "regex_pattern",
+      "target": "config_format"
+    }
+  ]
+}
+```
+
+**可用配置格式（`target`）：**
+- `links` - 普通订阅链接
+- `links_base64` - Base64 编码的订阅链接
+- `xray` - Xray-core JSON 配置
+- `sing_box` - sing-box JSON 配置
+- `clash` - Clash YAML 配置
+- `clash_meta` - Clash Meta YAML 配置
+- `outline` - Outline JSON 配置
+- `block` - 特殊目标，拒绝访问（返回 HTTP 406）
+
+**工作原理：**
+1. 客户端使用 User-Agent 头请求订阅
+2. 系统按顺序检查 User-Agent 与模式
+3. 第一个匹配的模式决定配置格式
+4. 如果没有匹配且格式未在 `manual_sub_request` 中启用，则返回 406
+5. 生成配置并使用适当的头返回
+
+**生产就绪模式：**
+```json
+{
+  "rules": [
+    {
+      "pattern": "^(Telegram|WhatsApp|TelegramBot|WhatsAppBot)",
+      "target": "block"
+    },
+    {
+      "pattern": "^([Cc]lash[\\-\\.]?[Vv]erge|[Cc]lash[\\-\\.]?[Mm]eta|[Ff][Ll][Cc]lash|[Mm]ihomo)",
+      "target": "clash_meta"
+    },
+    {
+      "pattern": "^([Cc]lash|[Ss]tash)",
+      "target": "clash"
+    },
+    {
+      "pattern": "^(SFA|SFI|SFM|SFT|[Kk]aring|[Hh]iddify[Nn]ext)|.*[Ss]ing[\\-b]?ox.*",
+      "target": "sing_box"
+    },
+    {
+      "pattern": "^(SS|SSR|SSD|SSS|Outline|Shadowsocks|SSconf)",
+      "target": "outline"
+    },
+    {
+      "pattern": "^.*",
+      "target": "links_base64"
+    }
+  ]
+}
+```
+
+**每个模式捕获的内容：**
+1. **被阻止的客户端** → `block`
+   - Telegram（阻止从 Telegram 应用访问订阅）
+   - WhatsApp（阻止从 WhatsApp 访问订阅）
+   - TelegramBot（阻止自动化机器人请求）
+   - WhatsAppBot（阻止自动化机器人请求）
+
+2. **Clash Meta 变体** → `clash_meta`
+   - Clash-Verge, Clash.Verge, ClashVerge
+   - Clash-Meta, Clash.Meta, ClashMeta
+   - FLClash, Mihomo
+
+3. **Clash 变体** → `clash`
+   - Clash（原版）
+   - Stash（iOS 客户端）
+
+4. **sing-box 变体** → `sing_box`
+   - SFA（sing-box for Android）
+   - SFI（sing-box for iOS）
+   - SFM（sing-box for macOS）
+   - SFT（sing-box terminal）
+   - Karing
+   - HiddifyNext
+   - User-Agent 中包含"sing-box"或"sing box"的任何客户端
+
+5. **Shadowsocks/Outline 变体** → `outline`
+   - SS, SSR, SSD, SSS
+   - Outline
+   - Shadowsocks
+   - SSconf
+
+6. **回退** → `links_base64`
+   - 匹配所有其他内容（^.*）
+   - 返回 base64 编码的订阅链接
+   - 对未知或自定义客户端有用
+
+**阻止不需要的客户端：**
+```json
+{
+  "rules": [
+    {"pattern": "^(Telegram|WhatsApp|TelegramBot|WhatsAppBot)", "target": "block"},
+    {"pattern": "BadClient|SpamBot|Scraper", "target": "block"},
+    {"pattern": "Clash", "target": "clash"}
+  ]
+}
+```
+
+<Callout type="info" title="为什么阻止 Telegram/WhatsApp？">
+阻止这些用户代理可防止用户直接在消息应用中打开订阅链接，这可能会：
+- 将订阅 URL 暴露给应用缓存
+- 允许通过应用功能意外共享
+- 绕过预期的客户端应用程序
+- 造成安全/隐私问题
+</Callout>
+
+### 手动订阅请求
+
+控制哪些配置格式可以手动请求（当用户代理不匹配任何规则时）。
+
+```json
+{
+  "manual_sub_request": {
+    "links": true,
+    "links_base64": true,
+    "xray": true,
+    "sing_box": true,
+    "clash": true,
+    "clash_meta": true,
+    "outline": true
+  }
+}
+```
+
+**使用案例：**
+- 仅启用您主动支持的格式
+- 禁用未使用的格式以减少攻击面
+- 通过用户代理检测强制使用特定客户端
+
+### 应用程序配置
+
+定义带有深层链接导入 URL 的客户端应用程序，便于一键订阅设置。
+
+```json
+{
+  "applications": [
+    {
+      "name": "v2rayNG",
+      "platform": "android",
+      "icon_url": "https://cdn.example.com/icons/v2rayng.png",
+      "import_url": "v2rayng://install-config?url={url}",
+      "description": {
+        "en": "Fast and lightweight VPN client for Android",
+        "fa": "کلاینت سریع و سبک برای اندروید",
+        "ru": "Быстрый VPN-клиент для Android",
+        "zh": "适用于Android的快速VPN客户端"
+      },
+      "recommended": true,
+      "download_links": [
+        {
+          "name": "Google Play",
+          "url": "https://play.google.com/store/apps/details?id=com.v2ray.ang",
+          "language": "en"
+        },
+        {
+          "name": "GitHub Release",
+          "url": "https://github.com/2dust/v2rayNG/releases",
+          "language": "en"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**字段描述：**
+
+| 字段 | 必需 | 描述 |
+|-------|----------|-------------|
+| `name` | 是 | 应用程序名称（最多 32 字符） |
+| `platform` | 是 | 平台：`android`、`ios`、`windows`、`macos`、`linux`、`appletv`、`androidtv` |
+| `icon_url` | 否 | 图标图像 URL（最多 512 字符） |
+| `import_url` | 否 | 深层链接 URL 模板（必须包含 `{url}` 占位符） |
+| `description` | 否 | 多语言描述（`en`、`fa`、`ru`、`zh`） |
+| `recommended` | 否 | 标记为推荐（每个平台只允许一个） |
+| `download_links` | 否 | 带有名称、URL 和语言的下载链接数组 |
+
+**导入 URL 占位符：**
+- 必须包含 `{url}` 占位符
+- 系统自动将 `{url}` 替换为实际订阅 URL
+- 示例：
+  - `v2rayng://install-config?url={url}`
+  - `clash://install-config?url={url}`
+  - `sing-box://import-remote-profile?url={url}`
+
+**验证规则：**
+- 每个平台只有一个 `recommended: true` 应用
+- 如果提供，`import_url` 必须包含 `{url}`
+- `platform` 必须是定义的平台之一
+
+### 订阅系统工作原理
+
+#### 1. 用户访问订阅 URL
+
+```
+格式：/sub/{token}
+示例：https://panel.example.com/sub/abc123def456
+```
+
+令牌唯一标识用户。
+
+#### 2. 请求类型检测
+
+**HTML 请求（浏览器）：**
+- Accept 头：`text/html`
+- 返回：HTML 订阅页面
+- 显示：链接、二维码、应用导入按钮
+- 使用：管理员的 `sub_template` 或默认模板
+
+**API 请求（客户端应用）：**
+- Accept 头：其他（例如 `*/*`、`application/json`）
+- 返回：配置文件（YAML/JSON/纯文本）
+- 格式由以下决定：User-Agent 检测或手动格式参数
+
+#### 3. User-Agent 检测
+
+```
+客户端发送：User-Agent: v2rayNG/1.8.5
+
+系统检查规则：
+1. 模式："^(Clash|ClashForAndroid)" → 不匹配
+2. 模式："v2rayN" → 匹配！→ 目标："xray"
+
+返回：Xray JSON 配置
+```
+
+#### 4. 配置生成
+
+1. **加载用户数据**：获取用户信息、入站、组、配额
+2. **应用过滤器**：
+   - 按用户的组成员资格过滤入站
+   - 如果启用，应用 `host_status_filter`
+3. **生成配置**：创建适当的格式（Clash YAML、Xray JSON 等）
+4. **编码**：如果需要（例如 `links_base64`），进行 Base64 编码
+5. **设置头**：添加订阅头
+6. **返回**：将配置发送给客户端
+
+#### 5. 响应头
+
+```http
+Content-Disposition: attachment; filename="john_doe"
+Profile-Web-Page-URL: https://panel.example.com/sub/abc123
+Support-URL: https://t.me/support
+Profile-Title: john_doe%20%7C%2050%20GB
+Profile-Update-Interval: 12
+Subscription-Userinfo: upload=0; download=5589934592; total=53687091200; expire=1735689599
+```
+
+### 完整使用案例
+
+<Tabs items={['基本设置', '阻止和允许列表', '丰富的应用目录', '动态标题']}>
+  <Tab value="基本设置">
+    ```json
+    {
+      "subscription": {
+        "url_prefix": "https://sub.example.com",
+        "update_interval": 12,
+        "support_url": "https://t.me/support",
+        "profile_title": "{username} - {data_limit}",
+        "host_status_filter": false,
+        "rules": [
+          {"pattern": "Clash", "target": "clash"},
+          {"pattern": "v2ray", "target": "xray"},
+          {"pattern": "Hiddify", "target": "sing_box"}
+        ],
+        "manual_sub_request": {
+          "links": true,
+          "xray": true,
+          "clash": true,
+          "sing_box": true
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="阻止和允许列表">
+    ```json
+    {
+      "subscription": {
+        "url_prefix": "https://sub.example.com",
+        "update_interval": 24,
+        "profile_title": "安全订阅",
+        "host_status_filter": false,
+        "rules": [
+          {"pattern": "BadClient|Scraper|Bot", "target": "block"},  // 阻止这些
+          {"pattern": "Clash", "target": "clash"},
+          {"pattern": "v2ray", "target": "xray"}
+        ],
+        "manual_sub_request": {
+          "links": false,
+          "links_base64": false,
+          "xray": true,
+          "clash": true
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="丰富的应用目录">
+    ```json
+    {
+      "subscription": {
+        "url_prefix": "https://sub.example.com",
+        "update_interval": 12,
+        "profile_title": "{username}",
+        "host_status_filter": false,
+        "rules": [
+          {"pattern": "Clash", "target": "clash"},
+          {"pattern": "v2ray", "target": "xray"}
+        ],
+        "applications": [
+          {
+            "name": "v2rayNG",
+            "platform": "android",
+            "icon_url": "https://cdn.example.com/v2rayng.png",
+            "import_url": "v2rayng://install-config?url={url}",
+            "description": {
+              "en": "Best Android VPN client",
+              "zh": "最佳 Android VPN 客户端"
+            },
+            "recommended": true,
+            "download_links": [
+              {"name": "Play Store", "url": "https://play.google.com/...", "language": "en"},
+              {"name": "Direct APK", "url": "https://github.com/.../v2rayNG.apk", "language": "en"}
+            ]
+          },
+          {
+            "name": "Hiddify",
+            "platform": "ios",
+            "icon_url": "https://cdn.example.com/hiddify.png",
+            "import_url": "hiddify://import-remote-profile?url={url}",
+            "description": {
+              "en": "Best iOS VPN client",
+              "zh": "最佳 iOS VPN 客户端"
+            },
+            "recommended": true,
+            "download_links": [
+              {"name": "App Store", "url": "https://apps.apple.com/...", "language": "en"}
+            ]
+          },
+          {
+            "name": "Clash Verge",
+            "platform": "windows",
+            "icon_url": "https://cdn.example.com/clash.png",
+            "import_url": "clash://install-config?url={url}",
+            "description": {
+              "en": "Modern Clash GUI for Windows",
+              "zh": "Windows 现代 Clash GUI"
+            },
+            "recommended": true,
+            "download_links": [
+              {"name": "GitHub", "url": "https://github.com/.../releases", "language": "en"}
+            ]
+          }
+        ]
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="动态标题">
+    ```json
+    {
+      "subscription": {
+        "url_prefix": "https://sub.example.com",
+        "update_interval": 6,
+        "support_url": "https://t.me/support",
+        "profile_title": "{username} | {data_left}/{data_limit} | {expire_days}天",
+        "announce": "新服务器已添加！请更新您的订阅。",
+        "announce_url": "https://example.com/news/new-servers",
+        "host_status_filter": false,
+        "rules": [
+          {"pattern": "v2ray", "target": "xray"}
+        ]
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### 最佳实践
+
+<Callout type="tip" title="应该做的">
+- **始终设置 `url_prefix`** 以便正确生成深层链接
+- **测试正则表达式模式** 在部署前使用在线正则表达式测试器
+- **仔细排列规则** - 特定模式在前，通用模式在后
+- **使用 `host_status_filter`** 仅当您配置了状态特定的主机时
+- **保持公告简洁** - 最多 128 字符
+- **验证导入 URL** - 必须包含 `{url}` 占位符
+- **每个平台一个推荐应用** 最多
+- **使用有意义的配置文件标题** 带变量以获得更好的用户体验
+</Callout>
+
+<Callout type="warning" title="不应该做的">
+- 不要在生产环境中将 `url_prefix` 留空（会破坏导入 URL）
+- 不要使用重叠的正则表达式模式（第一个匹配优先）
+- 不要在未配置主机状态的情况下启用 `host_status_filter`
+- 不要在 `announce` 字段中超过 128 字符
+- 不要忘记在 `import_url` 中添加 `{url}` 占位符
+- 不要为同一平台设置多个 `recommended: true` 应用
+- 不要在 `profile_title` 中使用破坏 URL 的特殊字符
+</Callout>
+
+<Callout type="info" title="测试">
+```bash
+# 测试订阅端点
+curl -v "https://panel.example.com/sub/TOKEN" \
+  -H "User-Agent: v2rayNG/1.8.5"
+
+# 测试 HTML 页面
+curl -v "https://panel.example.com/sub/TOKEN" \
+  -H "Accept: text/html"
+
+# 检查响应头
+curl -I "https://panel.example.com/sub/TOKEN"
+```
+</Callout>
+
+---
+
+## 6. 常规设置
+
+创建新配置时应用的默认代理协议设置。
+
+<Callout type="warning" title="重要">
+这些设置**仅由前端应用**作为创建新配置时的默认值。它们**不影响**：
+- 直接 API 请求（API 绕过这些默认值）
+- 前端中的手动更改（用户可以覆盖这些值）
+- 现有配置（仅适用于新配置）
+</Callout>
+
+### 字段
+
+| 字段 | 类型 | 默认值 | 描述 |
+|-------|------|---------|-------------|
+| `default_flow` | string | `"none"` | 默认 XTLS 流控制（仅前端默认值） |
+| `default_method` | string | `"chacha20-poly1305"` | 默认 Shadowsocks 加密方法（仅前端默认值） |
+
+### XTLS Flow 选项
+
+| 值 | 描述 |
+|-------|-------------|
+| `none` | 无 XTLS（标准 TLS） |
+| `xtls-rprx-vision` | XTLS Vision 流（推荐用于 VLESS） |
+
+### Shadowsocks 方法
+
+| 值 | 安全性 | 性能 |
+|-------|----------|-------------|
+| `chacha20-poly1305` | 高 | 快速 |
+| `chacha20-ietf-poly1305` | 高 | 快速 |
+| `aes-256-gcm` | 高 | 中等 |
+| `aes-128-gcm` | 中等 | 快速 |
+
+### 示例
+
+```json
+{
+  "general": {
+    "default_flow": "xtls-rprx-vision",
+    "default_method": "chacha20-poly1305"
+  }
+}
+```
+
+---
+
+## 完整配置示例
+
+此示例演示了启用所有功能的生产就绪配置：
+
+```json
+{
+  "telegram": {
+    "enable": true,
+    "token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz0123456",
+    "method": "webhook",
+    "webhook_url": "https://panel.example.com/api/telegram/webhook",
+    "webhook_secret": "random_secret_string_here",
+    "proxy_url": null,
+    "mini_app_login": true,
+    "mini_app_web_url": "https://panel.example.com",
+    "for_admins_only": true
+  },
+  "webhook": {
+    "enable": true,
+    "webhooks": [
+      {
+        "url": "https://uptime.example.com/api/push/abc123",
+        "secret": "uptime_kuma_secret"
+      },
+      {
+        "url": "https://monitoring.example.com/webhook",
+        "secret": "monitoring_secret"
+      }
+    ],
+    "days_left": [1, 3, 7, 14],
+    "usage_percent": [80, 90, 95, 100],
+    "timeout": 10,
+    "recurrent": 3600,
+    "proxy_url": null
+  },
+  "notification_settings": {
+    "notify_telegram": true,
+    "notify_discord": false,
+    "telegram_api_token": "987654321:XYZabcDEFghiJKLmno9876543210ABCDEF",
+    "telegram_chat_id": -1001234567890,
+    "telegram_topic_id": null,
+    "discord_webhook_url": null,
+    "proxy_url": null,
+    "max_retries": 3,
+    "channels": {
+      "admin": {
+        "telegram_chat_id": -1002222222222,
+        "telegram_topic_id": 10,
+        "discord_webhook_url": null
+      },
+      "user": {
+        "telegram_chat_id": -1003333333333,
+        "telegram_topic_id": 20,
+        "discord_webhook_url": null
+      },
+      "node": {
+        "telegram_chat_id": -1004444444444,
+        "telegram_topic_id": null,
+        "discord_webhook_url": null
+      }
+    }
+  },
+  "notification_enable": {
+    "admin": {
+      "create": true,
+      "modify": false,
+      "delete": true,
+      "reset_usage": true,
+      "login": true
+    },
+    "core": {
+      "create": true,
+      "modify": false,
+      "delete": true
+    },
+    "group": {
+      "create": true,
+      "modify": false,
+      "delete": true
+    },
+    "host": {
+      "create": true,
+      "modify": false,
+      "delete": true,
+      "modify_hosts": true
+    },
+    "node": {
+      "create": true,
+      "modify": false,
+      "delete": true,
+      "connect": true,
+      "error": true
+    },
+    "user": {
+      "create": true,
+      "modify": true,
+      "delete": true,
+      "status_change": true,
+      "reset_data_usage": true,
+      "data_reset_by_next": true,
+      "subscription_revoked": true
+    },
+    "user_template": {
+      "create": true,
+      "modify": false,
+      "delete": true
+    }
+  },
+  "subscription": {
+    "url_prefix": "https://sub.example.com",
+    "update_interval": 12,
+    "support_url": "https://t.me/example_support",
+    "profile_title": "{username} | {data_limit} | 过期: {expire_days}天",
+    "announce": "欢迎！每 12 小时更新一次以获得最佳性能。",
+    "announce_url": "https://example.com/announcements",
+    "host_status_filter": true,
+    "rules": [
+      {"pattern": "^(Clash|ClashForAndroid)", "target": "clash"},
+      {"pattern": "ClashMeta", "target": "clash_meta"},
+      {"pattern": "Stash", "target": "clash"},
+      {"pattern": "Shadowrocket", "target": "links"},
+      {"pattern": "v2rayN", "target": "xray"},
+      {"pattern": "v2rayNG", "target": "xray"},
+      {"pattern": "Hiddify|SFI|SFA", "target": "sing_box"},
+      {"pattern": "Outline", "target": "outline"}
+    ],
+    "manual_sub_request": {
+      "links": true,
+      "links_base64": true,
+      "xray": true,
+      "sing_box": true,
+      "clash": true,
+      "clash_meta": true,
+      "outline": true
+    },
+    "applications": [
+      {
+        "name": "v2rayNG",
+        "platform": "android",
+        "icon_url": "https://cdn.example.com/icons/v2rayng.png",
+        "import_url": "v2rayng://install-config?url={url}",
+        "description": {
+          "en": "Recommended Android client",
+          "fa": "کلاینت پیشنهادی اندروید",
+          "zh": "推荐的 Android 客户端"
+        },
+        "recommended": true,
+        "download_links": [
+          {
+            "name": "GitHub Release",
+            "url": "https://github.com/2dust/v2rayNG/releases",
+            "language": "en"
+          }
+        ]
+      },
+      {
+        "name": "Hiddify",
+        "platform": "ios",
+        "icon_url": "https://cdn.example.com/icons/hiddify.png",
+        "import_url": "hiddify://import-remote-profile?url={url}",
+        "description": {
+          "en": "Recommended iOS client",
+          "zh": "推荐的 iOS 客户端"
+        },
+        "recommended": true,
+        "download_links": [
+          {
+            "name": "App Store",
+            "url": "https://apps.apple.com/app/hiddify",
+            "language": "en"
+          }
+        ]
+      }
+    ]
+  },
+  "general": {
+    "default_flow": "xtls-rprx-vision",
+    "default_method": "chacha20-poly1305"
+  }
+}
+```
+
+---
+
+## 其他资源
+
+- **Telegram Bot API**: https://core.telegram.org/bots/api
+- **Discord Webhooks**: https://discord.com/developers/docs/resources/webhook
+- **Xray 文档**: https://xtls.github.io/
+- **Clash 文档**: https://github.com/Dreamacro/clash/wiki
+- **sing-box 文档**: https://sing-box.sagernet.org/
+
+---
+
+## 支持
+
+如有问题、疑问或贡献：
+- Telegram 群组：https://t.me/Pasar_Guard
+- GitHub Issues：https://github.com/PasarGuard/panel/issues
+
+---

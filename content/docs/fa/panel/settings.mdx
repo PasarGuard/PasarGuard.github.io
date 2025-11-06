@@ -1,0 +1,1271 @@
+---
+title: راهنمای تنظیمات
+description: مستندات کامل برای پیکربندی تنظیمات سیستم PasarGuard
+icon: Settings
+---
+
+## فهرست مطالب
+
+1. [تنظیمات ربات تلگرام](#1-تنظیمات-ربات-تلگرام)
+2. [تنظیمات Webhook](#2-تنظیمات-webhook)
+3. [تنظیمات نوتیفیکیشن](#3-تنظیمات-نوتیفیکیشن)
+4. [فعال‌سازی نوتیفیکیشن (کنترل‌های دقیق)](#4-فعالسازی-نوتیفیکیشن-کنترلهای-دقیق)
+5. [تنظیمات اشتراک](#5-تنظیمات-اشتراک) (مهم‌ترین بخش)
+6. [تنظیمات عمومی](#6-تنظیمات-عمومی)
+7. [مثال کانفیگ کامل](#مثال-کانفیگ-کامل)
+
+---
+
+## 1. تنظیمات ربات تلگرام
+
+پیکربندی ربات تلگرام برای مدیریت پنل ادمین و تعاملات کاربران.
+
+### فیلدها
+
+| فیلد | نوع | الزامی | پیش‌فرض | توضیحات |
+|-------|------|----------|---------|-------------|
+| `enable` | boolean | بله | `false` | فعال/غیرفعال کردن قابلیت ربات تلگرام |
+| `token` | string | وقتی فعاله | `null` | توکن ربات از [@BotFather](https://t.me/botfather) |
+| `webhook_url` | string | برای روش webhook | `null` | آدرس HTTPS عمومی برای endpoint webhook |
+| `webhook_secret` | string | برای روش webhook | `null` | توکن امنیتی برای webhook |
+| `proxy_url` | string | خیر | `null` | آدرس پروکسی SOCKS5/HTTP (فرمت: `protocol://host:port`) |
+| `method` | string | خیر | `"webhook"` | روش اتصال: `"webhook"` یا `"long-polling"` |
+| `mini_app_login` | boolean | خیر | `true` | فعال کردن قابلیت لاگین Telegram Mini App |
+| `mini_app_web_url` | string | خیر | `""` | آدرس URL برای رابط وب Mini App |
+| `for_admins_only` | boolean | خیر | `true` | محدود کردن دسترسی ربات فقط به ادمین‌ها |
+
+### نکات مهم
+
+<Callout type="warning" title="Inline Mode الزامیه">
+برای فعال کردن **قابلیت جستجوی لحظه‌ای کاربران** توی ربات، باید **Inline Mode** رو توی @BotFather فعال کنید:
+1. دستور `/setinline` رو به @BotFather بفرستید
+2. ربات خودتون رو انتخاب کنید
+3. یه متن placeholder وارد کنید (مثلا "جستجوی کاربران...")
+</Callout>
+
+<Callout type="info" title="Webhook در مقابل Long Polling">
+**Webhook (پیشنهادی برای محیط تولید)**
+- ✅ ارسال فوری پیام
+- ✅ بار کمتر روی سرور
+- ✅ قابل اعتمادتر
+- ❌ نیاز به آدرس HTTPS عمومی داره
+- ❌ راه‌اندازی پیچیده‌تر
+
+**Long Polling (مناسب برای توسعه)**
+- ✅ راه‌اندازی آسون، نیازی به URL عمومی نیست
+- ✅ پشت فایروال هم کار می‌کنه
+- ❌ تاخیر بیشتر
+- ❌ منابع سرور بیشتری می‌خواد
+</Callout>
+
+### موارد استفاده
+
+<Tabs items={['محیط تولید (Webhook)', 'توسعه (Long Polling)', 'پشت فایروال (Proxy)']}>
+  <Tab value="محیط تولید (Webhook)">
+    ```json
+    {
+      "telegram": {
+        "enable": true,
+        "token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+        "method": "webhook",
+        "webhook_url": "https://panel.example.com/api/telegram/webhook",
+        "webhook_secret": "your_random_secret_here",
+        "mini_app_login": true,
+        "mini_app_web_url": "https://panel.example.com",
+        "for_admins_only": true
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="توسعه (Long Polling)">
+    ```json
+    {
+      "telegram": {
+        "enable": true,
+        "token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+        "method": "long-polling",
+        "mini_app_login": false,
+        "for_admins_only": false
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="پشت فایروال (Proxy)">
+    ```json
+    {
+      "telegram": {
+        "enable": true,
+        "token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+        "method": "long-polling",
+        "proxy_url": "socks5://proxy.example.com:1080",
+        "for_admins_only": true
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## 2. تنظیمات Webhook
+
+پیکربندی webhook های خارجی برای یکپارچگی با سیستم‌های شخص ثالث (مثلا سیستم‌های مانیتورینگ سفارشی).
+
+### فیلدها
+
+| فیلد | نوع | الزامی | پیش‌فرض | توضیحات |
+|-------|------|----------|---------|-------------|
+| `enable` | boolean | بله | `false` | فعال/غیرفعال کردن نوتیفیکیشن webhook |
+| `webhooks` | array | وقتی فعاله | `[]` | آرایه‌ای از کانفیگ webhook ها (هرکدوم با `url` و `secret`) |
+| `days_left` | array | خیر | `[]` | آستانه‌های روز باقی‌مونده برای هشدار انقضا (مثلا `[3, 7, 14]`) |
+| `usage_percent` | array | خیر | `[]` | آستانه‌های درصد مصرف (مثلا `[80, 90, 100]`) |
+| `timeout` | integer | خیر | `10` | تایم‌اوت درخواست HTTP به ثانیه (باید >0 باشه) |
+| `recurrent` | integer | خیر | `3600` | بازه زمانی چک‌های تکراری به ثانیه (باید >0 باشه) |
+| `proxy_url` | string | خیر | `null` | آدرس پروکسی برای درخواست‌های webhook |
+
+### موارد استفاده
+
+<Tabs items={['راه‌اندازی چند Webhook', 'فقط هشدارهای بحرانی']}>
+  <Tab value="راه‌اندازی چند Webhook">
+    ```json
+    {
+      "webhook": {
+        "enable": true,
+        "webhooks": [
+          {
+            "url": "https://monitoring1.example.com/webhook",
+            "secret": "secret1"
+          },
+          {
+            "url": "https://monitoring2.example.com/webhook",
+            "secret": "secret2"
+          }
+        ],
+        "days_left": [1, 3, 7],
+        "usage_percent": [90, 100],
+        "timeout": 15,
+        "recurrent": 1800
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="فقط هشدارهای بحرانی">
+    ```json
+    {
+      "webhook": {
+        "enable": true,
+        "webhooks": [
+          {"url": "https://alerts.example.com/critical", "secret": "secret"}
+        ],
+        "days_left": [1, 3],
+        "usage_percent": [95, 100],
+        "timeout": 5,
+        "recurrent": 7200
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## 3. تنظیمات نوتیفیکیشن
+
+پیکربندی نوتیفیکیشن‌های Telegram/Discord برای رویدادهای سیستم با استفاده از سیستم صف‌بندی تحویل پیام.
+
+### کانفیگ پایه
+
+| فیلد | نوع | الزامی | پیش‌فرض | توضیحات |
+|-------|------|----------|---------|-------------|
+| `notify_telegram` | boolean | بله | `false` | فعال کردن نوتیفیکیشن‌های تلگرام |
+| `notify_discord` | boolean | بله | `false` | فعال کردن نوتیفیکیشن‌های Discord |
+| `telegram_api_token` | string | اگه notify_telegram فعاله | `null` | توکن API ربات تلگرام |
+| `telegram_chat_id` | integer | اگه notify_telegram فعاله | `null` | ID کانال/چت پیش‌فرض تلگرام |
+| `telegram_topic_id` | integer | خیر | `null` | ID تاپیک/تاپیک پیش‌فرض تلگرام (برای کانال‌های انجمن) |
+| `discord_webhook_url` | string | اگه notify_discord فعاله | `null` | آدرس webhook پیش‌فرض Discord |
+| `proxy_url` | string | خیر | `null` | پروکسی برای درخواست‌های API نوتیفیکیشن |
+| `max_retries` | integer | خیر | `3` | حداکثر تلاش‌های مجدد برای نوتیفیکیشن‌های ناموفق (باید >1 باشه) |
+
+### کانال‌های نوتیفیکیشن به ازای هر موجودیت
+
+می‌تونید کانال‌های Telegram/Discord جداگانه برای انواع موجودیت‌های مختلف پیکربندی کنید. اگه پیکربندی نشه، نوتیفیکیشن‌ها به کانال اصلی ارسال میشن.
+
+| موجودیت | توضیحات | انواع نوتیفیکیشن |
+|--------|-------------|-------------------|
+| `channels.admin` | رویدادهای اکانت ادمین | create, modify, delete, reset_usage, login |
+| `channels.core` | رویدادهای کانفیگ اصلی | create, modify, delete |
+| `channels.group` | رویدادهای گروه/گروه inbound | create, modify, delete |
+| `channels.host` | کانفیگ host/inbound | create, modify, delete, modify_hosts |
+| `channels.node` | رویدادهای سرور node | create, modify, delete, connect, error |
+| `channels.user` | رویدادهای اکانت کاربر | create, modify, delete, status_change, reset_data_usage, data_reset_by_next, subscription_revoked |
+| `channels.user_template` | رویدادهای قالب کاربر | create, modify, delete |
+
+هر کانال موجودیت از این پشتیبانی می‌کنه:
+```json
+{
+  "telegram_chat_id": -1001234567890,  // اختیاری: کانال مخصوص این موجودیت
+  "telegram_topic_id": 5,               // اختیاری: ID تاپیک توی کانال انجمن
+  "discord_webhook_url": "https://..."  // اختیاری: webhook Discord مخصوص این موجودیت
+}
+```
+
+<Callout type="info" title="سیستم نوتیفیکیشن مبتنی بر صف">
+**چطوری کار می‌کنه:**
+1. نوتیفیکیشن‌ها به یه صف حافظه اضافه میشن
+2. یه worker پس‌زمینه صف رو به ترتیب پردازش می‌کنه (یکی یکی)
+3. محدودیت‌های نرخ از API های Telegram/Discord به صورت خودکار رعایت میشه
+4. نوتیفیکیشن‌های ناموفق با exponential backoff تلاش مجدد میشن (تا `max_retries`)
+5. سیستم `retry_after` رو از پاسخ‌های 429 API استخراج می‌کنه (تاخیرهای ثابت نیست)
+
+**مزایا:**
+- ✅ هیچ نوتیفیکیشنی گم نمیشه حتی هنگام محدودیت نرخ
+- ✅ تلاش مجدد خودکار برای خطاهای موقت
+- ✅ تحویل ترتیبی، ترتیب پیام‌ها رو حفظ می‌کنه
+- ✅ محدودیت‌های نرخ API رو به صورت داینامیک رعایت می‌کنه
+</Callout>
+
+### موارد استفاده
+
+<Tabs items={['تک کانال', 'چند کانال', 'Telegram + Discord', 'با Proxy']}>
+  <Tab value="تک کانال">
+    ```json
+    {
+      "notification_settings": {
+        "notify_telegram": true,
+        "notify_discord": false,
+        "telegram_api_token": "987654321:XYZabcDEFghiJKLmno",
+        "telegram_chat_id": -1001234567890,
+        "max_retries": 3
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="چند کانال">
+    ```json
+    {
+      "notification_settings": {
+        "notify_telegram": true,
+        "telegram_api_token": "987654321:XYZabcDEFghiJKLmno",
+        "telegram_chat_id": -1001111111111,  // کانال پیش‌فرض/fallback
+        "max_retries": 3,
+        "channels": {
+          "admin": {
+            "telegram_chat_id": -1002222222222,
+            "telegram_topic_id": 10
+          },
+          "user": {
+            "telegram_chat_id": -1003333333333,
+            "telegram_topic_id": 20
+          },
+          "node": {
+            "telegram_chat_id": -1004444444444
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Telegram + Discord">
+    ```json
+    {
+      "notification_settings": {
+        "notify_telegram": true,
+        "notify_discord": true,
+        "telegram_api_token": "987654321:XYZabcDEFghiJKLmno",
+        "telegram_chat_id": -1001234567890,
+        "discord_webhook_url": "https://discord.com/api/webhooks/123/abc",
+        "max_retries": 5,
+        "channels": {
+          "admin": {
+            "telegram_chat_id": -1005555555555  // رویدادهای بحرانی روی تلگرام
+          },
+          "user": {
+            "discord_webhook_url": "https://discord.com/api/webhooks/456/def"  // رویدادهای کاربر روی Discord
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="با Proxy">
+    ```json
+    {
+      "notification_settings": {
+        "notify_telegram": true,
+        "telegram_api_token": "987654321:XYZabcDEFghiJKLmno",
+        "telegram_chat_id": -1001234567890,
+        "proxy_url": "socks5://proxy.internal:1080",
+        "max_retries": 3
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## 4. فعال‌سازی نوتیفیکیشن (کنترل‌های دقیق)
+
+دقیقا مشخص کنید کدوم نوع نوتیفیکیشن‌ها برای هر موجودیت ارسال بشن. این بهتون اجازه میده با غیرفعال کردن نوتیفیکیشن‌های غیرضروری، سر و صدا رو کم کنید.
+
+### نمای کلی ساختار
+
+```json
+{
+  "notification_enable": {
+    "admin": { /* AdminNotificationEnable */ },
+    "core": { /* BaseNotificationEnable */ },
+    "group": { /* BaseNotificationEnable */ },
+    "host": { /* HostNotificationEnable */ },
+    "node": { /* NodeNotificationEnable */ },
+    "user": { /* UserNotificationEnable */ },
+    "user_template": { /* BaseNotificationEnable */ }
+  }
+}
+```
+
+### انواع نوتیفیکیشن به ازای هر موجودیت
+
+<Tabs items={['Admin', 'Core', 'Group', 'Host', 'Node', 'User', 'User Template']}>
+  <Tab value="Admin">
+    **AdminNotificationEnable**
+
+    ```json
+    {
+      "admin": {
+        "create": true,       // اکانت ادمین جدید ساخته شد
+        "modify": true,       // اکانت ادمین ویرایش شد
+        "delete": true,       // اکانت ادمین پاک شد
+        "reset_usage": true,  // استفاده ادمین ریست شد
+        "login": true         // تلاش‌های لاگین ادمین (موفق/ناموفق)
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Core">
+    **BaseNotificationEnable**
+
+    ```json
+    {
+      "core": {
+        "create": true,   // کانفیگ core جدید ساخته شد
+        "modify": true,   // کانفیگ core ویرایش شد
+        "delete": true    // کانفیگ core پاک شد
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Group">
+    **BaseNotificationEnable**
+
+    ```json
+    {
+      "group": {
+        "create": true,   // گروه جدید ساخته شد
+        "modify": true,   // گروه ویرایش شد
+        "delete": true    // گروه پاک شد
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Host">
+    **HostNotificationEnable**
+
+    ```json
+    {
+      "host": {
+        "create": true,       // host/inbound جدید ساخته شد
+        "modify": true,       // Host ویرایش شد
+        "delete": true,       // Host پاک شد
+        "modify_hosts": true  // ویرایش دسته‌جمعی host
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Node">
+    **NodeNotificationEnable**
+
+    ```json
+    {
+      "node": {
+        "create": true,   // Node جدید اضافه شد
+        "modify": true,   // کانفیگ node ویرایش شد
+        "delete": true,   // Node حذف شد
+        "connect": true,  // Node با موفقیت متصل شد
+        "error": true     // خطای اتصال node
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="User">
+    **UserNotificationEnable**
+
+    ```json
+    {
+      "user": {
+        "create": true,               // کاربر جدید ساخته شد
+        "modify": true,               // کاربر ویرایش شد
+        "delete": true,               // کاربر پاک شد
+        "status_change": true,        // وضعیت کاربر تغییر کرد (active/expired/limited/disabled)
+        "reset_data_usage": true,     // مصرف دیتا کاربر به صورت دستی ریست شد
+        "data_reset_by_next": true,   // مصرف دیتا توسط پلن بعدی ریست شد
+        "subscription_revoked": true  // دسترسی اشتراک کاربر لغو شد
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="User Template">
+    **BaseNotificationEnable**
+
+    ```json
+    {
+      "user_template": {
+        "create": true,   // قالب جدید ساخته شد
+        "modify": true,   // قالب ویرایش شد
+        "delete": true    // قالب پاک شد
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### موارد استفاده
+
+<Tabs items={['فقط رویدادهای بحرانی', 'فقط رویدادهای کاربر', 'حالت ساکت']}>
+  <Tab value="فقط رویدادهای بحرانی">
+    ```json
+    {
+      "notification_enable": {
+        "admin": {
+          "create": false,
+          "modify": false,
+          "delete": true,
+          "reset_usage": false,
+          "login": true
+        },
+        "core": {"create": false, "modify": false, "delete": true},
+        "group": {"create": false, "modify": false, "delete": false},
+        "host": {"create": false, "modify": false, "delete": true, "modify_hosts": false},
+        "node": {"create": false, "modify": false, "delete": false, "connect": false, "error": true},
+        "user": {
+          "create": false,
+          "modify": false,
+          "delete": true,
+          "status_change": true,
+          "reset_data_usage": false,
+          "data_reset_by_next": false,
+          "subscription_revoked": true
+        },
+        "user_template": {"create": false, "modify": false, "delete": false}
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="فقط رویدادهای کاربر">
+    ```json
+    {
+      "notification_enable": {
+        "admin": {"create": false, "modify": false, "delete": false, "reset_usage": false, "login": false},
+        "core": {"create": false, "modify": false, "delete": false},
+        "group": {"create": false, "modify": false, "delete": false},
+        "host": {"create": false, "modify": false, "delete": false, "modify_hosts": false},
+        "node": {"create": false, "modify": false, "delete": false, "connect": false, "error": false},
+        "user": {
+          "create": true,
+          "modify": true,
+          "delete": true,
+          "status_change": true,
+          "reset_data_usage": true,
+          "data_reset_by_next": true,
+          "subscription_revoked": true
+        },
+        "user_template": {"create": false, "modify": false, "delete": false}
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="حالت ساکت">
+    ```json
+    {
+      "notification_enable": {
+        "admin": {"create": false, "modify": false, "delete": false, "reset_usage": false, "login": false},
+        "core": {"create": false, "modify": false, "delete": false},
+        "group": {"create": false, "modify": false, "delete": false},
+        "host": {"create": false, "modify": false, "delete": false, "modify_hosts": false},
+        "node": {"create": false, "modify": false, "delete": false, "connect": false, "error": false},
+        "user": {
+          "create": false,
+          "modify": false,
+          "delete": false,
+          "status_change": false,
+          "reset_data_usage": false,
+          "data_reset_by_next": false,
+          "subscription_revoked": false
+        },
+        "user_template": {"create": false, "modify": false, "delete": false}
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## 5. تنظیمات اشتراک
+
+<Callout type="tip" title="مهم‌ترین بخش">
+پیکربندی کنید که کاربرا چطوری به کانفیگ‌های اشتراک خودشون دسترسی پیدا کنن و دریافتشون کنن. این بخش برای عملکرد صحیح کلاینت حیاتیه.
+</Callout>
+
+### فیلدهای اصلی
+
+| فیلد | نوع | الزامی | پیش‌فرض | توضیحات |
+|-------|------|----------|---------|-------------|
+| `url_prefix` | string | پیشنهادی | `""` | آدرس پایه برای لینک‌های اشتراک (مثلا `"https://sub.example.com"`) |
+| `update_interval` | integer | خیر | `12` | بازه آپدیت به ساعت که به کلاینت‌ها نشون داده میشه |
+| `support_url` | string | خیر | `"https://t.me/"` | آدرس پشتیبانی/تماس که توی اپ‌های کلاینت نشون داده میشه |
+| `profile_title` | string | خیر | `"Subscription"` | عنوان پروفایل اشتراک (از متغیرها پشتیبانی می‌کنه) |
+| `announce` | string | خیر | `""` | متن اطلاعیه (حداکثر ۱۲۸ کاراکتر، فقط v2RayTun و Happ) |
+| `announce_url` | string | خیر | `""` | آدرس URL برای اطلاعات بیشتر اطلاعیه |
+| `host_status_filter` | boolean | بله | - | فیلتر کردن host ها بر اساس وضعیت کاربر |
+| `rules` | array | بله | - | قوانین تشخیص user-agent برای کانفیگ خودکار |
+| `manual_sub_request` | object | خیر | همه true | فعال/غیرفعال کردن درخواست‌های فرمت دستی |
+| `applications` | array | خیر | `[]` | کانفیگ‌های اپلیکیشن کلاینت با URL های import |
+
+### متغیرهای عنوان پروفایل
+
+فیلد `profile_title` از متغیرهای داینامیک پشتیبانی می‌کنه:
+
+| متغیر | توضیحات | مثال خروجی |
+|----------|-------------|----------------|
+| `{username}` | نام کاربری کاربر | `john_doe` |
+| `{used_traffic}` | ترافیک استفاده شده (فرمت شده) | `5.2 GB` |
+| `{data_limit}` | محدودیت حجم (فرمت شده) | `50 GB` |
+| `{data_left}` | حجم باقی‌مونده (فرمت شده) | `44.8 GB` |
+| `{expire_date}` | تاریخ انقضا | `2024-12-31` |
+| `{expire_days}` | روزهای باقی‌مونده تا انقضا | `45` |
+| `{status}` | وضعیت کاربر | `active` |
+| `{admin_username}` | نام کاربری ادمین | `admin1` |
+
+**مثال:**
+```json
+{
+  "profile_title": "{username} | {data_limit} | انقضا: {expire_days} روز"
+}
+```
+خروجی: `john_doe | 50 GB | انقضا: 45 روز`
+
+### فیلتر وضعیت Host
+
+کنترل می‌کنه که host ها بر اساس وضعیت کاربر فیلتر بشن یا نه.
+
+```json
+{
+  "host_status_filter": true  // یا false
+}
+```
+
+**وقتی `true` هست:**
+- کاربرا فقط host هایی رو می‌بینن که با وضعیت فعلیشون مطابقت داره
+- بهتون اجازه میده گروه‌های host جداگانه برای وضعیت‌های مختلف کاربر بسازید
+- مثال: host های پریمیوم برای کاربرای active، host های محدود برای کاربرای on-hold
+
+**وقتی `false` هست:**
+- کاربرا همه host های فعال رو می‌بینن بدون توجه به وضعیتشون
+- پیکربندی ساده‌تر، کنترل کمتر دقیق‌تر
+
+<Callout type="warning" title="مهم">
+وقتی فیلد وضعیت یه host **خالی** باشه (پیکربندی نشده)، اون host به **همه کاربرا** نشون داده میشه بدون توجه به تنظیم `host_status_filter`.
+</Callout>
+
+**سناریوی مثال:**
+```
+Host A: status = [active, limited]
+Host B: status = [active]
+Host C: status = [on_hold]
+
+کاربر با status = "active":
+  - host_status_filter=true  → Host A و Host B رو می‌بینه
+  - host_status_filter=false → Host A، Host B و Host C رو می‌بینه
+
+کاربر با status = "on_hold":
+  - host_status_filter=true  → فقط Host C رو می‌بینه
+  - host_status_filter=false → Host A، Host B و Host C رو می‌بینه
+```
+
+### قوانین تشخیص کلاینت
+
+آرایه `rules` مشخص می‌کنه چطور نوع کلاینت رو بر اساس هدر User-Agent تشخیص بدیم و کدوم فرمت کانفیگ رو برگردونیم.
+
+```json
+{
+  "rules": [
+    {
+      "pattern": "regex_pattern",
+      "target": "config_format"
+    }
+  ]
+}
+```
+
+**فرمت‌های کانفیگ موجود (`target`):**
+- `links` - لینک‌های اشتراک ساده
+- `links_base64` - لینک‌های اشتراک کدگذاری شده با Base64
+- `xray` - کانفیگ JSON Xray-core
+- `sing_box` - کانفیگ JSON sing-box
+- `clash` - کانفیگ YAML Clash
+- `clash_meta` - کانفیگ YAML Clash Meta
+- `outline` - کانفیگ JSON Outline
+- `block` - هدف خاص برای رد دسترسی (برمی‌گردونه HTTP 406)
+
+**چطوری کار می‌کنه:**
+1. کلاینت اشتراک رو با هدر User-Agent درخواست می‌کنه
+2. سیستم User-Agent رو با pattern ها به ترتیب چک می‌کنه
+3. اولین pattern مطابق، فرمت کانفیگ رو مشخص می‌کنه
+4. اگه هیچ مطابقتی نباشه و فرمت توی `manual_sub_request` فعال نباشه، 406 برمی‌گردونه
+5. کانفیگ ساخته میشه و با هدرهای مناسب برگردونده میشه
+
+**Pattern های آماده برای محیط تولید:**
+```json
+{
+  "rules": [
+    {
+      "pattern": "^(Telegram|WhatsApp|TelegramBot|WhatsAppBot)",
+      "target": "block"
+    },
+    {
+      "pattern": "^([Cc]lash[\\-\\.]?[Vv]erge|[Cc]lash[\\-\\.]?[Mm]eta|[Ff][Ll][Cc]lash|[Mm]ihomo)",
+      "target": "clash_meta"
+    },
+    {
+      "pattern": "^([Cc]lash|[Ss]tash)",
+      "target": "clash"
+    },
+    {
+      "pattern": "^(SFA|SFI|SFM|SFT|[Kk]aring|[Hh]iddify[Nn]ext)|.*[Ss]ing[\\-b]?ox.*",
+      "target": "sing_box"
+    },
+    {
+      "pattern": "^(SS|SSR|SSD|SSS|Outline|Shadowsocks|SSconf)",
+      "target": "outline"
+    },
+    {
+      "pattern": "^.*",
+      "target": "links_base64"
+    }
+  ]
+}
+```
+
+**هر Pattern چی رو می‌گیره:**
+1. **کلاینت‌های بلاک شده** → `block`
+   - Telegram (جلوگیری از دسترسی اشتراک از اپ تلگرام)
+   - WhatsApp (جلوگیری از دسترسی اشتراک از واتساپ)
+   - TelegramBot (بلاک درخواست‌های ربات خودکار)
+   - WhatsAppBot (بلاک درخواست‌های ربات خودکار)
+
+2. **نسخه‌های Clash Meta** → `clash_meta`
+   - Clash-Verge, Clash.Verge, ClashVerge
+   - Clash-Meta, Clash.Meta, ClashMeta
+   - FLClash, Mihomo
+
+3. **نسخه‌های Clash** → `clash`
+   - Clash (اصلی)
+   - Stash (کلاینت iOS)
+
+4. **نسخه‌های sing-box** → `sing_box`
+   - SFA (sing-box برای Android)
+   - SFI (sing-box برای iOS)
+   - SFM (sing-box برای macOS)
+   - SFT (sing-box terminal)
+   - Karing
+   - HiddifyNext
+   - هر کلاینتی که "sing-box" یا "sing box" توی User-Agent داره
+
+5. **نسخه‌های Shadowsocks/Outline** → `outline`
+   - SS, SSR, SSD, SSS
+   - Outline
+   - Shadowsocks
+   - SSconf
+
+6. **Fallback** → `links_base64`
+   - همه چیز دیگه رو می‌گیره (^.*)
+   - لینک‌های اشتراک کدگذاری شده با base64 برمی‌گردونه
+   - برای کلاینت‌های ناشناخته یا سفارشی مفیده
+
+**بلاک کردن کلاینت‌های ناخواسته:**
+```json
+{
+  "rules": [
+    {"pattern": "^(Telegram|WhatsApp|TelegramBot|WhatsAppBot)", "target": "block"},
+    {"pattern": "BadClient|SpamBot|Scraper", "target": "block"},
+    {"pattern": "Clash", "target": "clash"}
+  ]
+}
+```
+
+<Callout type="info" title="چرا Telegram/WhatsApp رو بلاک کنیم؟">
+بلاک کردن این user agent ها جلوی باز کردن مستقیم لینک‌های اشتراک توی اپ‌های پیام‌رسان رو می‌گیره، که می‌تونه:
+- لینک‌های اشتراک رو توی کش اپ در معرض نمایش بذاره
+- اشتراک‌گذاری ناخواسته از طریق قابلیت‌های اپ رو مجاز کنه
+- اپلیکیشن‌های کلاینت مورد نظر رو دور بزنه
+- مشکلات امنیتی/حریم خصوصی ایجاد کنه
+</Callout>
+
+### درخواست دستی اشتراک
+
+کنترل می‌کنه کدوم فرمت‌های کانفیگ می‌تونن به صورت دستی درخواست بشن (وقتی user-agent با هیچ قانونی مطابقت نداره).
+
+```json
+{
+  "manual_sub_request": {
+    "links": true,
+    "links_base64": true,
+    "xray": true,
+    "sing_box": true,
+    "clash": true,
+    "clash_meta": true,
+    "outline": true
+  }
+}
+```
+
+**موارد استفاده:**
+- فقط فرمت‌هایی که فعالانه ساپورت می‌کنید رو فعال کنید
+- فرمت‌های استفاده نشده رو غیرفعال کنید تا سطح حمله کاهش پیدا کنه
+- کلاینت‌های خاص رو از طریق تشخیص user-agent مجبور کنید
+
+### کانفیگ اپلیکیشن‌ها
+
+اپلیکیشن‌های کلاینت رو با URL های import با deep link برای راه‌اندازی آسون اشتراک با یک کلیک تعریف کنید.
+
+```json
+{
+  "applications": [
+    {
+      "name": "v2rayNG",
+      "platform": "android",
+      "icon_url": "https://cdn.example.com/icons/v2rayng.png",
+      "import_url": "v2rayng://install-config?url={url}",
+      "description": {
+        "en": "Fast and lightweight VPN client for Android",
+        "fa": "کلاینت سریع و سبک برای اندروید",
+        "ru": "Быстрый VPN-клиент для Android",
+        "zh": "适用于Android的快速VPN客户端"
+      },
+      "recommended": true,
+      "download_links": [
+        {
+          "name": "Google Play",
+          "url": "https://play.google.com/store/apps/details?id=com.v2ray.ang",
+          "language": "en"
+        },
+        {
+          "name": "GitHub Release",
+          "url": "https://github.com/2dust/v2rayNG/releases",
+          "language": "en"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**توضیحات فیلدها:**
+
+| فیلد | الزامی | توضیحات |
+|-------|----------|-------------|
+| `name` | بله | نام اپلیکیشن (حداکثر ۳۲ کاراکتر) |
+| `platform` | بله | پلتفرم: `android`, `ios`, `windows`, `macos`, `linux`, `appletv`, `androidtv` |
+| `icon_url` | خیر | آدرس URL تصویر آیکون (حداکثر ۵۱۲ کاراکتر) |
+| `import_url` | خیر | قالب URL deep link (باید شامل placeholder `{url}` باشه) |
+| `description` | خیر | توضیحات چندزبانه (`en`, `fa`, `ru`, `zh`) |
+| `recommended` | خیر | علامت‌گذاری به عنوان پیشنهادی (فقط یکی به ازای هر پلتفرم مجازه) |
+| `download_links` | خیر | آرایه‌ای از لینک‌های دانلود با name، url و language |
+
+**Placeholder آدرس Import:**
+- باید شامل placeholder `{url}` باشه
+- سیستم به صورت خودکار `{url}` رو با آدرس واقعی اشتراک جایگزین می‌کنه
+- مثال‌ها:
+  - `v2rayng://install-config?url={url}`
+  - `clash://install-config?url={url}`
+  - `sing-box://import-remote-profile?url={url}`
+
+**قوانین اعتبارسنجی:**
+- فقط یه اپ `recommended: true` به ازای هر پلتفرم
+- `import_url` اگه ارائه بشه باید شامل `{url}` باشه
+- `platform` باید یکی از پلتفرم‌های تعریف شده باشه
+
+### چطوری سیستم اشتراک کار می‌کنه
+
+#### 1. کاربر به آدرس اشتراک دسترسی پیدا می‌کنه
+
+```
+فرمت: /sub/{token}
+مثال: https://panel.example.com/sub/abc123def456
+```
+
+توکن به صورت یکتا کاربر رو شناسایی می‌کنه.
+
+#### 2. تشخیص نوع درخواست
+
+**درخواست HTML (مرورگر):**
+- هدر Accept: `text/html`
+- برمی‌گردونه: صفحه HTML اشتراک
+- نشون میده: لینک‌ها، کدهای QR، دکمه‌های import اپ
+- استفاده می‌کنه از: `sub_template` ادمین یا قالب پیش‌فرض
+
+**درخواست API (اپ کلاینت):**
+- هدر Accept: غیره (مثلا `*/*`, `application/json`)
+- برمی‌گردونه: فایل کانفیگ (YAML/JSON/plain text)
+- فرمت مشخص میشه توسط: تشخیص User-Agent یا پارامتر فرمت دستی
+
+#### 3. تشخیص User-Agent
+
+```
+کلاینت می‌فرسته: User-Agent: v2rayNG/1.8.5
+
+سیستم قوانین رو چک می‌کنه:
+1. Pattern: "^(Clash|ClashForAndroid)" → مطابقت نداره
+2. Pattern: "v2rayN" → مطابقت داره! → Target: "xray"
+
+برمی‌گردونه: کانفیگ JSON Xray
+```
+
+#### 4. ساخت کانفیگ
+
+1. **بارگذاری اطلاعات کاربر**: دریافت اطلاعات کاربر، inbound ها، گروه‌ها، سهمیه‌ها
+2. **اعمال فیلترها**:
+   - فیلتر کردن inbound ها بر اساس عضویت گروهی کاربر
+   - اعمال `host_status_filter` اگه فعال باشه
+3. **ساخت کانفیگ**: ایجاد فرمت مناسب (Clash YAML، Xray JSON و غیره)
+4. **کدگذاری**: کدگذاری Base64 در صورت نیاز (مثلا `links_base64`)
+5. **تنظیم هدرها**: اضافه کردن هدرهای اشتراک
+6. **برگشت**: ارسال کانفیگ به کلاینت
+
+#### 5. هدرهای پاسخ
+
+```http
+Content-Disposition: attachment; filename="john_doe"
+Profile-Web-Page-URL: https://panel.example.com/sub/abc123
+Support-URL: https://t.me/support
+Profile-Title: john_doe%20%7C%2050%20GB
+Profile-Update-Interval: 12
+Subscription-Userinfo: upload=0; download=5589934592; total=53687091200; expire=1735689599
+```
+
+### موارد استفاده کامل
+
+<Tabs items={['راه‌اندازی پایه', 'لیست بلاک و مجاز', 'دایرکتوری کامل اپلیکیشن', 'عنوان‌های داینامیک']}>
+  <Tab value="راه‌اندازی پایه">
+    ```json
+    {
+      "subscription": {
+        "url_prefix": "https://sub.example.com",
+        "update_interval": 12,
+        "support_url": "https://t.me/support",
+        "profile_title": "{username} - {data_limit}",
+        "host_status_filter": false,
+        "rules": [
+          {"pattern": "Clash", "target": "clash"},
+          {"pattern": "v2ray", "target": "xray"},
+          {"pattern": "Hiddify", "target": "sing_box"}
+        ],
+        "manual_sub_request": {
+          "links": true,
+          "xray": true,
+          "clash": true,
+          "sing_box": true
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="لیست بلاک و مجاز">
+    ```json
+    {
+      "subscription": {
+        "url_prefix": "https://sub.example.com",
+        "update_interval": 24,
+        "profile_title": "اشتراک امن",
+        "host_status_filter": false,
+        "rules": [
+          {"pattern": "BadClient|Scraper|Bot", "target": "block"},  // بلاک کردن این‌ها
+          {"pattern": "Clash", "target": "clash"},
+          {"pattern": "v2ray", "target": "xray"}
+        ],
+        "manual_sub_request": {
+          "links": false,
+          "links_base64": false,
+          "xray": true,
+          "clash": true
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="دایرکتوری کامل اپلیکیشن">
+    ```json
+    {
+      "subscription": {
+        "url_prefix": "https://sub.example.com",
+        "update_interval": 12,
+        "profile_title": "{username}",
+        "host_status_filter": false,
+        "rules": [
+          {"pattern": "Clash", "target": "clash"},
+          {"pattern": "v2ray", "target": "xray"}
+        ],
+        "applications": [
+          {
+            "name": "v2rayNG",
+            "platform": "android",
+            "icon_url": "https://cdn.example.com/v2rayng.png",
+            "import_url": "v2rayng://install-config?url={url}",
+            "description": {
+              "en": "Best Android VPN client",
+              "fa": "بهترین کلاینت اندروید"
+            },
+            "recommended": true,
+            "download_links": [
+              {"name": "Play Store", "url": "https://play.google.com/...", "language": "en"},
+              {"name": "Direct APK", "url": "https://github.com/.../v2rayNG.apk", "language": "en"}
+            ]
+          },
+          {
+            "name": "Hiddify",
+            "platform": "ios",
+            "icon_url": "https://cdn.example.com/hiddify.png",
+            "import_url": "hiddify://import-remote-profile?url={url}",
+            "description": {
+              "en": "Best iOS VPN client"
+            },
+            "recommended": true,
+            "download_links": [
+              {"name": "App Store", "url": "https://apps.apple.com/...", "language": "en"}
+            ]
+          },
+          {
+            "name": "Clash Verge",
+            "platform": "windows",
+            "icon_url": "https://cdn.example.com/clash.png",
+            "import_url": "clash://install-config?url={url}",
+            "description": {
+              "en": "Modern Clash GUI for Windows"
+            },
+            "recommended": true,
+            "download_links": [
+              {"name": "GitHub", "url": "https://github.com/.../releases", "language": "en"}
+            ]
+          }
+        ]
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="عنوان‌های داینامیک">
+    ```json
+    {
+      "subscription": {
+        "url_prefix": "https://sub.example.com",
+        "update_interval": 6,
+        "support_url": "https://t.me/support",
+        "profile_title": "{username} | {data_left}/{data_limit} | {expire_days} روز",
+        "announce": "سرورهای جدید اضافه شد! اشتراک خودتون رو آپدیت کنید.",
+        "announce_url": "https://example.com/news/new-servers",
+        "host_status_filter": false,
+        "rules": [
+          {"pattern": "v2ray", "target": "xray"}
+        ]
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### بهترین روش‌ها
+
+<Callout type="tip" title="این کارا رو بکنید">
+- **همیشه `url_prefix` رو تنظیم کنید** برای ساخت صحیح deep link
+- **pattern های regex رو تست کنید** با استفاده از تست‌کننده‌های آنلاین regex قبل از استقرار
+- **قوانین رو با دقت مرتب کنید** - pattern های خاص اول، pattern های عمومی آخر
+- **از `host_status_filter` استفاده کنید** فقط اگه host های مخصوص وضعیت پیکربندی کردید
+- **اطلاعیه‌ها رو مختصر نگه دارید** - حداکثر ۱۲۸ کاراکتر
+- **URL های import رو اعتبارسنجی کنید** - باید شامل placeholder `{url}` باشن
+- **یه اپ پیشنهادی** حداکثر به ازای هر پلتفرم
+- **از عنوان‌های پروفایل معنادار** با متغیرها برای تجربه کاربری بهتر استفاده کنید
+</Callout>
+
+<Callout type="warning" title="این کارا رو نکنید">
+- توی محیط تولید `url_prefix` رو خالی نذارید (deep link ها رو خراب می‌کنه)
+- از pattern های regex همپوشانی استفاده نکنید (اولین مطابقت برنده میشه)
+- `host_status_filter` رو بدون پیکربندی وضعیت host ها فعال نکنید
+- از ۱۲۸ کاراکتر توی فیلد `announce` تجاوز نکنید
+- placeholder `{url}` رو توی `import_url` فراموش نکنید
+- چندین اپ رو به عنوان `recommended: true` برای یه پلتفرم تنظیم نکنید
+- از کاراکترهای خاص توی `profile_title` استفاده نکنید که URL ها رو خراب کنن
+</Callout>
+
+<Callout type="info" title="تست کردن">
+```bash
+# تست endpoint اشتراک
+curl -v "https://panel.example.com/sub/TOKEN" \
+  -H "User-Agent: v2rayNG/1.8.5"
+
+# تست صفحه HTML
+curl -v "https://panel.example.com/sub/TOKEN" \
+  -H "Accept: text/html"
+
+# چک کردن هدرهای پاسخ
+curl -I "https://panel.example.com/sub/TOKEN"
+```
+</Callout>
+
+---
+
+## 6. تنظیمات عمومی
+
+تنظیمات پیش‌فرض پروتکل پروکسی که هنگام ساخت کانفیگ‌های جدید اعمال میشه.
+
+<Callout type="warning" title="مهم">
+این تنظیمات **فقط توسط فرانت‌اند** به عنوان مقادیر پیش‌فرض هنگام ساخت کانفیگ‌های جدید اعمال میشن. اینا روی این موارد **تاثیری ندارن**:
+- درخواست‌های مستقیم API (API این پیش‌فرض‌ها رو دور می‌زنه)
+- تغییرات دستی توی فرانت‌اند (کاربرا می‌تونن این مقادیر رو override کنن)
+- کانفیگ‌های موجود (فقط روی کانفیگ‌های جدید اعمال میشه)
+</Callout>
+
+### فیلدها
+
+| فیلد | نوع | پیش‌فرض | توضیحات |
+|-------|------|---------|-------------|
+| `default_flow` | string | `"none"` | کنترل جریان XTLS پیش‌فرض (فقط پیش‌فرض فرانت‌اند) |
+| `default_method` | string | `"chacha20-poly1305"` | روش رمزنگاری Shadowsocks پیش‌فرض (فقط پیش‌فرض فرانت‌اند) |
+
+### گزینه‌های XTLS Flow
+
+| مقدار | توضیحات |
+|-------|-------------|
+| `none` | بدون XTLS (TLS استاندارد) |
+| `xtls-rprx-vision` | جریان XTLS Vision (پیشنهادی برای VLESS) |
+
+### روش‌های Shadowsocks
+
+| مقدار | امنیت | عملکرد |
+|-------|----------|-------------|
+| `chacha20-poly1305` | بالا | سریع |
+| `chacha20-ietf-poly1305` | بالا | سریع |
+| `aes-256-gcm` | بالا | متوسط |
+| `aes-128-gcm` | متوسط | سریع |
+
+### مثال
+
+```json
+{
+  "general": {
+    "default_flow": "xtls-rprx-vision",
+    "default_method": "chacha20-poly1305"
+  }
+}
+```
+
+---
+
+## مثال کانفیگ کامل
+
+این مثال یه کانفیگ آماده محیط تولید با همه قابلیت‌های فعال شده رو نشون میده:
+
+```json
+{
+  "telegram": {
+    "enable": true,
+    "token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz0123456",
+    "method": "webhook",
+    "webhook_url": "https://panel.example.com/api/telegram/webhook",
+    "webhook_secret": "random_secret_string_here",
+    "proxy_url": null,
+    "mini_app_login": true,
+    "mini_app_web_url": "https://panel.example.com",
+    "for_admins_only": true
+  },
+  "webhook": {
+    "enable": true,
+    "webhooks": [
+      {
+        "url": "https://uptime.example.com/api/push/abc123",
+        "secret": "uptime_kuma_secret"
+      },
+      {
+        "url": "https://monitoring.example.com/webhook",
+        "secret": "monitoring_secret"
+      }
+    ],
+    "days_left": [1, 3, 7, 14],
+    "usage_percent": [80, 90, 95, 100],
+    "timeout": 10,
+    "recurrent": 3600,
+    "proxy_url": null
+  },
+  "notification_settings": {
+    "notify_telegram": true,
+    "notify_discord": false,
+    "telegram_api_token": "987654321:XYZabcDEFghiJKLmno9876543210ABCDEF",
+    "telegram_chat_id": -1001234567890,
+    "telegram_topic_id": null,
+    "discord_webhook_url": null,
+    "proxy_url": null,
+    "max_retries": 3,
+    "channels": {
+      "admin": {
+        "telegram_chat_id": -1002222222222,
+        "telegram_topic_id": 10,
+        "discord_webhook_url": null
+      },
+      "user": {
+        "telegram_chat_id": -1003333333333,
+        "telegram_topic_id": 20,
+        "discord_webhook_url": null
+      },
+      "node": {
+        "telegram_chat_id": -1004444444444,
+        "telegram_topic_id": null,
+        "discord_webhook_url": null
+      }
+    }
+  },
+  "notification_enable": {
+    "admin": {
+      "create": true,
+      "modify": false,
+      "delete": true,
+      "reset_usage": true,
+      "login": true
+    },
+    "core": {
+      "create": true,
+      "modify": false,
+      "delete": true
+    },
+    "group": {
+      "create": true,
+      "modify": false,
+      "delete": true
+    },
+    "host": {
+      "create": true,
+      "modify": false,
+      "delete": true,
+      "modify_hosts": true
+    },
+    "node": {
+      "create": true,
+      "modify": false,
+      "delete": true,
+      "connect": true,
+      "error": true
+    },
+    "user": {
+      "create": true,
+      "modify": true,
+      "delete": true,
+      "status_change": true,
+      "reset_data_usage": true,
+      "data_reset_by_next": true,
+      "subscription_revoked": true
+    },
+    "user_template": {
+      "create": true,
+      "modify": false,
+      "delete": true
+    }
+  },
+  "subscription": {
+    "url_prefix": "https://sub.example.com",
+    "update_interval": 12,
+    "support_url": "https://t.me/example_support",
+    "profile_title": "{username} | {data_limit} | انقضا: {expire_days} روز",
+    "announce": "خوش اومدید! برای بهترین عملکرد هر ۱۲ ساعت آپدیت کنید.",
+    "announce_url": "https://example.com/announcements",
+    "host_status_filter": true,
+    "rules": [
+      {"pattern": "^(Clash|ClashForAndroid)", "target": "clash"},
+      {"pattern": "ClashMeta", "target": "clash_meta"},
+      {"pattern": "Stash", "target": "clash"},
+      {"pattern": "Shadowrocket", "target": "links"},
+      {"pattern": "v2rayN", "target": "xray"},
+      {"pattern": "v2rayNG", "target": "xray"},
+      {"pattern": "Hiddify|SFI|SFA", "target": "sing_box"},
+      {"pattern": "Outline", "target": "outline"}
+    ],
+    "manual_sub_request": {
+      "links": true,
+      "links_base64": true,
+      "xray": true,
+      "sing_box": true,
+      "clash": true,
+      "clash_meta": true,
+      "outline": true
+    },
+    "applications": [
+      {
+        "name": "v2rayNG",
+        "platform": "android",
+        "icon_url": "https://cdn.example.com/icons/v2rayng.png",
+        "import_url": "v2rayng://install-config?url={url}",
+        "description": {
+          "en": "Recommended Android client",
+          "fa": "کلاینت پیشنهادی اندروید"
+        },
+        "recommended": true,
+        "download_links": [
+          {
+            "name": "GitHub Release",
+            "url": "https://github.com/2dust/v2rayNG/releases",
+            "language": "en"
+          }
+        ]
+      },
+      {
+        "name": "Hiddify",
+        "platform": "ios",
+        "icon_url": "https://cdn.example.com/icons/hiddify.png",
+        "import_url": "hiddify://import-remote-profile?url={url}",
+        "description": {
+          "en": "Recommended iOS client"
+        },
+        "recommended": true,
+        "download_links": [
+          {
+            "name": "App Store",
+            "url": "https://apps.apple.com/app/hiddify",
+            "language": "en"
+          }
+        ]
+      }
+    ]
+  },
+  "general": {
+    "default_flow": "xtls-rprx-vision",
+    "default_method": "chacha20-poly1305"
+  }
+}
+```
+
+---
+
+## منابع بیشتر
+
+- **Telegram Bot API**: https://core.telegram.org/bots/api
+- **Discord Webhooks**: https://discord.com/developers/docs/resources/webhook
+- **مستندات Xray**: https://xtls.github.io/
+- **مستندات Clash**: https://github.com/Dreamacro/clash/wiki
+- **مستندات sing-box**: https://sing-box.sagernet.org/
+
+---
+
+## پشتیبانی
+
+برای سوالات، مشکلات یا مشارکت:
+- گروه تلگرام: https://t.me/Pasar_Guard
+- GitHub Issues: https://github.com/PasarGuard/panel/issues
+
+---
