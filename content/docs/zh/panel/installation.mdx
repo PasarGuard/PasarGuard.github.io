@@ -19,27 +19,27 @@ PasarGuard 面板支持多个数据库后端：
 <Tabs items={['TimescaleDB (Recommended)', 'PostgreSQL', 'MySQL', 'MariaDB', 'SQLite']}>
   <Tab value="TimescaleDB (Recommended)">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database timescaledb
+    curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh | sudo bash -s -- @ install --database timescaledb
     ```
   </Tab>
   <Tab value="PostgreSQL">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database postgresql
+   curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh | sudo bash -s -- @ install --database postgresql
     ```
   </Tab>
   <Tab value="MySQL">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mysql
-    ```
+    curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh | sudo bash -s -- @ install --database mysql
+```
   </Tab>
   <Tab value="MariaDB">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install --database mariadb
+    curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh | sudo bash -s -- @ install --database mariadb
     ```
   </Tab>
   <Tab value="SQLite">
     ```bash
-    sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install
+    curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh | sudo bash -s -- @ install
     ```
   </Tab>
 </Tabs>

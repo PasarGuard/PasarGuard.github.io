@@ -580,7 +580,7 @@ docker compose exec mariadb mariadb -u root -p -e "DROP DATABASE marzban;"
 #### Команда установки скрипта
 
 ```bash
-sudo bash -c "$(curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh)" @ install-script
+curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh | sudo bash -s -- @ install-script
 ```
 
 Этот скрипт предоставляет полезные команды для управления вашей установкой PasarGuard.
