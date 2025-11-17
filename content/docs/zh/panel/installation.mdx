@@ -19,27 +19,32 @@ PasarGuard 面板支持多个数据库后端：
 <Tabs items={['TimescaleDB (Recommended)', 'PostgreSQL', 'MySQL', 'MariaDB', 'SQLite']}>
   <Tab value="TimescaleDB (Recommended)">
     ```bash
-    curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh | sudo bash -s -- @ install --database timescaledb
+    curl -fsSL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh -o /tmp/pg.sh \
+      && sudo bash /tmp/pg.sh install --database timescaledb
     ```
   </Tab>
   <Tab value="PostgreSQL">
     ```bash
-   curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh | sudo bash -s -- @ install --database postgresql
+    curl -fsSL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh -o /tmp/pg.sh \
+      && sudo bash /tmp/pg.sh install --database postgresql
     ```
   </Tab>
   <Tab value="MySQL">
     ```bash
-    curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh | sudo bash -s -- @ install --database mysql
-```
+    curl -fsSL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh -o /tmp/pg.sh \
+      && sudo bash /tmp/pg.sh install --database mysql
+    ```
   </Tab>
   <Tab value="MariaDB">
     ```bash
-    curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh | sudo bash -s -- @ install --database mariadb
+    curl -fsSL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh -o /tmp/pg.sh \
+      && sudo bash /tmp/pg.sh install --database mariadb
     ```
   </Tab>
   <Tab value="SQLite">
     ```bash
-    curl -sL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh | sudo bash -s -- @ install
+    curl -fsSL https://github.com/PasarGuard/scripts/raw/main/pasarguard.sh -o /tmp/pg.sh \
+      && sudo bash /tmp/pg.sh install
     ```
   </Tab>
 </Tabs>
