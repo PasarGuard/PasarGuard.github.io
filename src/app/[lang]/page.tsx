@@ -203,7 +203,7 @@ export default async function LocaleHomePage({ params }: { params: Promise<{ lan
             </Link>
 
             {/* Commands Card */}
-            <Link href={`/${lang}/cli-tui`} className="block md:col-span-2 lg:col-span-1">
+            <Link href={`/${lang}/interfaces`} className="block md:col-span-2 lg:col-span-1">
               <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer h-full">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">

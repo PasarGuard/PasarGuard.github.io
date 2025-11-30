@@ -5,7 +5,7 @@
     "...introduction",
     "panel",
     "node",
-    "cli-tui",
+    "interfaces",
     "learn",
     "migration"
   ]

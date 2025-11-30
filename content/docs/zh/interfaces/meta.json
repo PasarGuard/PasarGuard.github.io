@@ -1,0 +1,9 @@
+{
+  "title": "CLI & TUI",
+  "description": "Command-line and Text User Interface tools",
+  "pages": [
+    "cli",
+    "tui"
+  ],
+  "icon": "Terminal"
+}

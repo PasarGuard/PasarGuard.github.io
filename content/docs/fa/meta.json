@@ -6,7 +6,7 @@
     "panel",
     "node",
     "xray",
-    "cli-tui",
+    "interfaces",
     "learn",
     "migration",
     "...faq"
