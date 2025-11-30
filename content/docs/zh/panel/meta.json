@@ -6,7 +6,8 @@
     "installation",
     "configuration",
     "settings",
-    "features"
+    "features",
+    "core"
   ],
   "icon": "Monitor"
 }

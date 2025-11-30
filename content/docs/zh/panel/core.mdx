@@ -1,0 +1,629 @@
+---
+title: 核心配置
+description: XRay 配置验证、默认值和 API 文档
+icon: Server
+---
+
+# XRay 配置文档
+
+本文档解释了 PasarGuard 如何验证和处理 XRay 配置文件。它旨在帮助初学者理解验证过程、默认值和 API 限制。
+
+## 目录
+
+1. [概述](#overview)
+2. [配置验证](#configuration-validation)
+3. [默认值](#default-values)
+4. [支持的协议](#supported-protocols)
+5. [网络类型](#network-types)
+6. [安全设置](#security-settings)
+7. [API 限制和约束](#api-limits-and-constraints)
+8. [常见验证错误](#common-validation-errors)
+
+---
+
+## 概述
+
+`XRayConfig` 类负责：
+- **验证** XRay 配置 JSON 文件
+- **提取** 配置中的默认值
+- **处理** 入站和出站设置
+- **处理** 特殊配置，如 fallback 和 TLS/Reality
+
+<Callout type="info">
+当您通过 API 创建或修改核心配置时，PasarGuard 会自动使用此类验证您的 XRay 配置。
+</Callout>
+
+---
+
+## 配置验证
+
+### 必填字段
+
+您的 XRay 配置**必须**包括：
+
+1. **`inbounds`** - 入站配置数组
+   - 不能为空或缺失
+   - 每个 inbound 必须有一个唯一的 `tag`
+   - 每个 inbound 必须有一个 `protocol` 字段
+
+2. **`outbounds`** - 出站配置数组
+   - 不能为空或缺失
+   - 每个 outbound 必须有一个唯一的 `tag`
+
+### 入站标签规则
+
+入站标签有严格的规则：
+
+- ✅ **必须唯一** - 任何两个 inbound 不能有相同的标签
+- ✅ **必须存在** - 每个 inbound 都需要一个标签
+- ❌ **不能包含逗号 (`,`)** - 不允许使用字符 `,`
+- ❌ **不能包含 `<=>`** - 此序列保留用于 fallback 处理
+
+<Tabs items={['有效标签', '无效标签']}>
+  <Tab value="有效标签">
+    ```json
+    {
+      "inbounds": [
+        {
+          "tag": "vless-ws-443",
+          "port": 443,
+          "protocol": "vless"
+        },
+        {
+          "tag": "trojan-tls-8443",
+          "port": 8443,
+          "protocol": "trojan"
+        },
+        {
+          "tag": "vmess-grpc",
+          "port": 443,
+          "protocol": "vmess"
+        }
+      ]
+    }
+    ```
+  </Tab>
+  <Tab value="无效标签">
+    ```json
+    {
+      "inbounds": [
+        {
+          "tag": "inbound,fallback",  // ❌ 包含逗号
+          "port": 443,
+          "protocol": "vless"
+        },
+        {
+          "tag": "inbound<=>fallback",  // ❌ 包含 <=>
+          "port": 8443,
+          "protocol": "trojan"
+        }
+      ]
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### 端口要求
+
+大多数 inbound **必须**有一个 `port` 字段。唯一的例外是：
+- inbound 用作 fallback 目标（由另一个 inbound 的 fallback 设置引用）
+- inbound 在设置中有自己的 `fallbacks` 数组
+
+<Callout type="warning" title="端口要求">
+大多数 inbound 需要 `port` 字段。只有 fallback inbound（被其他 inbound 引用或具有自己的 fallbacks 数组的 inbound）可以省略端口。
+</Callout>
+
+**示例：**
+```json
+{
+  "tag": "main-inbound",
+  "port": 443,  // ✅ 大多数 inbound 必需
+  "protocol": "vless"
+}
+```
+
+---
+
+## 默认值
+
+处理配置时，PasarGuard 会提取并设置各种设置的默认值。以下是自动设置的内容：
+
+### 基本设置（所有 Inbound）
+
+这些默认值应用于每个 inbound：
+
+| 字段 | 默认值 | 描述 |
+|-------|--------------|-------------|
+| `network` | `"tcp"` | 传输网络类型 |
+| `tls` | `"none"` | 安全/加密类型 |
+| `sni` | `[]` | Server Name Indication 列表（空数组） |
+| `host` | `[]` | Host 标头列表（空数组） |
+| `path` | `""` | 路径字符串（空） |
+| `header_type` | `""` | 标头类型（空字符串） |
+| `is_fallback` | `false` | 这是否是 fallback inbound |
+| `fallbacks` | `[]` | Fallback 配置（空数组） |
+| `port` | `None` | 端口号（必须在配置中提供） |
+
+### 协议特定默认值
+
+<Tabs items={['VLESS', 'Shadowsocks', 'Reality']}>
+  <Tab value="VLESS">
+    **VLESS 协议默认值：**
+    
+    - `flow`: `""`（空字符串）- 流控制设置
+    - `encryption`: `"none"` - 加密方法
+    - `decryption`: `"none"` - 解密方法
+
+    <Callout type="info">
+    如果 `decryption` 不是 `"none"`，则还必须提供 `encryption`。
+    </Callout>
+  </Tab>
+  <Tab value="Shadowsocks">
+    **Shadowsocks 协议默认值：**
+    
+    - `method`: `""` - 加密方法（必须指定）
+    - `is_2022`: `false` - 是否使用 2022-blake3 方法
+    - `password`: 必须是有效的 base64 字符串（对于 2022-blake3 方法）
+
+    <Callout type="warning" title="Shadowsocks 限制">
+    - ❌ 不支持 `2022-blake3-chacha20-poly1305` 方法
+    - ✅ 仅支持 `2022-blake3-aes-*-gcm` 方法
+    </Callout>
+  </Tab>
+  <Tab value="Reality">
+    **Reality 安全默认值：**
+    
+    | 字段 | 默认值 | 描述 |
+    |-------|--------------|-------------|
+    | `fp` | `"chrome"` | 指纹类型 |
+    | `tls` | `"reality"` | 安全类型 |
+    | `sni` | 来自 realitySettings 中的 `serverNames` | 服务器名称 |
+    | `pbk` | 从 `privateKey` 计算 | 公钥（自动生成） |
+    | `sids` | 来自 realitySettings 中的 `shortIds` | 短 ID（必需） |
+    | `spx` | `""` | SpiderX 设置（可选） |
+    | `mldsa65Verify` | 来自 realitySettings | MLDSA65 验证 |
+
+    **必需的 Reality 设置：**
+    - ✅ `privateKey` - 必须提供
+    - ✅ `shortIds` - 必须定义至少一个短 ID
+    - ✅ `serverNames` - 用于 SNI
+  </Tab>
+</Tabs>
+
+---
+
+## 支持的协议
+
+PasarGuard 处理并验证以下协议：
+
+1. **Vmess**
+2. **Vless**
+3. **Trojan**
+4. **Shadowsocks**
+
+<Callout type="info">
+配置中的其他协议（如 `socks`、`http`）在处理过程中将被忽略，但不会导致错误。
+</Callout>
+
+---
+
+## 网络类型
+
+支持以下网络/传输类型：
+
+| 网络类型 | 描述 | 特殊处理 |
+|--------------|-------------|------------------|
+| `tcp` | TCP 传输 | 默认网络类型 |
+| `raw` | 原始 TCP | 与 TCP 相同的处理 |
+| `ws` | WebSocket | path 和 host 必须是字符串 |
+| `grpc` | gRPC | 使用 `serviceName` 作为 path |
+| `gun` | gUN | 与 gRPC 相同 |
+| `quic` | QUIC | 使用 `key` 作为 path |
+| `httpupgrade` | HTTP Upgrade | 标准 path/host 处理 |
+| `splithttp` | Split HTTP | 包括 `mode` 设置 |
+| `xhttp` | XHTTP | 包括 `mode` 设置 |
+| `kcp` | KCP | 使用 `seed` 作为 path |
+| `http` | HTTP/1.1 | 标准 HTTP |
+| `h2` | HTTP/2 | 标准 HTTP |
+| `h3` | HTTP/3 | 标准 HTTP |
+
+### 网络特定规则
+
+<Tabs items={['TCP/Raw', 'WebSocket', 'gRPC']}>
+  <Tab value="TCP/Raw">
+    **TCP/Raw 网络：**
+    
+    - 标头中的 `path` 和 `host` **必须是数组**（不是字符串）
+    - 如果 `path` 是数组，仅使用第一个元素
+    - `host` 可以是 host 值数组
+
+    **示例：**
+    ```json
+    {
+      "streamSettings": {
+        "network": "tcp",
+        "tcpSettings": {
+          "header": {
+            "type": "http",
+            "request": {
+              "path": ["/path"],  // ✅ 数组
+              "headers": {
+                "Host": ["example.com"]  // ✅ 数组
+              }
+            }
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="WebSocket">
+    **WebSocket (WS)：**
+    
+    - `path` 和 `host` **必须是字符串**（不是数组）
+    - `host` 在内部转换为单元素数组
+
+    **示例：**
+    ```json
+    {
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+          "path": "/path",  // ✅ 字符串
+          "host": "example.com"  // ✅ 字符串
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    **gRPC：**
+    
+    - `path` 从 `serviceName` 提取
+    - `host` 从 `authority` 提取
+
+    **示例：**
+    ```json
+    {
+      "streamSettings": {
+        "network": "grpc",
+        "grpcSettings": {
+          "serviceName": "my-service",  // 用作 path
+          "authority": "example.com"     // 用作 host
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## 安全设置
+
+<Tabs items={['None', 'TLS', 'Reality']}>
+  <Tab value="None">
+    **None（无安全）**
+    
+    - 默认安全类型
+    - 无加密或 TLS
+    - 用于普通连接或在应用层处理加密时使用
+  </Tab>
+  <Tab value="TLS">
+    **TLS 安全**
+    
+    使用 TLS 安全时：
+
+    **证书处理：**
+    - 可以通过以下方式提供证书：
+      - `certificateFile` - 证书文件路径（需要 `keyFile`）
+      - `certificate` - 直接证书内容（字符串或数组）
+    - 如果使用 `certificateFile`，您**必须**同时提供 `keyFile`
+    - SNI（Server Name Indication）会自动从证书中提取
+
+    <Callout type="warning" title="证书要求">
+    如果使用 `certificateFile`，您**必须**同时提供 `keyFile`。两个文件都是必需的。
+    </Callout>
+
+    **示例：**
+    ```json
+    {
+      "streamSettings": {
+        "security": "tls",
+        "tlsSettings": {
+          "certificates": [{
+            "certificateFile": "/path/to/cert.pem",
+            "keyFile": "/path/to/key.pem"
+          }]
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Reality">
+    **Reality 安全**
+    
+    使用 Reality 安全时：
+
+    **必填字段：**
+    - `privateKey` - X25519 的私钥
+    - `shortIds` - 至少包含一个短 ID 的数组（可以是空字符串 `""`）
+    - `serverNames` - 用于 SNI 的服务器名称数组
+
+    **可选字段：**
+    - `SpiderX` - SpiderX 配置
+    - `mldsa65Verify` - MLDSA65 验证设置
+
+    <Callout type="warning" title="必需的 Reality 设置">
+    - ✅ `privateKey` - 必须提供
+    - ✅ `shortIds` - 必须定义至少一个短 ID（可以是空字符串）
+    - ✅ `serverNames` - 用于 SNI
+    </Callout>
+
+    **示例：**
+    ```json
+    {
+      "streamSettings": {
+        "security": "reality",
+        "realitySettings": {
+          "serverNames": ["example.com"],
+          "privateKey": "your-private-key-here",
+          "shortIds": [""]
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## API 限制和约束
+
+通过 API 创建或修改核心配置时，适用以下限制：
+
+### 字段限制
+
+| 字段 | 限制 | 描述 |
+|-------|-------|-------------|
+| `name` | 最多 256 个字符 | 核心配置名称 |
+| `exclude_inbound_tags` | 组合字符串长度最多 2048 个字符 | 要从处理中排除的标签 |
+| `fallbacks_inbound_tags` | 组合字符串长度最多 2048 个字符 | 用于 fallback 处理的标签 |
+| `config` | 不能为空 | 必须包含有效的 XRay 配置 |
+
+### 特殊规则
+
+1. **默认核心保护**
+   - 不能删除 `id = 1` 的核心配置
+   - 这是默认/系统核心配置
+
+2. **标签字符串长度**
+   - 当 `exclude_inbound_tags` 和 `fallbacks_inbound_tags` 组合成逗号分隔的字符串时，总长度不得超过 2048 个字符
+   - 示例：如果您有 100 个标签，每个 20 个字符，那就是 2000 个字符（加上 99 个逗号 = 2099），这将超过限制
+
+3. **配置验证**
+   - `config` 字典不能为空 `{}`
+   - 必须通过所有 XRay 验证规则（inbounds、outbounds、标签等）
+
+<Callout type="warning" title="默认核心保护">
+不能删除 `id = 1` 的核心配置。这是默认/系统核心配置。
+</Callout>
+
+### API 端点
+
+以下端点可用于核心配置管理：
+
+- `POST /api/core` - 创建新的核心配置
+- `GET /api/core/{core_id}` - 按 ID 获取核心配置
+- `PUT /api/core/{core_id}` - 修改现有核心配置
+- `DELETE /api/core/{core_id}` - 删除核心配置（id=1 除外）
+- `GET /api/cores` - 列出所有核心配置
+- `POST /api/core/{core_id}/restart` - 重启使用此核心的节点
+
+<Callout type="info" title="身份验证">
+所有端点都需要 sudo 管理员权限。
+</Callout>
+
+---
+
+## 常见验证错误
+
+以下是您可能遇到的常见错误以及如何修复它们：
+
+<Tabs items={['Missing Inbounds', 'Duplicate Tags', 'Invalid Tag Characters', 'Missing Port', 'Shadowsocks Errors', 'Reality Errors', 'Network Type Errors']}>
+  <Tab value="Missing Inbounds">
+    ### 错误："config doesn't have inbounds"
+    
+    **问题：** 您的配置缺少 `inbounds` 数组。
+
+    **解决方案：**
+    ```json
+    {
+      "inbounds": [
+        {
+          "tag": "my-inbound",
+          "port": 443,
+          "protocol": "vless"
+        }
+      ],
+      "outbounds": []
+    }
+    ```
+  </Tab>
+  <Tab value="Duplicate Tags">
+    ### 错误："all inbounds must have a unique tag"
+    
+    **问题：** 两个或多个 inbound 具有相同的标签值。
+
+    **解决方案：** 确保每个 inbound 都有唯一的标签：
+    ```json
+    {
+      "inbounds": [
+        {"tag": "inbound-1", "port": 443, "protocol": "vless"},
+        {"tag": "inbound-2", "port": 8443, "protocol": "trojan"}  // ✅ 不同的标签
+      ]
+    }
+    ```
+  </Tab>
+  <Tab value="Invalid Tag Characters">
+    ### 错误："character «,» is not allowed in inbound tag"
+    
+    **问题：** 您的 inbound 标签包含逗号或 `<=>`。
+
+    **解决方案：** 从标签中删除逗号和 `<=>`：
+    ```json
+    {
+      "inbounds": [
+        {
+          "tag": "inbound,fallback",  // ❌ 无效
+          "port": 443,
+          "protocol": "vless"
+        },
+        {
+          "tag": "inbound-fallback",  // ✅ 有效
+          "port": 443,
+          "protocol": "vless"
+        }
+      ]
+    }
+    ```
+  </Tab>
+  <Tab value="Missing Port">
+    ### 错误："&#123;tag&#125; inbound doesn't have port"
+    
+    **问题：** inbound 缺少必需的 `port` 字段。
+
+    **解决方案：** 添加端口号：
+    ```json
+    {
+      "tag": "my-inbound",
+      "port": 443,  // ✅ 添加此项
+      "protocol": "vless"
+    }
+    ```
+  </Tab>
+  <Tab value="Shadowsocks Errors">
+    ### 错误："only 2022-blake3-aes-*-gcm methods are supported"
+    
+    **问题：** 您使用的是不支持的 Shadowsocks 方法。
+
+    **解决方案：** 使用支持的方法：
+    ```json
+    {
+      "protocol": "shadowsocks",
+      "settings": {
+        "method": "2022-blake3-aes-128-gcm"  // ✅ 支持
+        // "method": "2022-blake3-chacha20-poly1305"  // ❌ 不支持
+      }
+    }
+    ```
+
+    ### 错误："Shadowsocks password must be a valid base64 string"
+    
+    **问题：** 对于 2022-blake3 方法，密码必须是 base64 编码。
+
+    **解决方案：** 确保密码是有效的 base64：
+    ```json
+    {
+      "settings": {
+        "method": "2022-blake3-aes-128-gcm",
+        "password": "base64-encoded-password-here"  // ✅ 必须是 base64
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Reality Errors">
+    ### 错误："You need to provide privateKey in realitySettings"
+    
+    **问题：** Reality 配置缺少私钥。
+
+    **解决方案：**
+    ```json
+    {
+      "streamSettings": {
+        "security": "reality",
+        "realitySettings": {
+          "privateKey": "your-private-key-here",  // ✅ 必需
+          "shortIds": [""],
+          "serverNames": ["example.com"]
+        }
+      }
+    }
+    ```
+
+    ### 错误："You need to define at least one shortID in realitySettings"
+    
+    **问题：** Reality 设置的 `shortIds` 数组为空或缺失。
+
+    **解决方案：**
+    ```json
+    {
+      "realitySettings": {
+        "shortIds": [""],  // ✅ 至少一个元素（可以是空字符串）
+        // "shortIds": []  // ❌ 不允许空数组
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Network Type Errors">
+    ### 错误："Settings of &#123;tag&#125; for path and host must be list, not str"
+    
+    **问题：** 对于 TCP/raw 网络，标头中的 path 和 host 必须是数组。
+
+    **解决方案：**
+    ```json
+    {
+      "streamSettings": {
+        "network": "tcp",
+        "tcpSettings": {
+          "header": {
+            "type": "http",
+            "request": {
+              "path": ["/path"],  // ✅ 数组，不是字符串
+              "headers": {
+                "Host": ["example.com"]  // ✅ 数组，不是字符串
+              }
+            }
+          }
+        }
+      }
+    }
+    ```
+
+    ### 错误："Settings for path and host must be str, not list"
+    
+    **问题：** 对于 WebSocket，path 和 host 必须是字符串。
+
+    **解决方案：**
+    ```json
+    {
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+          "path": "/path",  // ✅ 字符串，不是数组
+          "host": "example.com"  // ✅ 字符串，不是数组
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## 总结
+
+<Callout type="tip" title="最佳实践">
+- ✅ 始终包含 `inbounds` 和 `outbounds` 数组
+- ✅ 确保所有 inbound 和 outbound 都有唯一标签
+- ✅ 避免在 inbound 标签中使用逗号和 `<=>`
+- ✅ 为 inbound 提供端口号（除非使用 fallback）
+- ✅ 使用支持的协议：vmess、vless、trojan、shadowsocks
+- ✅ 遵循网络特定规则以获取 path/host 格式
+- ✅ 为 TLS 和 Reality 安全提供必填字段
+- ✅ 将标签字符串总数保持在 2048 个字符以下
+- ✅ 无法删除默认核心（id=1）
+</Callout>
+
+有关 XRay 配置格式的更多信息，请参阅 [XRay 官方文档](https://xtls.github.io/config/)。
+

@@ -1,0 +1,629 @@
+---
+title: Конфигурация ядра
+description: Валидация конфигурации XRay, значения по умолчанию и документация API
+icon: Server
+---
+
+# Документация по конфигурации XRay
+
+Этот документ объясняет, как PasarGuard проверяет и обрабатывает файлы конфигурации XRay. Он разработан, чтобы помочь новичкам понять процесс валидации, значения по умолчанию и ограничения API.
+
+## Содержание
+
+1. [Обзор](#overview)
+2. [Валидация конфигурации](#configuration-validation)
+3. [Значения по умолчанию](#default-values)
+4. [Поддерживаемые протоколы](#supported-protocols)
+5. [Типы сетей](#network-types)
+6. [Настройки безопасности](#security-settings)
+7. [Ограничения и ограничения API](#api-limits-and-constraints)
+8. [Частые ошибки валидации](#common-validation-errors)
+
+---
+
+## Обзор
+
+Класс `XRayConfig` отвечает за:
+- **Валидацию** JSON-файлов конфигурации XRay
+- **Извлечение** значений по умолчанию из конфигурации
+- **Обработку** настроек входящих и исходящих соединений
+- **Обработку** специальных конфигураций, таких как fallback и TLS/Reality
+
+<Callout type="info">
+Когда вы создаете или изменяете конфигурацию ядра через API, PasarGuard автоматически проверяет вашу конфигурацию XRay с помощью этого класса.
+</Callout>
+
+---
+
+## Валидация конфигурации
+
+### Обязательные поля
+
+Ваша конфигурация XRay **должна** включать:
+
+1. **`inbounds`** - Массив конфигураций входящих соединений
+   - Не может быть пустым или отсутствовать
+   - Каждый inbound должен иметь уникальный `tag`
+   - Каждый inbound должен иметь поле `protocol`
+
+2. **`outbounds`** - Массив конфигураций исходящих соединений
+   - Не может быть пустым или отсутствовать
+   - Каждый outbound должен иметь уникальный `tag`
+
+### Правила тегов входящих соединений
+
+Теги входящих соединений имеют строгие правила:
+
+- ✅ **Должны быть уникальными** - Никакие два inbound не могут иметь одинаковый тег
+- ✅ **Должны присутствовать** - Каждый inbound требует тег
+- ❌ **Не могут содержать запятую (`,`)** - Символ `,` не допускается
+- ❌ **Не могут содержать `<=>`** - Эта последовательность зарезервирована для обработки fallback
+
+<Tabs items={['Валидные теги', 'Невалидные теги']}>
+  <Tab value="Валидные теги">
+    ```json
+    {
+      "inbounds": [
+        {
+          "tag": "vless-ws-443",
+          "port": 443,
+          "protocol": "vless"
+        },
+        {
+          "tag": "trojan-tls-8443",
+          "port": 8443,
+          "protocol": "trojan"
+        },
+        {
+          "tag": "vmess-grpc",
+          "port": 443,
+          "protocol": "vmess"
+        }
+      ]
+    }
+    ```
+  </Tab>
+  <Tab value="Невалидные теги">
+    ```json
+    {
+      "inbounds": [
+        {
+          "tag": "inbound,fallback",  // ❌ Содержит запятую
+          "port": 443,
+          "protocol": "vless"
+        },
+        {
+          "tag": "inbound<=>fallback",  // ❌ Содержит <=>
+          "port": 8443,
+          "protocol": "trojan"
+        }
+      ]
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Требования к портам
+
+Большинство inbound **должны** иметь поле `port`. Единственное исключение - когда:
+- Inbound используется как назначение fallback (ссылается настройками fallback другого inbound)
+- Inbound имеет свой собственный массив `fallbacks` в настройках
+
+<Callout type="warning" title="Требование к порту">
+Большинство inbound требуют поля `port`. Только fallback inbound (те, на которые ссылаются другие inbound или которые имеют свой собственный массив fallbacks) могут пропустить порт.
+</Callout>
+
+**Пример:**
+```json
+{
+  "tag": "main-inbound",
+  "port": 443,  // ✅ Требуется для большинства inbound
+  "protocol": "vless"
+}
+```
+
+---
+
+## Значения по умолчанию
+
+При обработке вашей конфигурации PasarGuard извлекает и устанавливает значения по умолчанию для различных настроек. Вот что устанавливается автоматически:
+
+### Базовые настройки (Все Inbound)
+
+Эти значения по умолчанию применяются к каждому inbound:
+
+| Поле | Значение по умолчанию | Описание |
+|-------|--------------|-------------|
+| `network` | `"tcp"` | Тип транспортной сети |
+| `tls` | `"none"` | Тип безопасности/шифрования |
+| `sni` | `[]` | Список Server Name Indication (пустой массив) |
+| `host` | `[]` | Список заголовков Host (пустой массив) |
+| `path` | `""` | Строка пути (пустая) |
+| `header_type` | `""` | Тип заголовка (пустая строка) |
+| `is_fallback` | `false` | Является ли это fallback inbound |
+| `fallbacks` | `[]` | Конфигурации fallback (пустой массив) |
+| `port` | `None` | Номер порта (должен быть указан в конфигурации) |
+
+### Значения по умолчанию для конкретных протоколов
+
+<Tabs items={['VLESS', 'Shadowsocks', 'Reality']}>
+  <Tab value="VLESS">
+    **Значения по умолчанию протокола VLESS:**
+    
+    - `flow`: `""` (пустая строка) - Настройка управления потоком
+    - `encryption`: `"none"` - Метод шифрования
+    - `decryption`: `"none"` - Метод расшифровки
+
+    <Callout type="info">
+    Если `decryption` не равен `"none"`, то `encryption` также должен быть указан.
+    </Callout>
+  </Tab>
+  <Tab value="Shadowsocks">
+    **Значения по умолчанию протокола Shadowsocks:**
+    
+    - `method`: `""` - Метод шифрования (должен быть указан)
+    - `is_2022`: `false` - Используются ли методы 2022-blake3
+    - `password`: Должен быть валидной строкой base64 (для методов 2022-blake3)
+
+    <Callout type="warning" title="Ограничения Shadowsocks">
+    - ❌ Метод `2022-blake3-chacha20-poly1305` **не поддерживается**
+    - ✅ Поддерживаются только методы `2022-blake3-aes-*-gcm`
+    </Callout>
+  </Tab>
+  <Tab value="Reality">
+    **Значения по умолчанию безопасности Reality:**
+    
+    | Поле | Значение по умолчанию | Описание |
+    |-------|--------------|-------------|
+    | `fp` | `"chrome"` | Тип отпечатка |
+    | `tls` | `"reality"` | Тип безопасности |
+    | `sni` | Из `serverNames` в realitySettings | Имена серверов |
+    | `pbk` | Вычисляется из `privateKey` | Публичный ключ (генерируется автоматически) |
+    | `sids` | Из `shortIds` в realitySettings | Короткие ID (обязательно) |
+    | `spx` | `""` | Настройка SpiderX (необязательно) |
+    | `mldsa65Verify` | Из realitySettings | Проверка MLDSA65 |
+
+    **Обязательные настройки Reality:**
+    - ✅ `privateKey` - Должен быть указан
+    - ✅ `shortIds` - Должен быть определен хотя бы один короткий ID
+    - ✅ `serverNames` - Используется для SNI
+  </Tab>
+</Tabs>
+
+---
+
+## Поддерживаемые протоколы
+
+PasarGuard обрабатывает и проверяет эти протоколы:
+
+1. **Vmess**
+2. **Vless**
+3. **Trojan**
+4. **Shadowsocks**
+
+<Callout type="info">
+Другие протоколы в вашей конфигурации (например, `socks`, `http`) будут игнорироваться во время обработки, но не вызовут ошибок.
+</Callout>
+
+---
+
+## Типы сетей
+
+Поддерживаются следующие типы сетей/транспорта:
+
+| Тип сети | Описание | Специальная обработка |
+|--------------|-------------|------------------|
+| `tcp` | TCP транспорт | Тип сети по умолчанию |
+| `raw` | Сырой TCP | Та же обработка, что и TCP |
+| `ws` | WebSocket | path и host должны быть строками |
+| `grpc` | gRPC | Использует `serviceName` как path |
+| `gun` | gUN | То же, что и gRPC |
+| `quic` | QUIC | Использует `key` как path |
+| `httpupgrade` | HTTP Upgrade | Стандартная обработка path/host |
+| `splithttp` | Split HTTP | Включает настройку `mode` |
+| `xhttp` | XHTTP | Включает настройку `mode` |
+| `kcp` | KCP | Использует `seed` как path |
+| `http` | HTTP/1.1 | Стандартный HTTP |
+| `h2` | HTTP/2 | Стандартный HTTP |
+| `h3` | HTTP/3 | Стандартный HTTP |
+
+### Правила для конкретных сетей
+
+<Tabs items={['TCP/Raw', 'WebSocket', 'gRPC']}>
+  <Tab value="TCP/Raw">
+    **Сети TCP/Raw:**
+    
+    - `path` и `host` в заголовках **должны быть массивами** (не строками)
+    - Если `path` является массивом, используется только первый элемент
+    - `host` может быть массивом значений host
+
+    **Пример:**
+    ```json
+    {
+      "streamSettings": {
+        "network": "tcp",
+        "tcpSettings": {
+          "header": {
+            "type": "http",
+            "request": {
+              "path": ["/path"],  // ✅ Массив
+              "headers": {
+                "Host": ["example.com"]  // ✅ Массив
+              }
+            }
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="WebSocket">
+    **WebSocket (WS):**
+    
+    - `path` и `host` **должны быть строками** (не массивами)
+    - `host` внутренне преобразуется в массив с одним элементом
+
+    **Пример:**
+    ```json
+    {
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+          "path": "/path",  // ✅ Строка
+          "host": "example.com"  // ✅ Строка
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    **gRPC:**
+    
+    - `path` извлекается из `serviceName`
+    - `host` извлекается из `authority`
+
+    **Пример:**
+    ```json
+    {
+      "streamSettings": {
+        "network": "grpc",
+        "grpcSettings": {
+          "serviceName": "my-service",  // Используется как path
+          "authority": "example.com"     // Используется как host
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Настройки безопасности
+
+<Tabs items={['None', 'TLS', 'Reality']}>
+  <Tab value="None">
+    **None (Без безопасности)**
+    
+    - Тип безопасности по умолчанию
+    - Без шифрования или TLS
+    - Используется для обычных соединений или когда шифрование обрабатывается на уровне приложения
+  </Tab>
+  <Tab value="TLS">
+    **Безопасность TLS**
+    
+    При использовании безопасности TLS:
+
+    **Обработка сертификатов:**
+    - Сертификаты могут быть предоставлены через:
+      - `certificateFile` - Путь к файлу сертификата (требует `keyFile`)
+      - `certificate` - Прямое содержимое сертификата (строка или массив)
+    - Если используется `certificateFile`, вы **должны** также предоставить `keyFile`
+    - SNI (Server Name Indication) автоматически извлекается из сертификатов
+
+    <Callout type="warning" title="Требования к сертификатам">
+    Если используется `certificateFile`, вы **должны** также предоставить `keyFile`. Оба файла обязательны.
+    </Callout>
+
+    **Пример:**
+    ```json
+    {
+      "streamSettings": {
+        "security": "tls",
+        "tlsSettings": {
+          "certificates": [{
+            "certificateFile": "/path/to/cert.pem",
+            "keyFile": "/path/to/key.pem"
+          }]
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Reality">
+    **Безопасность Reality**
+    
+    При использовании безопасности Reality:
+
+    **Обязательные поля:**
+    - `privateKey` - Приватный ключ для X25519
+    - `shortIds` - Массив с хотя бы одним коротким ID (может быть пустой строкой `""`)
+    - `serverNames` - Массив имен серверов для SNI
+
+    **Необязательные поля:**
+    - `SpiderX` - Конфигурация SpiderX
+    - `mldsa65Verify` - Настройка проверки MLDSA65
+
+    <Callout type="warning" title="Обязательные настройки Reality">
+    - ✅ `privateKey` - Должен быть указан
+    - ✅ `shortIds` - Должен быть определен хотя бы один короткий ID (может быть пустой строкой)
+    - ✅ `serverNames` - Используется для SNI
+    </Callout>
+
+    **Пример:**
+    ```json
+    {
+      "streamSettings": {
+        "security": "reality",
+        "realitySettings": {
+          "serverNames": ["example.com"],
+          "privateKey": "your-private-key-here",
+          "shortIds": [""]
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Ограничения и ограничения API
+
+При создании или изменении конфигураций ядра через API применяются следующие ограничения:
+
+### Ограничения полей
+
+| Поле | Ограничение | Описание |
+|-------|-------|-------------|
+| `name` | Максимум 256 символов | Имя конфигурации ядра |
+| `exclude_inbound_tags` | Общая длина строки максимум 2048 символов | Теги для исключения из обработки |
+| `fallbacks_inbound_tags` | Общая длина строки максимум 2048 символов | Теги, используемые для обработки fallback |
+| `config` | Не может быть пустым | Должен содержать валидную конфигурацию XRay |
+
+### Специальные правила
+
+1. **Защита ядра по умолчанию**
+   - Конфигурация ядра с `id = 1` **не может быть удалена**
+   - Это конфигурация ядра по умолчанию/системная
+
+2. **Длина строки тегов**
+   - Когда `exclude_inbound_tags` и `fallbacks_inbound_tags` объединяются в строку, разделенную запятыми, общая длина не должна превышать 2048 символов
+   - Пример: Если у вас 100 тегов по 20 символов каждый, это 2000 символов (плюс 99 запятых = 2099), что превысит лимит
+
+3. **Валидация конфигурации**
+   - Словарь `config` не может быть пустым `{}`
+   - Должен пройти все правила валидации XRay (inbounds, outbounds, теги и т.д.)
+
+<Callout type="warning" title="Защита ядра по умолчанию">
+Конфигурация ядра с `id = 1` **не может быть удалена**. Это конфигурация ядра по умолчанию/системная.
+</Callout>
+
+### Конечные точки API
+
+Следующие конечные точки доступны для управления конфигурацией ядра:
+
+- `POST /api/core` - Создать новую конфигурацию ядра
+- `GET /api/core/{core_id}` - Получить конфигурацию ядра по ID
+- `PUT /api/core/{core_id}` - Изменить существующую конфигурацию ядра
+- `DELETE /api/core/{core_id}` - Удалить конфигурацию ядра (кроме id=1)
+- `GET /api/cores` - Список всех конфигураций ядра
+- `POST /api/core/{core_id}/restart` - Перезапустить узлы, использующие это ядро
+
+<Callout type="info" title="Аутентификация">
+Все конечные точки требуют привилегий sudo администратора.
+</Callout>
+
+---
+
+## Частые ошибки валидации
+
+Вот частые ошибки, с которыми вы можете столкнуться, и способы их исправления:
+
+<Tabs items={['Missing Inbounds', 'Duplicate Tags', 'Invalid Tag Characters', 'Missing Port', 'Shadowsocks Errors', 'Reality Errors', 'Network Type Errors']}>
+  <Tab value="Missing Inbounds">
+    ### Ошибка: "config doesn't have inbounds"
+    
+    **Проблема:** В вашей конфигурации отсутствует массив `inbounds`.
+
+    **Решение:**
+    ```json
+    {
+      "inbounds": [
+        {
+          "tag": "my-inbound",
+          "port": 443,
+          "protocol": "vless"
+        }
+      ],
+      "outbounds": []
+    }
+    ```
+  </Tab>
+  <Tab value="Duplicate Tags">
+    ### Ошибка: "all inbounds must have a unique tag"
+    
+    **Проблема:** Два или более inbound имеют одинаковое значение тега.
+
+    **Решение:** Убедитесь, что каждый inbound имеет уникальный тег:
+    ```json
+    {
+      "inbounds": [
+        {"tag": "inbound-1", "port": 443, "protocol": "vless"},
+        {"tag": "inbound-2", "port": 8443, "protocol": "trojan"}  // ✅ Разный тег
+      ]
+    }
+    ```
+  </Tab>
+  <Tab value="Invalid Tag Characters">
+    ### Ошибка: "character «,» is not allowed in inbound tag"
+    
+    **Проблема:** Тег вашего inbound содержит запятую или `<=>`.
+
+    **Решение:** Удалите запятые и `<=>` из тегов:
+    ```json
+    {
+      "inbounds": [
+        {
+          "tag": "inbound,fallback",  // ❌ Невалидно
+          "port": 443,
+          "protocol": "vless"
+        },
+        {
+          "tag": "inbound-fallback",  // ✅ Валидно
+          "port": 443,
+          "protocol": "vless"
+        }
+      ]
+    }
+    ```
+  </Tab>
+  <Tab value="Missing Port">
+    ### Ошибка: "&#123;tag&#125; inbound doesn't have port"
+    
+    **Проблема:** У inbound отсутствует обязательное поле `port`.
+
+    **Решение:** Добавьте номер порта:
+    ```json
+    {
+      "tag": "my-inbound",
+      "port": 443,  // ✅ Добавьте это
+      "protocol": "vless"
+    }
+    ```
+  </Tab>
+  <Tab value="Shadowsocks Errors">
+    ### Ошибка: "only 2022-blake3-aes-*-gcm methods are supported"
+    
+    **Проблема:** Вы используете неподдерживаемый метод Shadowsocks.
+
+    **Решение:** Используйте поддерживаемый метод:
+    ```json
+    {
+      "protocol": "shadowsocks",
+      "settings": {
+        "method": "2022-blake3-aes-128-gcm"  // ✅ Поддерживается
+        // "method": "2022-blake3-chacha20-poly1305"  // ❌ Не поддерживается
+      }
+    }
+    ```
+
+    ### Ошибка: "Shadowsocks password must be a valid base64 string"
+    
+    **Проблема:** Для методов 2022-blake3 пароль должен быть в формате base64.
+
+    **Решение:** Убедитесь, что пароль является валидным base64:
+    ```json
+    {
+      "settings": {
+        "method": "2022-blake3-aes-128-gcm",
+        "password": "base64-encoded-password-here"  // ✅ Должен быть base64
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Reality Errors">
+    ### Ошибка: "You need to provide privateKey in realitySettings"
+    
+    **Проблема:** В конфигурации Reality отсутствует приватный ключ.
+
+    **Решение:**
+    ```json
+    {
+      "streamSettings": {
+        "security": "reality",
+        "realitySettings": {
+          "privateKey": "your-private-key-here",  // ✅ Обязательно
+          "shortIds": [""],
+          "serverNames": ["example.com"]
+        }
+      }
+    }
+    ```
+
+    ### Ошибка: "You need to define at least one shortID in realitySettings"
+    
+    **Проблема:** В настройках Reality отсутствует или пуст массив `shortIds`.
+
+    **Решение:**
+    ```json
+    {
+      "realitySettings": {
+        "shortIds": [""],  // ✅ Хотя бы один элемент (может быть пустой строкой)
+        // "shortIds": []  // ❌ Пустой массив не допускается
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Network Type Errors">
+    ### Ошибка: "Settings of &#123;tag&#125; for path and host must be list, not str"
+    
+    **Проблема:** Для сетей TCP/raw path и host в заголовках должны быть массивами.
+
+    **Решение:**
+    ```json
+    {
+      "streamSettings": {
+        "network": "tcp",
+        "tcpSettings": {
+          "header": {
+            "type": "http",
+            "request": {
+              "path": ["/path"],  // ✅ Массив, а не строка
+              "headers": {
+                "Host": ["example.com"]  // ✅ Массив, а не строка
+              }
+            }
+          }
+        }
+      }
+    }
+    ```
+
+    ### Ошибка: "Settings for path and host must be str, not list"
+    
+    **Проблема:** Для WebSocket path и host должны быть строками.
+
+    **Решение:**
+    ```json
+    {
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+          "path": "/path",  // ✅ Строка, а не массив
+          "host": "example.com"  // ✅ Строка, а не массив
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Резюме
+
+<Callout type="tip" title="Лучшие практики">
+- ✅ Всегда включайте массивы `inbounds` и `outbounds`
+- ✅ Убедитесь, что все inbound и outbound имеют уникальные теги
+- ✅ Избегайте запятых и `<=>` в тегах inbound
+- ✅ Указывайте номера портов для inbound (если не используете fallback)
+- ✅ Используйте поддерживаемые протоколы: vmess, vless, trojan, shadowsocks
+- ✅ Следуйте правилам для конкретных сетей для форматов path/host
+- ✅ Указывайте обязательные поля для безопасности TLS и Reality
+- ✅ Держите строки тегов под 2048 символов в общей сложности
+- ✅ Ядро по умолчанию (id=1) нельзя удалить
+</Callout>
+
+Для получения дополнительной информации о формате конфигурации XRay обратитесь к [официальной документации XRay](https://xtls.github.io/config/).
+

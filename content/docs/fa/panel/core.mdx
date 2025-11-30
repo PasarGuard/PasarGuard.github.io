@@ -1,0 +1,628 @@
+---
+title: پیکربندی هسته
+description: اعتبارسنجی پیکربندی XRay، مقادیر پیش‌فرض و مستندات API
+icon: Server
+---
+
+# مستندات پیکربندی XRay
+
+این سند نحوه اعتبارسنجی و پردازش فایل‌های پیکربندی XRay توسط PasarGuard را توضیح می‌دهد. این سند برای کمک به مبتدیان در درک فرآیند اعتبارسنجی، مقادیر پیش‌فرض و محدودیت‌های API طراحی شده است.
+
+## فهرست مطالب
+
+1. [نمای کلی](#overview)
+2. [اعتبارسنجی پیکربندی](#configuration-validation)
+3. [مقادیر پیش‌فرض](#default-values)
+4. [پروتکل‌های پشتیبانی شده](#supported-protocols)
+5. [انواع شبکه](#network-types)
+6. [تنظیمات امنیتی](#security-settings)
+7. [محدودیت‌ها و قیود API](#api-limits-and-constraints)
+8. [خطاهای رایج اعتبارسنجی](#common-validation-errors)
+
+---
+
+## نمای کلی
+
+کلاس `XRayConfig` مسئول موارد زیر است:
+- **اعتبارسنجی** فایل‌های JSON پیکربندی XRay
+- **استخراج** مقادیر پیش‌فرض از پیکربندی
+- **پردازش** تنظیمات ورودی و خروجی
+- **مدیریت** پیکربندی‌های خاص مانند fallback و TLS/Reality
+
+<Callout type="info">
+وقتی یک پیکربندی هسته را از طریق API ایجاد یا تغییر می‌دهید، PasarGuard به طور خودکار پیکربندی XRay شما را با استفاده از این کلاس اعتبارسنجی می‌کند.
+</Callout>
+
+---
+
+## اعتبارسنجی پیکربندی
+
+### فیلدهای الزامی
+
+پیکربندی XRay شما **باید** شامل موارد زیر باشد:
+
+1. **`inbounds`** - آرایه‌ای از پیکربندی‌های ورودی
+   - نمی‌تواند خالی یا مفقود باشد
+   - هر inbound باید یک `tag` منحصر به فرد داشته باشد
+   - هر inbound باید یک فیلد `protocol` داشته باشد
+
+2. **`outbounds`** - آرایه‌ای از پیکربندی‌های خروجی
+   - نمی‌تواند خالی یا مفقود باشد
+   - هر outbound باید یک `tag` منحصر به فرد داشته باشد
+
+### قوانین تگ‌های ورودی
+
+تگ‌های ورودی قوانین سخت‌گیرانه‌ای دارند:
+
+- ✅ **باید منحصر به فرد باشند** - هیچ دو inbound نمی‌توانند تگ یکسانی داشته باشند
+- ✅ **باید وجود داشته باشند** - هر inbound نیاز به یک تگ دارد
+- ❌ **نمی‌توانند شامل کاما (`,`)** باشند - کاراکتر `,` مجاز نیست
+- ❌ **نمی‌توانند شامل `<=>`** باشند - این دنباله برای مدیریت fallback رزرو شده است
+
+<Tabs items={['تگ‌های معتبر', 'تگ‌های نامعتبر']}>
+  <Tab value="تگ‌های معتبر">
+    ```json
+    {
+      "inbounds": [
+        {
+          "tag": "vless-ws-443",
+          "port": 443,
+          "protocol": "vless"
+        },
+        {
+          "tag": "trojan-tls-8443",
+          "port": 8443,
+          "protocol": "trojan"
+        },
+        {
+          "tag": "vmess-grpc",
+          "port": 443,
+          "protocol": "vmess"
+        }
+      ]
+    }
+    ```
+  </Tab>
+  <Tab value="تگ‌های نامعتبر">
+    ```json
+    {
+      "inbounds": [
+        {
+          "tag": "inbound,fallback",  // ❌ شامل کاما است
+          "port": 443,
+          "protocol": "vless"
+        },
+        {
+          "tag": "inbound<=>fallback",  // ❌ شامل <=> است
+          "port": 8443,
+          "protocol": "trojan"
+        }
+      ]
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### الزامات پورت
+
+اکثر inboundها **باید** یک فیلد `port` داشته باشند. تنها استثنا زمانی است که:
+- inbound به عنوان مقصد fallback استفاده می‌شود (ارجاع داده شده توسط تنظیمات fallback inbound دیگر)
+- inbound خودش یک آرایه `fallbacks` در تنظیمات دارد
+
+<Callout type="warning" title="الزام پورت">
+اکثر inboundها نیاز به فیلد `port` دارند. فقط inboundهای fallback (آنهایی که توسط inboundهای دیگر ارجاع داده می‌شوند یا خودشان آرایه fallbacks دارند) می‌توانند پورت را حذف کنند.
+</Callout>
+
+**مثال:**
+```json
+{
+  "tag": "main-inbound",
+  "port": 443,  // ✅ برای اکثر inboundها الزامی است
+  "protocol": "vless"
+}
+```
+
+---
+
+## مقادیر پیش‌فرض
+
+هنگام پردازش پیکربندی شما، PasarGuard مقادیر پیش‌فرض را برای تنظیمات مختلف استخراج و تنظیم می‌کند. در ادامه آنچه به طور خودکار تنظیم می‌شود آمده است:
+
+### تنظیمات پایه (همه Inboundها)
+
+این مقادیر پیش‌فرض برای هر inbound اعمال می‌شود:
+
+| فیلد | مقدار پیش‌فرض | توضیحات |
+|-------|--------------|-------------|
+| `network` | `"tcp"` | نوع شبکه انتقال |
+| `tls` | `"none"` | نوع امنیت/رمزگذاری |
+| `sni` | `[]` | لیست Server Name Indication (آرایه خالی) |
+| `host` | `[]` | لیست هدر Host (آرایه خالی) |
+| `path` | `""` | رشته مسیر (خالی) |
+| `header_type` | `""` | نوع هدر (رشته خالی) |
+| `is_fallback` | `false` | آیا این یک inbound fallback است |
+| `fallbacks` | `[]` | پیکربندی‌های fallback (آرایه خالی) |
+| `port` | `None` | شماره پورت (باید در پیکربندی ارائه شود) |
+
+### مقادیر پیش‌فرض خاص پروتکل
+
+<Tabs items={['VLESS', 'Shadowsocks', 'Reality']}>
+  <Tab value="VLESS">
+    **مقادیر پیش‌فرض پروتکل VLESS:**
+    
+    - `flow`: `""` (رشته خالی) - تنظیم کنترل جریان
+    - `encryption`: `"none"` - روش رمزگذاری
+    - `decryption`: `"none"` - روش رمزگشایی
+
+    <Callout type="info">
+    اگر `decryption` برابر `"none"` نباشد، پس `encryption` نیز باید ارائه شود.
+    </Callout>
+  </Tab>
+  <Tab value="Shadowsocks">
+    **مقادیر پیش‌فرض پروتکل Shadowsocks:**
+    
+    - `method`: `""` - روش رمزگذاری (باید مشخص شود)
+    - `is_2022`: `false` - آیا از روش‌های 2022-blake3 استفاده می‌شود
+    - `password`: باید یک رشته base64 معتبر باشد (برای روش‌های 2022-blake3)
+
+    <Callout type="warning" title="محدودیت‌های Shadowsocks">
+    - ❌ روش `2022-blake3-chacha20-poly1305` **پشتیبانی نمی‌شود**
+    - ✅ فقط روش‌های `2022-blake3-aes-*-gcm` پشتیبانی می‌شوند
+    </Callout>
+  </Tab>
+  <Tab value="Reality">
+    **مقادیر پیش‌فرض امنیت Reality:**
+    
+    | فیلد | مقدار پیش‌فرض | توضیحات |
+    |-------|--------------|-------------|
+    | `fp` | `"chrome"` | نوع Fingerprint |
+    | `tls` | `"reality"` | نوع امنیت |
+    | `sni` | از `serverNames` در realitySettings | نام‌های سرور |
+    | `pbk` | محاسبه شده از `privateKey` | کلید عمومی (به طور خودکار تولید می‌شود) |
+    | `sids` | از `shortIds` در realitySettings | شناسه‌های کوتاه (الزامی) |
+    | `spx` | `""` | تنظیم SpiderX (اختیاری) |
+    | `mldsa65Verify` | از realitySettings | تأیید MLDSA65 |
+
+    **تنظیمات الزامی Reality:**
+    - ✅ `privateKey` - باید ارائه شود
+    - ✅ `shortIds` - حداقل یک شناسه کوتاه باید تعریف شود
+    - ✅ `serverNames` - برای SNI استفاده می‌شود
+  </Tab>
+</Tabs>
+
+---
+
+## پروتکل‌های پشتیبانی شده
+
+PasarGuard این پروتکل‌ها را پردازش و اعتبارسنجی می‌کند:
+
+1. **Vmess**
+2. **Vless**
+3. **Trojan**
+4. **Shadowsocks**
+
+<Callout type="info">
+پروتکل‌های دیگر در پیکربندی شما (مانند `socks`، `http`) در طول پردازش نادیده گرفته می‌شوند اما باعث خطا نمی‌شوند.
+</Callout>
+
+---
+
+## انواع شبکه
+
+انواع شبکه/انتقال زیر پشتیبانی می‌شوند:
+
+| نوع شبکه | توضیحات | مدیریت خاص |
+|--------------|-------------|------------------|
+| `tcp` | انتقال TCP | نوع شبکه پیش‌فرض |
+| `raw` | TCP خام | همان مدیریت TCP |
+| `ws` | WebSocket | path و host باید رشته باشند |
+| `grpc` | gRPC | از `serviceName` به عنوان path استفاده می‌کند |
+| `gun` | gUN | همان gRPC |
+| `quic` | QUIC | از `key` به عنوان path استفاده می‌کند |
+| `httpupgrade` | HTTP Upgrade | مدیریت استاندارد path/host |
+| `splithttp` | Split HTTP | شامل تنظیم `mode` است |
+| `xhttp` | XHTTP | شامل تنظیم `mode` است |
+| `kcp` | KCP | از `seed` به عنوان path استفاده می‌کند |
+| `http` | HTTP/1.1 | HTTP استاندارد |
+| `h2` | HTTP/2 | HTTP استاندارد |
+| `h3` | HTTP/3 | HTTP استاندارد |
+
+### قوانین خاص شبکه
+
+<Tabs items={['TCP/Raw', 'WebSocket', 'gRPC']}>
+  <Tab value="TCP/Raw">
+    **شبکه‌های TCP/Raw:**
+    
+    - `path` و `host` در هدرها **باید آرایه باشند** (نه رشته)
+    - اگر `path` یک آرایه باشد، فقط اولین عنصر استفاده می‌شود
+    - `host` می‌تواند یک آرایه از مقادیر host باشد
+
+    **مثال:**
+    ```json
+    {
+      "streamSettings": {
+        "network": "tcp",
+        "tcpSettings": {
+          "header": {
+            "type": "http",
+            "request": {
+              "path": ["/path"],  // ✅ آرایه
+              "headers": {
+                "Host": ["example.com"]  // ✅ آرایه
+              }
+            }
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="WebSocket">
+    **WebSocket (WS):**
+    
+    - `path` و `host` **باید رشته باشند** (نه آرایه)
+    - `host` به طور داخلی به یک آرایه تک عنصری تبدیل می‌شود
+
+    **مثال:**
+    ```json
+    {
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+          "path": "/path",  // ✅ رشته
+          "host": "example.com"  // ✅ رشته
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    **gRPC:**
+    
+    - `path` از `serviceName` استخراج می‌شود
+    - `host` از `authority` استخراج می‌شود
+
+    **مثال:**
+    ```json
+    {
+      "streamSettings": {
+        "network": "grpc",
+        "grpcSettings": {
+          "serviceName": "my-service",  // به عنوان path استفاده می‌شود
+          "authority": "example.com"     // به عنوان host استفاده می‌شود
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## تنظیمات امنیتی
+
+<Tabs items={['None', 'TLS', 'Reality']}>
+  <Tab value="None">
+    **None (بدون امنیت)**
+    
+    - نوع امنیت پیش‌فرض
+    - بدون رمزگذاری یا TLS
+    - برای اتصالات ساده یا زمانی که رمزگذاری در سطح برنامه مدیریت می‌شود استفاده می‌شود
+  </Tab>
+  <Tab value="TLS">
+    **امنیت TLS**
+    
+    هنگام استفاده از امنیت TLS:
+
+    **مدیریت گواهینامه:**
+    - گواهینامه‌ها می‌توانند از طریق موارد زیر ارائه شوند:
+      - `certificateFile` - مسیر فایل گواهینامه (نیاز به `keyFile` دارد)
+      - `certificate` - محتوای مستقیم گواهینامه (رشته یا آرایه)
+    - اگر از `certificateFile` استفاده می‌کنید، **باید** `keyFile` را نیز ارائه دهید
+    - SNI (Server Name Indication) به طور خودکار از گواهینامه‌ها استخراج می‌شود
+
+    <Callout type="warning" title="الزامات گواهینامه">
+    اگر از `certificateFile` استفاده می‌کنید، **باید** `keyFile` را نیز ارائه دهید. هر دو فایل الزامی هستند.
+    </Callout>
+
+    **مثال:**
+    ```json
+    {
+      "streamSettings": {
+        "security": "tls",
+        "tlsSettings": {
+          "certificates": [{
+            "certificateFile": "/path/to/cert.pem",
+            "keyFile": "/path/to/key.pem"
+          }]
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Reality">
+    **امنیت Reality**
+    
+    هنگام استفاده از امنیت Reality:
+
+    **فیلدهای الزامی:**
+    - `privateKey` - کلید خصوصی برای X25519
+    - `shortIds` - آرایه‌ای با حداقل یک شناسه کوتاه (می‌تواند رشته خالی `""` باشد)
+    - `serverNames` - آرایه‌ای از نام‌های سرور برای SNI
+
+    **فیلدهای اختیاری:**
+    - `SpiderX` - پیکربندی SpiderX
+    - `mldsa65Verify` - تنظیم تأیید MLDSA65
+
+    <Callout type="warning" title="تنظیمات الزامی Reality">
+    - ✅ `privateKey` - باید ارائه شود
+    - ✅ `shortIds` - حداقل یک شناسه کوتاه باید تعریف شود (می‌تواند رشته خالی باشد)
+    - ✅ `serverNames` - برای SNI استفاده می‌شود
+    </Callout>
+
+    **مثال:**
+    ```json
+    {
+      "streamSettings": {
+        "security": "reality",
+        "realitySettings": {
+          "serverNames": ["example.com"],
+          "privateKey": "your-private-key-here",
+          "shortIds": [""]
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## محدودیت‌ها و قیود API
+
+هنگام ایجاد یا تغییر پیکربندی‌های هسته از طریق API، این محدودیت‌ها اعمال می‌شوند:
+
+### محدودیت‌های فیلد
+
+| فیلد | محدودیت | توضیحات |
+|-------|-------|-------------|
+| `name` | حداکثر 256 کاراکتر | نام پیکربندی هسته |
+| `exclude_inbound_tags` | طول رشته ترکیبی حداکثر 2048 کاراکتر | تگ‌هایی که از پردازش حذف می‌شوند |
+| `fallbacks_inbound_tags` | طول رشته ترکیبی حداکثر 2048 کاراکتر | تگ‌هایی که برای مدیریت fallback استفاده می‌شوند |
+| `config` | نمی‌تواند خالی باشد | باید شامل پیکربندی XRay معتبر باشد |
+
+### قوانین خاص
+
+1. **محافظت هسته پیش‌فرض**
+   - پیکربندی هسته با `id = 1` **نمی‌تواند حذف شود**
+   - این پیکربندی پیش‌فرض/سیستمی هسته است
+
+2. **طول رشته تگ**
+   - وقتی `exclude_inbound_tags` و `fallbacks_inbound_tags` به یک رشته جدا شده با کاما ترکیب می‌شوند، طول کل نباید از 2048 کاراکتر تجاوز کند
+   - مثال: اگر 100 تگ با 20 کاراکتر هر کدام داشته باشید، این 2000 کاراکتر است (به علاوه 99 کاما = 2099) که از محدودیت تجاوز می‌کند
+
+3. **اعتبارسنجی پیکربندی**
+   - دیکشنری `config` نمی‌تواند خالی `{}` باشد
+   - باید تمام قوانین اعتبارسنجی XRay را پاس کند (inbounds، outbounds، تگ‌ها و غیره)
+
+<Callout type="warning" title="محافظت هسته پیش‌فرض">
+پیکربندی هسته با `id = 1` **نمی‌تواند حذف شود**. این پیکربندی پیش‌فرض/سیستمی هسته است.
+</Callout>
+
+### نقاط پایانی API
+
+نقاط پایانی زیر برای مدیریت پیکربندی هسته در دسترس هستند:
+
+- `POST /api/core` - ایجاد پیکربندی هسته جدید
+- `GET /api/core/{core_id}` - دریافت پیکربندی هسته با ID
+- `PUT /api/core/{core_id}` - تغییر پیکربندی هسته موجود
+- `DELETE /api/core/{core_id}` - حذف پیکربندی هسته (به جز id=1)
+- `GET /api/cores` - لیست تمام پیکربندی‌های هسته
+- `POST /api/core/{core_id}/restart` - راه‌اندازی مجدد نودهای استفاده‌کننده از این هسته
+
+<Callout type="info" title="احراز هویت">
+همه نقاط پایانی نیاز به دسترسی ادمین sudo دارند.
+</Callout>
+
+---
+
+## خطاهای رایج اعتبارسنجی
+
+در ادامه خطاهای رایجی که ممکن است با آن‌ها مواجه شوید و نحوه رفع آن‌ها آمده است:
+
+<Tabs items={['Missing Inbounds', 'Duplicate Tags', 'Invalid Tag Characters', 'Missing Port', 'Shadowsocks Errors', 'Reality Errors', 'Network Type Errors']}>
+  <Tab value="Missing Inbounds">
+    ### خطا: "config doesn't have inbounds"
+    
+    **مشکل:** پیکربندی شما آرایه `inbounds` را ندارد.
+
+    **راه‌حل:**
+    ```json
+    {
+      "inbounds": [
+        {
+          "tag": "my-inbound",
+          "port": 443,
+          "protocol": "vless"
+        }
+      ],
+      "outbounds": []
+    }
+    ```
+  </Tab>
+  <Tab value="Duplicate Tags">
+    ### خطا: "all inbounds must have a unique tag"
+    
+    **مشکل:** دو یا چند inbound دارای مقدار تگ یکسان هستند.
+
+    **راه‌حل:** اطمینان حاصل کنید که هر inbound یک تگ منحصر به فرد دارد:
+    ```json
+    {
+      "inbounds": [
+        {"tag": "inbound-1", "port": 443, "protocol": "vless"},
+        {"tag": "inbound-2", "port": 8443, "protocol": "trojan"}  // ✅ تگ متفاوت
+      ]
+    }
+    ```
+  </Tab>
+  <Tab value="Invalid Tag Characters">
+    ### خطا: "character «,» is not allowed in inbound tag"
+    
+    **مشکل:** تگ inbound شما شامل کاما یا `<=>` است.
+
+    **راه‌حل:** کاما و `<=>` را از تگ‌ها حذف کنید:
+    ```json
+    {
+      "inbounds": [
+        {
+          "tag": "inbound,fallback",  // ❌ نامعتبر
+          "port": 443,
+          "protocol": "vless"
+        },
+        {
+          "tag": "inbound-fallback",  // ✅ معتبر
+          "port": 443,
+          "protocol": "vless"
+        }
+      ]
+    }
+    ```
+  </Tab>
+  <Tab value="Missing Port">
+    ### خطا: "&#123;tag&#125; inbound doesn't have port"
+    
+    **مشکل:** یک inbound فیلد الزامی `port` را ندارد.
+
+    **راه‌حل:** یک شماره پورت اضافه کنید:
+    ```json
+    {
+      "tag": "my-inbound",
+      "port": 443,  // ✅ این را اضافه کنید
+      "protocol": "vless"
+    }
+    ```
+  </Tab>
+  <Tab value="Shadowsocks Errors">
+    ### خطا: "only 2022-blake3-aes-*-gcm methods are supported"
+    
+    **مشکل:** شما از یک روش Shadowsocks پشتیبانی نشده استفاده می‌کنید.
+
+    **راه‌حل:** از یک روش پشتیبانی شده استفاده کنید:
+    ```json
+    {
+      "protocol": "shadowsocks",
+      "settings": {
+        "method": "2022-blake3-aes-128-gcm"  // ✅ پشتیبانی می‌شود
+        // "method": "2022-blake3-chacha20-poly1305"  // ❌ پشتیبانی نمی‌شود
+      }
+    }
+    ```
+
+    ### خطا: "Shadowsocks password must be a valid base64 string"
+    
+    **مشکل:** برای روش‌های 2022-blake3، رمز عبور باید base64 باشد.
+
+    **راه‌حل:** اطمینان حاصل کنید که رمز عبور base64 معتبر است:
+    ```json
+    {
+      "settings": {
+        "method": "2022-blake3-aes-128-gcm",
+        "password": "base64-encoded-password-here"  // ✅ باید base64 باشد
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Reality Errors">
+    ### خطا: "You need to provide privateKey in realitySettings"
+    
+    **مشکل:** پیکربندی Reality کلید خصوصی را ندارد.
+
+    **راه‌حل:**
+    ```json
+    {
+      "streamSettings": {
+        "security": "reality",
+        "realitySettings": {
+          "privateKey": "your-private-key-here",  // ✅ الزامی
+          "shortIds": [""],
+          "serverNames": ["example.com"]
+        }
+      }
+    }
+    ```
+
+    ### خطا: "You need to define at least one shortID in realitySettings"
+    
+    **مشکل:** تنظیمات Reality آرایه `shortIds` خالی یا مفقود دارد.
+
+    **راه‌حل:**
+    ```json
+    {
+      "realitySettings": {
+        "shortIds": [""],  // ✅ حداقل یک عنصر (می‌تواند رشته خالی باشد)
+        // "shortIds": []  // ❌ آرایه خالی مجاز نیست
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Network Type Errors">
+    ### خطا: "Settings of &#123;tag&#125; for path and host must be list, not str"
+    
+    **مشکل:** برای شبکه‌های TCP/raw، path و host در هدرها باید آرایه باشند.
+
+    **راه‌حل:**
+    ```json
+    {
+      "streamSettings": {
+        "network": "tcp",
+        "tcpSettings": {
+          "header": {
+            "type": "http",
+            "request": {
+              "path": ["/path"],  // ✅ آرایه، نه رشته
+              "headers": {
+                "Host": ["example.com"]  // ✅ آرایه، نه رشته
+              }
+            }
+          }
+        }
+      }
+    }
+    ```
+
+    ### خطا: "Settings for path and host must be str, not list"
+    
+    **مشکل:** برای WebSocket، path و host باید رشته باشند.
+
+    **راه‌حل:**
+    ```json
+    {
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+          "path": "/path",  // ✅ رشته، نه آرایه
+          "host": "example.com"  // ✅ رشته، نه آرایه
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## خلاصه
+
+<Callout type="tip" title="بهترین روش‌ها">
+- ✅ همیشه آرایه‌های `inbounds` و `outbounds` را شامل شوید
+- ✅ اطمینان حاصل کنید که همه inboundها و outboundها تگ‌های منحصر به فرد دارند
+- ✅ از کاما و `<=>` در تگ‌های inbound اجتناب کنید
+- ✅ شماره‌های پورت را برای inboundها ارائه دهید (مگر اینکه از fallback استفاده کنید)
+- ✅ از پروتکل‌های پشتیبانی شده استفاده کنید: vmess، vless، trojan، shadowsocks
+- ✅ قوانین خاص شبکه را برای فرمت‌های path/host دنبال کنید
+- ✅ فیلدهای الزامی را برای امنیت TLS و Reality ارائه دهید
+- ✅ رشته‌های تگ را زیر 2048 کاراکتر نگه دارید
+- ✅ هسته پیش‌فرض (id=1) نمی‌تواند حذف شود
+</Callout>
+
+برای اطلاعات بیشتر در مورد فرمت پیکربندی XRay، به [ XRay مستندات رسمی ](https://xtls.github.io/config/) مراجعه کنید. 
