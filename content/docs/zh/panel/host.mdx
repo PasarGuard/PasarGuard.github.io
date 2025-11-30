@@ -1,0 +1,939 @@
+---
+title: 主机配置
+description: 代理主机配置、值覆盖、格式变量和过滤
+icon: Globe
+---
+
+# 主机配置文档
+
+本文档解释了 PasarGuard 如何处理和管理代理主机。它旨在帮助初学者了解主机配置的工作原理、哪些值会覆盖入站默认值，以及主机如何在订阅中显示给用户。
+
+## 目录
+
+1. [概述](#overview)
+2. [主机配置基础](#host-configuration-basics)
+3. [值覆盖优先级](#value-override-priority)
+4. [主机字段及其行为](#host-fields-and-their-behavior)
+5. [用户显示的格式变量](#format-variables-for-user-display)
+6. [传输设置](#transport-settings)
+7. [主机状态和过滤](#host-status-and-filtering)
+8. [API 限制和约束](#api-limits-and-constraints)
+9. [常见场景](#common-scenarios)
+
+---
+
+## 概述
+
+PasarGuard 中的主机是代理服务器配置，它们：
+- **覆盖** XRay 入站配置中的默认值
+- **提供** 服务器地址、端口和传输设置
+- **显示** 自定义名称（备注）给订阅中的用户
+- **过滤** 哪些用户可以根据状态看到哪些主机
+
+### 订阅生成过程
+
+当用户请求订阅时，PasarGuard：
+
+1. **检查用户可访问的入站** - 仅处理其 `inbound_tag` 对用户可访问（通过其组）的主机
+2. 加载所有与用户状态匹配的已启用主机
+3. 将主机设置与入站默认值合并（主机值优先）
+4. 使用用户特定的变量格式化主机备注和地址
+5. 为每个请求从列表（SNI、host、address、port）中随机选择值
+6. 生成订阅配置
+
+<Callout type="warning" title="主机可见性要求">
+主机只有在以下情况下才会出现在用户的订阅中：
+- 主机的 `inbound_tag` 已分配给用户的至少一个组
+- 用户的组未被禁用
+- 主机未被禁用（`is_disabled: false`）
+- 主机的 `status` 过滤器（如果设置）包含用户的状态
+</Callout>
+
+---
+
+## 主机配置基础
+
+### 必需字段
+
+每个主机**必须**具有：
+
+| 字段 | 类型 | 描述 |
+|-------|------|-------------|
+| `remark` | string | 显示给用户的显示名称（支持格式变量） |
+| `inbound_tag` | string | 必须与您的 XRay 核心配置之一中的标签匹配。**重要：** 此入站必须分配给用户组，用户才能看到此主机 |
+| `priority` | integer | 主机在订阅中出现的顺序（数字越小 = 优先级越高） |
+
+### 可选字段
+
+主机可以覆盖入站默认值，用于：
+
+- **网络设置**：`address`, `port`, `sni`, `host`, `path`
+- **安全设置**：`security`, `alpn`, `fingerprint`, `allowinsecure`
+- **传输设置**：特定于网络的配置（WebSocket、gRPC 等）
+- **高级功能**：Mux、fragment、noise 设置
+- **显示选项**：`status`（哪些用户状态可以看到此主机）
+
+---
+
+## 值覆盖优先级
+
+生成订阅时，PasarGuard 按以下顺序合并值：
+
+### 优先级顺序（从高到低）
+
+1. **主机配置** - 在主机上设置的值覆盖所有内容
+2. **入站默认值** - 来自 XRay 入站配置的值
+3. **系统默认值** - 内置的备用值
+
+### 覆盖如何工作
+
+```
+最终值 = 主机值（如果设置）或 入站值（如果存在）或 系统默认值
+```
+
+<Tabs items={['主机覆盖', '入站默认值']}>
+  <Tab value="主机覆盖">
+    **主机值覆盖入站：**
+    
+    - 入站有 `sni: ["example.com"]`
+    - 主机有 `sni: ["host1.com", "host2.com"]`
+    - **结果：** `sni: ["host1.com", "host2.com"]`（主机值获胜）
+  </Tab>
+  <Tab value="入站默认值">
+    **主机未设置时使用入站值：**
+    
+    - 入站有 `port: 443`
+    - 主机有 `port: null`（未设置）
+    - **结果：** `port: 443`（使用入站值）
+  </Tab>
+</Tabs>
+
+---
+
+## 主机字段及其行为
+
+### 基本网络字段
+
+<Tabs items={['address', 'port', 'sni', 'host', 'path']}>
+  <Tab value="address">
+    #### `address` (字符串集合)
+    
+    - **用途：** 服务器 IP 地址或域名
+    - **覆盖：** 主机值完全替换入站值
+    - **显示：** 每个订阅请求随机选择
+    - **格式变量：** 支持 `` `{SERVER_IP}` ``, `` `{SERVER_IPV6}` ``, `` `{USERNAME}` `` 等
+    - **限制：** 组合字符串长度最大 256 个字符
+    - **通配符：** 支持 `*`，每个请求用随机盐替换
+
+    **示例：**
+    ```json
+    {
+      "address": ["1.2.3.4", "server.example.com", "{SERVER_IP}"]
+    }
+    ```
+  </Tab>
+  <Tab value="port">
+    #### `port` (整数)
+    
+    - **用途：** 服务器端口号
+    - **覆盖：** 主机端口替换入站端口
+    - **特殊：** 如果未设置，使用入站端口（可以是单个整数或逗号分隔的字符串，如 "8080,8443"）
+    - **显示：** 如果入站有多个端口，每个请求随机选择一个
+
+    **示例：**
+    ```json
+    {
+      "port": 443  // 覆盖入站端口
+    }
+    // 或
+    {
+      "port": null  // 使用入站端口（可能是多个）
+    }
+    ```
+  </Tab>
+  <Tab value="sni">
+    #### `sni` (字符串集合)
+    
+    - **用途：** TLS 的服务器名称指示
+    - **覆盖：** 主机值替换入站 SNI 列表
+    - **显示：** 每个订阅请求随机选择
+    - **限制：** 组合字符串长度最大 1000 个字符
+    - **通配符：** 支持 `*`，用随机盐替换
+
+    **示例：**
+    ```json
+    {
+      "sni": ["example.com", "*.example.com", "cdn.example.com"]
+    }
+    ```
+  </Tab>
+  <Tab value="host">
+    #### `host` (字符串集合)
+    
+    - **用途：** HTTP/WebSocket 传输的 Host 标头
+    - **覆盖：** 主机值替换入站 host 列表
+    - **显示：** 每个订阅请求随机选择
+    - **限制：** 组合字符串长度最大 1000 个字符
+    - **通配符：** 支持 `*`，用随机盐替换
+
+    **示例：**
+    ```json
+    {
+      "host": ["example.com", "www.example.com"]
+    }
+    ```
+  </Tab>
+  <Tab value="path">
+    #### `path` (字符串)
+    
+    - **用途：** WebSocket、gRPC、HTTP 传输的路径
+    - **覆盖：** 如果设置了主机路径，则替换入站路径
+    - **格式变量：** 支持 `` `{PROTOCOL}` ``, `` `{TRANSPORT}` ``, `` `{USERNAME}` `` 等
+    - **默认：** 如果未设置主机路径，则使用入站路径
+
+    **示例：**
+    ```json
+    {
+      "path": "/{PROTOCOL}-{TRANSPORT}/path"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### 安全设置
+
+<Tabs items={['security', 'alpn', 'fingerprint', 'allowinsecure', 'ech_config_list']}>
+  <Tab value="security">
+    #### `security` (枚举: ProxyHostSecurity)
+    
+    - **用途：** TLS/Reality 安全类型
+    - **选项：**
+      - `inbound_default` - 使用入站配置中的安全设置
+      - `none` - 无加密
+      - `tls` - TLS 加密
+      - `reality` - Reality 协议
+    - **覆盖：** 主机安全设置替换入站安全设置（除非设置为 `inbound_default`）
+
+    **示例：**
+    ```json
+    {
+      "security": "tls"  // 覆盖入站安全设置
+    }
+    // 或
+    {
+      "security": "inbound_default"  // 使用入站安全设置
+    }
+    ```
+  </Tab>
+  <Tab value="alpn">
+    #### `alpn` (ProxyHostALPN 列表)
+    
+    - **用途：** 应用层协议协商
+    - **选项：** `h3`, `h2`, `http/1.1`
+    - **覆盖：** 主机 ALPN 列表替换入站 ALPN
+    - **特殊：** 自动按优先级排序（h3 → h2 → http/1.1）
+    - **默认：** 如果未设置，则使用入站 ALPN
+
+    **示例：**
+    ```json
+    {
+      "alpn": ["h3", "h2", "http/1.1"]
+    }
+    ```
+  </Tab>
+  <Tab value="fingerprint">
+    #### `fingerprint` (枚举: ProxyHostFingerprint)
+    
+    - **用途：** TLS 指纹类型
+    - **覆盖：** 主机指纹替换入站指纹（除非设置为 `none`）
+    - **默认：** 使用入站指纹（Reality 通常为 `chrome`）
+
+    **示例：**
+    ```json
+    {
+      "fingerprint": "chrome"  // 覆盖入站指纹
+    }
+    // 或
+    {
+      "fingerprint": "none"  // 使用入站指纹
+    }
+    ```
+  </Tab>
+  <Tab value="allowinsecure">
+    #### `allowinsecure` (布尔值)
+    
+    - **用途：** 允许不安全的 TLS 连接
+    - **覆盖：** 如果设置了主机值，则替换入站值
+    - **默认：** 使用入站值（通常为 `false`）
+
+    **示例：**
+    ```json
+    {
+      "allowinsecure": false  // 覆盖入站设置
+    }
+    ```
+  </Tab>
+  <Tab value="ech_config_list">
+    #### `ech_config_list` (字符串)
+    
+    - **用途：** 加密客户端 Hello (ECH) 配置
+    - **覆盖：** 如果设置了主机值，则替换入站值
+    - **默认：** 如果未设置，则使用入站值
+  </Tab>
+</Tabs>
+
+### 高级功能
+
+<Tabs items={['use_sni_as_host', 'random_user_agent', 'http_headers', 'is_disabled', 'status']}>
+  <Tab value="use_sni_as_host">
+    #### `use_sni_as_host` (布尔值)
+    
+    - **用途：** 使用 SNI 值作为 host 标头
+    - **行为：** 当 `true` 时，选定的 SNI 值替换 host 标头
+    - **默认：** `false`
+  </Tab>
+  <Tab value="random_user_agent">
+    #### `random_user_agent` (布尔值)
+    
+    - **用途：** 生成随机 User-Agent 标头
+    - **行为：** 当 `true` 时，随机 User-Agent 添加到 HTTP 标头
+    - **默认：** `false`
+  </Tab>
+  <Tab value="http_headers">
+    #### `http_headers` (字典)
+    
+    - **用途：** 自定义 HTTP 标头
+    - **格式：** `{"Header-Name": "value"}`
+    - **覆盖：** 主机标头添加到传输配置
+
+    **示例：**
+    ```json
+    {
+      "http_headers": {
+        "X-Forwarded-For": "1.2.3.4",
+        "Custom-Header": "value"
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="is_disabled">
+    #### `is_disabled` (布尔值)
+    
+    - **用途：** 临时禁用主机而不删除
+    - **行为：** 禁用的主机从订阅中排除
+    - **默认：** `false`
+  </Tab>
+  <Tab value="status">
+    #### `status` (UserStatus 集合)
+    
+    - **用途：** 过滤哪些用户状态可以看到此主机
+    - **选项：** `active`, `expired`, `limited`, `disabled`, `on_hold`
+    - **行为：** 如果设置，只有匹配状态的用户可以看到此主机
+    - **默认：** `null`（所有用户都可以看到）
+
+    **示例：**
+    ```json
+    {
+      "status": ["active", "on_hold"]  // 只有 active 和 on_hold 用户可以看到此主机
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## 用户显示的格式变量
+
+主机 `remark` 和 `address` 字段支持格式变量，在生成订阅时会被替换为用户特定的值。
+
+### 可用的格式变量
+
+| 变量 | 描述 | 示例 |
+|----------|-------------|---------|
+| `{SERVER_IP}` | 服务器的公共 IPv4 地址 | `1.2.3.4` |
+| `{SERVER_IPV6}` | 服务器的公共 IPv6 地址 | `2001:db8::1` |
+| `{USERNAME}` | 用户的用户名 | `john_doe` |
+| `{PROTOCOL}` | 协议名称（vmess、vless 等） | `vless` |
+| `{TRANSPORT}` | 传输类型（tcp、ws、grpc 等） | `ws` |
+| `{DATA_USAGE}` | 用户的数据使用量（格式化） | `1.5 GB` |
+| `{DATA_LIMIT}` | 用户的数据限制（格式化） | `100 GB` 或 `∞` |
+| `{DATA_LEFT}` | 剩余数据（格式化） | `98.5 GB` 或 `∞` |
+| `{DAYS_LEFT}` | 到期前的天数 | `30` 或 `∞` |
+| `{EXPIRE_DATE}` | 到期日期（公历） | `2024-12-31` |
+| `{JALALI_EXPIRE_DATE}` | 到期日期（波斯历） | `1403-10-11` |
+| `{TIME_LEFT}` | 到期前的时间（格式化） | `30 days` 或 `∞` |
+| `{STATUS_EMOJI}` | 用户状态表情符号 | `✅`, `⌛️`, `🪫`, `❌`, `🔌` |
+| `{USAGE_PERCENTAGE}` | 数据使用百分比 | `15.5` 或 `∞` |
+| `{ADMIN_USERNAME}` | 创建用户的管理员 | `admin` |
+
+### 格式变量示例
+
+<Tabs items={['备注示例', '地址示例', '缺失变量']}>
+  <Tab value="备注示例">
+    **备注示例：**
+    
+    ```json
+    {
+      "remark": "{PROTOCOL}-{TRANSPORT} Server {STATUS_EMOJI}"
+    }
+    // 结果： "vless-ws Server ✅"（对于活跃用户）
+    ```
+
+    ```json
+    {
+      "remark": "{USERNAME} - {DATA_LEFT} left"
+    }
+    // 结果： "john_doe - 98.5 GB left"
+    ```
+
+    ```json
+    {
+      "remark": "Server {SERVER_IP} - Expires {EXPIRE_DATE}"
+    }
+    // 结果： "Server 1.2.3.4 - Expires 2024-12-31"
+    ```
+  </Tab>
+  <Tab value="地址示例">
+    **地址示例：**
+    
+    ```json
+    {
+      "address": ["{SERVER_IP}", "cdn-{USERNAME}.example.com"]
+    }
+    // 随机选择结果： "1.2.3.4" 或 "cdn-john_doe.example.com"
+    ```
+  </Tab>
+  <Tab value="缺失变量">
+    **缺失变量：**
+    
+    如果格式变量不可用（例如，用户没有到期时间），它将被替换为：
+    - `∞` 用于日期/时间/限制字段
+    - `-` 用于用户处于 on_hold 状态时的日期
+    - `<missing>` 用于其他缺失的变量
+  </Tab>
+</Tabs>
+
+---
+
+## 传输设置
+
+主机可以配置特定于网络的传输设置，这些设置会覆盖入站默认值。
+
+<Tabs items={['WebSocket', 'gRPC', 'KCP', 'TCP', 'XHTTP/SplitHTTP', 'Mux', 'Fragment', 'Noise']}>
+  <Tab value="WebSocket">
+    ### WebSocket 设置
+
+    ```json
+    {
+      "transport_settings": {
+        "websocket_settings": {
+          "heartbeatPeriod": 30  // 心跳间隔（秒）
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="gRPC">
+    ### gRPC 设置
+
+    ```json
+    {
+      "transport_settings": {
+        "grpc_settings": {
+          "multi_mode": true,  // 启用多模式
+          "idle_timeout": 60,  // 空闲超时（秒）
+          "health_check_timeout": 20,  // 健康检查超时
+          "permit_without_stream": false,  // 需要流
+          "initial_windows_size": 1048576  // 初始窗口大小
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="KCP">
+    ### KCP 设置
+
+    ```json
+    {
+      "transport_settings": {
+        "kcp_settings": {
+          "header": "wechat-video",  // 标头类型
+          "mtu": 1350,  // 最大传输单元
+          "tti": 20,  // 传输时间间隔
+          "uplink_capacity": 5,  // 上行容量
+          "downlink_capacity": 20,  // 下行容量
+          "congestion": false,  // 拥塞控制
+          "read_buffer_size": 2,  // 读缓冲区大小
+          "write_buffer_size": 2  // 写缓冲区大小
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="TCP">
+    ### TCP 设置
+
+    ```json
+    {
+      "transport_settings": {
+        "tcp_settings": {
+          "header": "http",  // 标头类型："none" 或 "http"
+          "request": {
+            "method": "GET",
+            "version": "1.1",
+            "headers": {
+              "Host": ["example.com"]
+            }
+          },
+          "response": {
+            "status": "200",
+            "reason": "OK",
+            "version": "1.1"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="XHTTP/SplitHTTP">
+    ### XHTTP/SplitHTTP 设置
+
+    ```json
+    {
+      "transport_settings": {
+        "xhttp_settings": {
+          "mode": "auto",  // auto, packet-up, stream-up, stream-one
+          "no_grpc_header": false,  // 禁用 gRPC 标头
+          "x_padding_bytes": "1-100",  // 填充字节范围
+          "sc_max_each_post_bytes": 1048576,  // 最大 post 字节数
+          "sc_min_posts_interval_ms": 100,  // post 之间的最小间隔
+          "xmux": {
+            "maxConcurrency": 8,
+            "maxConnections": 8,
+            "cMaxReuseTimes": 1,
+            "hMaxReusableSecs": 300,
+            "hMaxRequestTimes": 8,
+            "hKeepAlivePeriod": 15
+          },
+          "download_settings": 2  // 用于下载的另一个主机 ID
+        }
+      }
+    }
+    ```
+
+    <Callout type="warning" title="下载设置">
+    `download_settings` 引用另一个主机 ID 用于 XHTTP 下载功能。引用的主机不能有自己的下载主机（无嵌套）。
+    </Callout>
+  </Tab>
+  <Tab value="Mux">
+    ### Mux 设置
+
+    ```json
+    {
+      "mux_settings": {
+        "xray": {
+          "enabled": true,
+          "concurrency": 8,
+          "xudpConcurrency": 8,
+          "xudpProxyUDP443": "reject"  // reject, allow, skip
+        },
+        "sing_box": {
+          "enable": true,
+          "protocol": "smux",  // smux, yamux, h2mux
+          "max_connections": 8,
+          "max_streams": 8,
+          "min_streams": 1,
+          "padding": false,
+          "brutal": {
+            "enable": true,
+            "up_mbps": 100,
+            "down_mbps": 100
+          }
+        },
+        "clash": {
+          // 与 sing_box 相同，另外：
+          "statistic": false,
+          "only_tcp": false
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Fragment">
+    ### Fragment 设置
+
+    ```json
+    {
+      "fragment_settings": {
+        "xray": {
+          "packets": "tlshello",  // 或范围如 "1-10"
+          "length": "100-200",  // Fragment 长度范围
+          "interval": "10-20"  // 间隔范围
+        },
+        "sing_box": {
+          "fragment": true,
+          "fragment_fallback_delay": "100ms",
+          "record_fragment": false
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Noise">
+    ### Noise 设置
+
+    ```json
+    {
+      "noise_settings": {
+        "xray": [
+          {
+            "type": "rand",  // rand, str, base64, hex
+            "packet": "base64-encoded-data",
+            "delay": "10-20",  // 延迟范围
+            "apply_to": "ip"  // ip, ipv4, ipv6
+          }
+        ]
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## 主机状态和过滤
+
+### 主机过滤如何工作
+
+生成订阅时，主机按以下顺序过滤：
+
+1. **检查入站访问权限：** 主机的 `inbound_tag` 必须通过用户的组对用户可访问
+   - 用户属于组
+   - 组已分配入站标签
+   - 仅处理其 `inbound_tag` 在用户可访问的入站（来自其所有组）中的主机
+   - 禁用的组从此检查中排除
+   - **这是第一个也是最重要的过滤器** - 如果用户无法通过其组访问入站，主机永远不会出现在其订阅中
+
+2. **禁用检查：** 带有 `is_disabled: true` 的主机被排除
+
+3. **状态检查：** 如果主机设置了 `status`，用户的状态必须匹配集合中的一个值
+
+4. **优先级排序：** 剩余的主机按 `priority` 排序（升序）
+
+### 了解通过组的入站访问
+
+**工作原理：**
+- 用户被分配到组
+- 组被分配入站标签（多对多关系）
+- 生成订阅时，PasarGuard 从用户的所有组（排除禁用的组）收集所有入站标签
+- 仅包含其 `inbound_tag` 与这些可访问入站之一匹配的主机
+
+**示例：**
+```
+用户 "john" 属于：
+  - 组 "Premium" (inbound_tags: ["vless-443", "trojan-8443"])
+  - 组 "Standard" (inbound_tags: ["vmess-8080"])
+
+主机：
+  - 主机 A (inbound_tag: "vless-443") ✅ 会出现（在 Premium 组中）
+  - 主机 B (inbound_tag: "trojan-8443") ✅ 会出现（在 Premium 组中）
+  - 主机 C (inbound_tag: "vmess-8080") ✅ 会出现（在 Standard 组中）
+  - 主机 D (inbound_tag: "shadowsocks-9090") ❌ 不会出现（不在任何组中）
+```
+
+<Callout type="warning" title="无组 = 无主机">
+如果用户没有组，或者其所有组都被禁用，他们将在订阅中看不到任何主机。
+</Callout>
+
+### 状态过滤示例
+
+<Tabs items={['所有用户', '仅活跃', '多个状态']}>
+  <Tab value="所有用户">
+    **所有用户可见的主机：**
+    ```json
+    {
+      "status": null  // 或空集合
+    }
+    ```
+  </Tab>
+  <Tab value="仅活跃">
+    **仅活跃用户可见的主机：**
+    ```json
+    {
+      "status": ["active"]
+    }
+    ```
+  </Tab>
+  <Tab value="多个状态">
+    **活跃和 on_hold 用户可见的主机：**
+    ```json
+    {
+      "status": ["active", "on_hold"]
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### 优先级排序
+
+主机按 `priority` 字段排序（数字越小 = 优先级越高）：
+
+```json
+{
+  "priority": 1  // 在订阅中首先出现
+}
+```
+
+```json
+{
+  "priority": 100  // 在订阅中稍后出现
+}
+```
+
+---
+
+## API 限制和约束
+
+### 字段限制
+
+| 字段 | 限制 | 描述 |
+|-------|-------|-------------|
+| `remark` | 必须是有效的格式字符串 | 支持格式变量 |
+| `address` | 组合字符串长度最大 256 个字符 | 地址字符串集合 |
+| `sni` | 组合字符串长度最大 1000 个字符 | SNI 字符串集合 |
+| `host` | 组合字符串长度最大 1000 个字符 | host 字符串集合 |
+| `inbound_tag` | 必须存在于核心配置中 | 针对 XRay 配置进行验证 |
+
+### 验证规则
+
+1. **入站标签验证**
+   - `inbound_tag` 必须至少存在于一个 XRay 核心配置中
+   - 创建或修改主机时进行验证
+
+2. **下载设置验证**
+   - 如果设置了 `xhttp_settings.download_settings`，它必须引用有效的主机 ID
+   - 引用的主机不能与当前主机相同
+   - 引用的主机不能有自己的下载主机（无嵌套）
+
+3. **格式变量验证**
+   - `remark` 必须是有效的格式字符串
+   - 无效的格式变量将导致错误
+
+4. **ALPN 验证**
+   - ALPN 列表自动去重
+   - ALPN 列表自动按优先级排序（h3 → h2 → http/1.1）
+
+### API 端点
+
+- `GET /api/host/{host_id}` - 按 ID 获取主机
+- `GET /api/hosts` - 列出所有主机（带分页）
+- `POST /api/host/` - 创建新主机
+- `PUT /api/host/{host_id}` - 修改现有主机
+- `DELETE /api/host/{host_id}` - 删除主机
+- `PUT /api/hosts` - 批量修改主机
+
+<Callout type="info" title="身份验证">
+所有端点都需要 sudo 管理员权限。
+</Callout>
+
+---
+
+## 常见场景
+
+<Tabs items={['覆盖端口', '多个 SNI', '用户特定名称', '基于状态的可见性', '基于组的访问', '覆盖安全', '自定义路径', '多个端口', 'XHTTP 下载', '通配符 SNI', '优先级排序']}>
+  <Tab value="覆盖端口">
+    ### 场景 1：覆盖入站端口
+    
+    **问题：** 入站使用端口 443，但您希望此主机使用端口 8443。
+    
+    **解决方案：**
+    ```json
+    {
+      "inbound_tag": "my-inbound",
+      "port": 8443,  // 覆盖入站端口
+      "remark": "Custom Port Server"
+    }
+    ```
+  </Tab>
+  <Tab value="多个 SNI">
+    ### 场景 2：多个 SNI 值
+    
+    **问题：** 您希望为每个请求从多个 SNI 值中随机选择。
+    
+    **解决方案：**
+    ```json
+    {
+      "sni": ["example.com", "cdn.example.com", "www.example.com"]
+    }
+    // 每个订阅请求随机选择一个
+    ```
+  </Tab>
+  <Tab value="用户特定名称">
+    ### 场景 3：用户特定的服务器名称
+    
+    **问题：** 您希望每个用户在服务器地址中看到其用户名。
+    
+    **解决方案：**
+    ```json
+    {
+      "address": ["{USERNAME}.example.com", "{SERVER_IP}"],
+      "remark": "Server for {USERNAME}"
+    }
+    ```
+  </Tab>
+  <Tab value="基于状态的可见性">
+    ### 场景 4：基于状态的主机可见性
+    
+    **问题：** 您希望高级服务器仅对活跃用户可见。
+    
+    **解决方案：**
+    ```json
+    {
+      "remark": "Premium Server",
+      "status": ["active"],  // 只有活跃用户可以看到此主机
+      "priority": 1  // 高优先级
+    }
+    ```
+    
+    <Callout type="warning" title="需要组访问">
+    主机的 `inbound_tag` 也必须分配给用户的组。`status` 过滤器仅对已通过组可访问的主机有效。
+    </Callout>
+  </Tab>
+  <Tab value="基于组的访问">
+    ### 场景 4b：基于组的主机访问
+    
+    **问题：** 您希望主机仅对特定组中的用户可见。
+    
+    **解决方案：**
+    1. 创建一个组（例如，"VIP Group"）
+    2. 将主机的 `inbound_tag` 分配给该组
+    3. 仅将应该看到主机的用户分配给该组
+    
+    ```json
+    // 主机配置
+    {
+      "inbound_tag": "vless-premium-443",
+      "remark": "VIP Server"
+    }
+    
+    // 组配置（通过 API）
+    {
+      "name": "VIP Group",
+      "inbound_tags": ["vless-premium-443"]  // 必须与主机的 inbound_tag 匹配
+    }
+    ```
+    
+    "VIP Group" 中的用户将看到此主机。不在该组中的用户将看不到它，无论其他设置如何。
+  </Tab>
+  <Tab value="覆盖安全">
+    ### 场景 5：覆盖安全类型
+    
+    **问题：** 入站使用 TLS，但您希望此主机使用 Reality。
+    
+    **解决方案：**
+    ```json
+    {
+      "security": "reality",  // 覆盖入站安全设置
+      "sni": ["reality.example.com"]
+    }
+    ```
+  </Tab>
+  <Tab value="自定义路径">
+    ### 场景 6：带变量的自定义路径
+    
+    **问题：** 您希望路径包含协议和传输类型。
+    
+    **解决方案：**
+    ```json
+    {
+      "path": "/{PROTOCOL}/{TRANSPORT}/path"
+    }
+    // 结果： "/vless/ws/path"
+    ```
+  </Tab>
+  <Tab value="多个端口">
+    ### 场景 7：来自入站的多个端口
+    
+    **问题：** 入站有端口 "8080,8443,9090"，您希望使用所有这些端口。
+    
+    **解决方案：**
+    ```json
+    {
+      "port": null  // 不设置端口，使用入站的多个端口
+    }
+    // 每个订阅请求随机选择一个端口
+    ```
+  </Tab>
+  <Tab value="XHTTP 下载">
+    ### 场景 8：带下载主机的 XHTTP
+    
+    **问题：** 您希望配置带下载主机的 XHTTP。
+    
+    **解决方案：**
+    ```json
+    {
+      "transport_settings": {
+        "xhttp_settings": {
+          "mode": "auto",
+          "download_settings": 5  // 引用主机 ID 5
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="通配符 SNI">
+    ### 场景 9：带随机盐的通配符 SNI
+    
+    **问题：** 您希望 SNI 为每个请求具有随机子域。
+    
+    **解决方案：**
+    ```json
+    {
+      "sni": ["*.example.com"]
+    }
+    // 每个请求： "a1b2c3d4.example.com"（随机盐替换 *）
+    ```
+  </Tab>
+  <Tab value="优先级排序">
+    ### 场景 10：优先级排序
+    
+    **问题：** 您希望某些主机在订阅中首先出现。
+    
+    **解决方案：**
+    ```json
+    // 高优先级主机
+    {
+      "remark": "Primary Server",
+      "priority": 1
+    }
+    
+    // 较低优先级主机
+    {
+      "remark": "Backup Server",
+      "priority": 100
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## 总结
+
+<Callout type="tip" title="最佳实践">
+- ✅ **主机值覆盖入站默认值** - 主机设置优先于入站默认值
+- ✅ **通过组的入站访问是必需的** - 主机只有在 `inbound_tag` 分配给用户组时才会出现
+- ✅ **在 `remark` 和 `address` 中使用格式变量** 用于用户特定的显示
+- ✅ **多个值随机选择** - SNI、host、address 和 port 值在每次订阅请求时随机选择
+- ✅ **通配符 (`*`)** 在 SNI/host/address 中用随机盐替换
+- ✅ **主机 `status` 过滤器** 确定哪些用户可以看到主机（但前提是入站通过组可访问）
+- ✅ **主机 `priority`** 确定订阅中的顺序
+- ✅ **`inbound_tag` 必须存在** 在您的 XRay 核心配置中并分配给用户组
+- ✅ **传输设置** 覆盖特定网络的入站默认值
+- ✅ **禁用的主机** (`is_disabled: true`) 从订阅中排除
+- ✅ **格式变量** 在生成订阅时被替换为用户特定的值
+- ✅ **基于组的访问控制** - 用户只能看到其入站在其分配的组中的主机
+</Callout>
+
+有关 XRay 配置的更多信息，请参阅 [核心配置](/panel/core)。
+
