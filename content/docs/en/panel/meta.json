@@ -10,6 +10,7 @@
     "features",
     "core",
     "host",
-    "groups"
+    "groups",
+    "user_template"
   ]
 }

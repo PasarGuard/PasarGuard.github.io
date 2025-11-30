@@ -1,0 +1,1142 @@
+---
+title: 用户模板配置
+description: 模板管理、字段应用、批量用户创建和 API 文档
+icon: FileText
+---
+
+# 用户模板文档
+
+本文档解释了用户模板在 PasarGuard 中的工作原理。模板是预配置的用户设置，可用于快速创建具有一致配置的用户。它旨在帮助初学者理解模板管理、字段应用和批量用户创建。
+
+## 目录
+
+1. [概述](#overview)
+2. [模板配置基础](#template-configuration-basics)
+3. [模板字段说明](#template-fields-explained)
+4. [模板的工作原理](#how-templates-work)
+5. [用户名处理](#username-handling)
+6. [额外设置](#extra-settings)
+7. [状态和过期](#status-and-expiration)
+8. [数据限制和重置策略](#data-limit-and-reset-strategy)
+9. [从模板创建用户](#creating-users-from-templates)
+10. [使用模板修改用户](#modifying-users-with-templates)
+11. [批量用户创建](#bulk-user-creation)
+12. [验证规则和约束](#validation-rules-and-constraints)
+13. [API 端点](#api-endpoints)
+14. [常见场景](#common-scenarios)
+
+---
+
+## 概述
+
+PasarGuard 中的用户模板是**预配置的用户设置**，它们：
+
+- **标准化用户创建** - 将一致的设置应用于多个用户
+- **加快用户管理** - 快速创建用户而无需配置每个字段
+- **支持批量操作** - 一次创建许多用户，自动生成用户名
+- **启用自动化** - 模板可用于自动化工作流
+
+### 模板流程
+
+```
+Template → User Creation → Applied Settings
+```
+
+**工作原理：**
+1. 管理员创建具有所需用户设置的模板
+2. 创建用户时，管理员选择模板
+3. 模板字段自动应用于新用户
+4. 管理员只需提供用户名（以及可选的备注）
+5. 使用所有模板设置创建用户
+
+<Callout type="info">
+模板是用户创建的**蓝图**。它们本身不创建用户 - 它们在创建用户时提供默认值。
+</Callout>
+
+---
+
+## 模板配置基础
+
+### 必填字段
+
+每个模板**必须**具有：
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `name` | string | 不能为空，最多 64 个字符，必须唯一 | 模板标识符/名称 |
+| `group_ids` | list[integer] | 创建时至少需要一个组 | 分配给从此模板创建的用户组 |
+
+### 可选字段
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `data_limit` | integer | `0`（无限制） | 数据限制（字节）（0 = 无限制） |
+| `expire_duration` | integer | `0`（无限制） | 过期持续时间（秒）（0 = 无限制） |
+| `username_prefix` | string | `null` | 添加到用户名的前缀（最多 20 个字符） |
+| `username_suffix` | string | `null` | 添加到用户名的后缀（最多 20 个字符） |
+| `extra_settings` | ExtraSettings | `null` | 协议特定设置（flow, method） |
+| `status` | UserStatusCreate | `active` | 初始用户状态（`active` 或 `on_hold`） |
+| `reset_usages` | boolean | `false` | 将模板应用于现有用户时重置数据使用量 |
+| `on_hold_timeout` | integer | `null` | `on_hold` 状态的超时（秒） |
+| `data_limit_reset_strategy` | DataLimitResetStrategy | `no_reset` | 数据限制重置方式 |
+| `is_disabled` | boolean | `false` | 禁用模板（防止使用） |
+
+### 模板响应字段
+
+检索模板时，您还会获得：
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | integer | 唯一标识符（自动生成） |
+
+---
+
+## 模板字段说明
+
+### 基本字段
+
+#### `name` (String, 必填)
+- **用途：** 模板标识符
+- **约束：** 最多 64 个字符
+- **示例：** `"Premium Plan"`, `"Basic User"`, `"Trial Account"`
+
+#### `group_ids` (List[Integer], 创建时必填)
+- **用途：** 分配给从此模板创建的用户的组
+- **行为：** 创建时用户自动加入这些组
+- **验证：** 所有组 ID 必须存在
+- **示例：** `[1, 2, 3]` - 用户加入组 1、2 和 3
+
+#### `data_limit` (Integer, 可选)
+- **用途：** 最大数据使用量（字节）
+- **默认值：** `0`（无限制）
+- **格式：** 字节（例如，`1073741824` = 1 GB）
+- **示例：** `1073741824` = 1 GB 限制
+
+#### `expire_duration` (Integer, 可选)
+- **用途：** 账户过期持续时间（秒）
+- **默认值：** `0`（无限制）
+- **计算：** 创建用户时，过期时间 = 现在 + expire_duration
+- **示例：** `2592000` = 30 天 (30 * 24 * 60 * 60)
+
+### 用户名字段
+
+#### `username_prefix` (String, 可选)
+- **用途：** 创建用户时添加到用户名之前的前缀
+- **约束：** 最多 20 个字符
+- **行为：** 添加到提供的用户名
+- **示例：** 前缀 `"premium_"` + 用户名 `"john"` = `"premium_john"`
+
+#### `username_suffix` (String, 可选)
+- **用途：** 创建用户时添加到用户名之后的后缀
+- **约束：** 最多 20 个字符
+- **行为：** 添加到提供的用户名
+- **示例：** 用户名 `"john"` + 后缀 `"_vip"` = `"john_vip"`
+
+**组合示例：**
+```
+prefix: "premium_"
+username: "john"
+suffix: "_vip"
+Result: "premium_john_vip"
+```
+
+### 状态字段
+
+#### `status` (UserStatusCreate, 可选)
+- **用途：** 初始用户状态
+- **选项：**
+  - `active` - 用户处于活动状态（默认）
+  - `on_hold` - 用户处于暂停状态
+- **默认值：** `active`
+- **行为：** 影响过期时间的计算（请参阅状态和过期部分）
+
+#### `on_hold_timeout` (Integer, 可选)
+- **用途：** `on_hold` 状态应开始/结束的时间
+- **格式：** 从创建时间开始的秒数
+- **必需：** 当 `status` 为 `on_hold` 且设置了 `expire_duration` 时
+- **示例：** `3600` = 用户 1 小时后变为活动状态
+
+### 数据管理字段
+
+#### `data_limit_reset_strategy` (DataLimitResetStrategy, 可选)
+- **用途：** 数据限制重置方式
+- **选项：**
+  - `no_reset` - 从不重置（默认）
+  - `day` - 每天重置
+  - `week` - 每周重置
+  - `month` - 每月重置
+  - `year` - 每年重置
+- **默认值：** `no_reset`
+- **注意：** 仅在设置了 `data_limit` 时适用
+
+#### `reset_usages` (Boolean, 可选)
+- **用途：** 将模板应用于现有用户时重置数据使用量
+- **默认值：** `false`
+- **行为：** 仅在修改现有用户时使用
+- **效果：** 清除用户的数据使用历史
+
+### 高级字段
+
+#### `extra_settings` (ExtraSettings, 可选)
+- **用途：** 协议特定设置
+- **字段：**
+  - `flow` - VLESS 流控制（XTLSFlows 枚举）
+  - `method` - Shadowsocks 加密方法（ShadowsocksMethods 枚举）
+- **默认值：** `null`
+- **示例：** `{"flow": "xtls-rprx-vision", "method": "chacha20-poly1305"}`
+
+#### `is_disabled` (Boolean, 可选)
+- **用途：** 禁用模板以防止使用
+- **默认值：** `false`
+- **行为：** 禁用的模板不能用于创建或修改用户
+- **用例：** 临时禁用模板而不删除它们
+
+---
+
+## 模板的工作原理
+
+### 模板应用过程
+
+从模板创建用户时：
+
+1. **模板验证** - 模板必须存在且未禁用
+2. **字段加载** - 从模板加载基本字段
+3. **用户名构建** - 前缀 + 用户名 + 后缀
+4. **设置应用** - 应用额外设置（flow, method）
+5. **用户创建** - 使用所有模板值创建用户
+
+### 字段应用顺序
+
+```
+Template Fields → User Creation → Final User
+```
+
+**应用的内容：**
+- ✅ `data_limit` → 用户的数据限制
+- ✅ `expire_duration` → 用户的过期时间（从现在开始计算）
+- ✅ `group_ids` → 用户的组
+- ✅ `status` → 用户的初始状态
+- ✅ `data_limit_reset_strategy` → 用户的重置策略
+- ✅ `username_prefix` + `username` + `username_suffix` → 最终用户名
+- ✅ `extra_settings.flow` → VLESS 流设置
+- ✅ `extra_settings.method` → Shadowsocks 方法设置
+- ✅ `on_hold_timeout` → 用户的 on_hold 超时（如果状态为 on_hold）
+
+**不应用的内容：**
+- ❌ `name` - 模板名称不会复制到用户
+- ❌ `is_disabled` - 模板状态不影响创建的用户
+- ❌ `reset_usages` - 仅在修改现有用户时使用
+
+---
+
+## 用户名处理
+
+### 用户名构建
+
+从模板创建用户时，最终用户名构建为：
+
+```
+Final Username = prefix + provided_username + suffix
+```
+
+**规则：**
+- 如果前缀为 `null` 或空，则不添加
+- 如果后缀为 `null` 或空，则不添加
+- 提供的用户名必须仍然有效（3-128 个字符，字母数字 + 特殊字符）
+- 最终用户名必须唯一
+
+<Tabs items={['仅前缀', '仅后缀', '两者', '无']}>
+<Tab value="仅前缀">
+
+```
+Template: prefix = "premium_", suffix = null
+Provided: username = "john"
+Result: "premium_john"
+```
+
+</Tab>
+<Tab value="仅后缀">
+
+```
+Template: prefix = null, suffix = "_vip"
+Provided: username = "john"
+Result: "john_vip"
+```
+
+</Tab>
+<Tab value="两者">
+
+```
+Template: prefix = "premium_", suffix = "_vip"
+Provided: username = "john"
+Result: "premium_john_vip"
+```
+
+</Tab>
+<Tab value="无">
+
+```
+Template: prefix = null, suffix = null
+Provided: username = "john"
+Result: "john"
+```
+
+</Tab>
+</Tabs>
+
+### 用户名验证
+
+**最终用户名**（前缀/后缀后）必须：
+- 长度为 3-128 个字符
+- 仅包含：a-z, A-Z, 0-9, `-`, `_`, `@`, `.`
+- 没有连续的特殊字符
+- 唯一（不存在）
+
+<Callout type="info">
+**验证发生在最终用户名上**，而不是提供的用户名。
+</Callout>
+
+---
+
+## 额外设置
+
+### Flow (VLESS)
+
+控制 VLESS 流控制设置。
+
+**选项：**
+- `none` - 无流（默认）
+- `xtls-rprx-vision` - XTLS Reality Proxy Vision
+
+**应用于：** 用户的 VLESS 代理设置
+
+**示例：**
+```json
+{
+  "extra_settings": {
+    "flow": "xtls-rprx-vision"
+  }
+}
+```
+
+### Method (Shadowsocks)
+
+控制 Shadowsocks 加密方法。
+
+**选项：**
+- `chacha20-ietf-poly1305` - ChaCha20-ietf-Poly1305（默认）
+- `xchacha20-poly1305` - XChaCha20-Poly1305
+- `aes-128-gcm` - AES-128-GCM
+- `aes-256-gcm` - AES-256-GCM
+- 以及其他 Shadowsocks 方法
+
+**应用于：** 用户的 Shadowsocks 代理设置
+
+**示例：**
+```json
+{
+  "extra_settings": {
+    "method": "aes-256-gcm"
+  }
+}
+```
+
+### 组合额外设置
+
+您可以同时设置 flow 和 method：
+
+```json
+{
+  "extra_settings": {
+    "flow": "xtls-rprx-vision",
+    "method": "aes-256-gcm"
+  }
+}
+```
+
+---
+
+## 状态和过期
+
+### 活动状态
+
+当 `status` 为 `active` 时：
+
+- **过期计算：**
+  - 如果 `expire_duration > 0`：`expire = now + expire_duration`
+  - 如果 `expire_duration = 0`：`expire = 0`（无限制）
+
+**示例：**
+```
+Template: status = "active", expire_duration = 2592000 (30 天)
+User created: 2024-01-01 00:00:00
+Result: expire = 2024-01-31 00:00:00
+```
+
+### 暂停状态
+
+当 `status` 为 `on_hold` 时：
+
+- **过期：** 始终设置为 `0`（无限制）
+- **暂停过期持续时间：** 使用 `expire_duration` 作为 `on_hold_expire_duration`
+- **暂停超时：**
+  - 如果设置了 `on_hold_timeout`：`on_hold_timeout = now + on_hold_timeout`
+  - 如果未设置 `on_hold_timeout`：`on_hold_timeout = null`
+
+**示例：**
+```
+Template: 
+  status = "on_hold"
+  expire_duration = 2592000 (30 天)
+  on_hold_timeout = 3600 (1 小时)
+
+User created: 2024-01-01 00:00:00
+Result:
+  expire = 0 (无限制)
+  on_hold_expire_duration = 2592000
+  on_hold_timeout = 2024-01-01 01:00:00 (1 小时后变为活动)
+```
+
+<Callout type="warning">
+**验证：** 如果 `status` 为 `on_hold` 且 `expire_duration > 0`，则必须设置 `on_hold_timeout`。
+</Callout>
+
+---
+
+## 数据限制和重置策略
+
+### 数据限制
+
+- **格式：** 字节（整数）
+- **默认值：** `0`（无限制）
+- **应用于：** 用户的 `data_limit` 字段
+
+**示例：**
+- `1073741824` = 1 GB
+- `5368709120` = 5 GB
+- `0` = 无限制
+
+### 重置策略
+
+控制数据限制重置方式（仅在 `data_limit > 0` 时适用）：
+
+| Strategy | Description | Reset Interval |
+|----------|-------------|----------------|
+| `no_reset` | 从不重置 | 从不 |
+| `day` | 每天重置 | 每 24 小时 |
+| `week` | 每周重置 | 每 7 天 |
+| `month` | 每月重置 | 每 30 天 |
+| `year` | 每年重置 | 每 365 天 |
+
+**行为：**
+- 重置时，用户的 `used_traffic` 重置为 0
+- 重置时间从用户创建时间计算
+- 重置日志保存在 `UserUsageResetLogs` 中
+
+**示例：**
+```
+Template:
+  data_limit = 1073741824 (1 GB)
+  data_limit_reset_strategy = "month"
+
+User created: 2024-01-01
+Result:
+  - 用户有 1 GB 限制
+  - 限制在 2024-01-31、2024-03-01 等重置
+```
+
+---
+
+## 从模板创建用户
+
+### 创建单个用户
+
+**Endpoint:** `POST /api/user/from_template`
+
+**Request:**
+```json
+{
+  "user_template_id": 1,
+  "username": "john",
+  "note": "Premium customer"
+}
+```
+
+**过程：**
+1. 验证模板（存在，未禁用）
+2. 从模板加载基本字段
+3. 构建用户名：`prefix + "john" + suffix`
+4. 应用额外设置
+5. 使用所有模板值创建用户
+
+**Response:** 包含所有应用设置的用户对象
+
+### 应用的内容
+
+所有模板字段都应用于新用户：
+
+- ✅ 来自 `group_ids` 的组
+- ✅ 来自 `data_limit` 的数据限制
+- ✅ 来自 `expire_duration` 的过期时间（已计算）
+- ✅ 来自 `status` 的状态
+- ✅ 数据限制重置策略
+- ✅ VLESS 流（如果在 extra_settings 中设置）
+- ✅ Shadowsocks 方法（如果在 extra_settings 中设置）
+- ✅ 暂停超时（如果状态为 on_hold）
+
+---
+
+## 使用模板修改用户
+
+### 将模板应用于现有用户
+
+**Endpoint:** `PUT /api/user/{username}/from_template`
+
+**Request:**
+```json
+{
+  "user_template_id": 2,
+  "note": "Updated to premium plan"
+}
+```
+
+**过程：**
+1. 验证模板（存在，未禁用）
+2. 从模板加载基本字段
+3. 保留用户现有的 `proxy_settings`
+4. 应用模板字段（覆盖用户的当前值）
+5. 如果 `reset_usages` 为 `true`，则重置用户的数据使用量
+6. 更新用户
+
+### 应用的内容
+
+使用模板修改用户时：
+
+- ✅ 来自 `group_ids` 的组（替换用户的组）
+- ✅ 来自 `data_limit` 的数据限制
+- ✅ 来自 `expire_duration` 的过期时间（重新计算）
+- ✅ 来自 `status` 的状态
+- ✅ 数据限制重置策略
+- ✅ VLESS 流（如果在 extra_settings 中设置）
+- ✅ Shadowsocks 方法（如果在 extra_settings 中设置）
+- ✅ 暂停超时（如果状态为 on_hold）
+- ✅ 数据使用量重置（如果 `reset_usages` 为 `true`）
+
+**不更改的内容：**
+- ❌ 用户名（无法更改）
+- ❌ 代理设置结构（仅更新 flow/method）
+- ❌ 用户的创建日期
+- ❌ 用户的管理员（创建者）
+
+### 重置使用量标志
+
+当模板中的 `reset_usages` 为 `true` 时：
+
+- 用户的 `used_traffic` 重置为 0
+- 清除使用历史
+- 创建重置日志条目
+
+**用例：** 将用户升级到新计划时，您可能希望重置其使用量。
+
+---
+
+## 批量用户创建
+
+### 概述
+
+批量用户创建允许一次从模板创建多个用户，自动生成用户名。
+
+**Endpoint:** `POST /api/users/bulk/from_template`
+
+**功能：**
+- 一次创建最多 500 个用户
+- 自动生成用户名
+- 两种用户名生成策略
+- 返回所有创建用户的订阅 URL
+
+### 用户名生成策略
+
+<Tabs items={['随机策略', '序列策略']}>
+<Tab value="随机策略">
+
+**Strategy:** `random`
+
+**行为：**
+- 生成随机用户名
+- 格式：5 个随机字母数字字符（A-Z, 0-9）
+- 示例：`"A3K9M"`, `"X7P2Q"`
+
+**Request:**
+```json
+{
+  "user_template_id": 1,
+  "count": 10,
+  "strategy": "random",
+  "username": null,
+  "note": "Bulk created users"
+}
+```
+
+**约束：**
+- `username` 必须为 `null` 或空
+- 不得提供 `start_number`
+
+</Tab>
+<Tab value="序列策略">
+
+**Strategy:** `sequence`
+
+**行为：**
+- 生成顺序用户名
+- 格式：`base_username + number`
+- 示例：`"user1"`, `"user2"`, `"user3"`
+
+**Request:**
+```json
+{
+  "user_template_id": 1,
+  "count": 10,
+  "strategy": "sequence",
+  "username": "user",
+  "start_number": 1,
+  "note": "Sequential users"
+}
+```
+
+**约束：**
+- `username` 必需
+- `start_number` 可选（默认为 1）
+- 如果基本用户名以数字结尾，则忽略它们
+
+**示例：**
+```
+Base: "user", start: 1 → "user1", "user2", "user3"
+Base: "user10", start: 1 → "user11", "user12", "user13" (忽略 10)
+Base: "test", start: 100 → "test100", "test101", "test102"
+```
+
+</Tab>
+</Tabs>
+
+### 批量创建中的用户名前缀/后缀
+
+模板的 `username_prefix` 和 `username_suffix` 应用于**所有**生成的用户名：
+
+**示例：**
+```
+Template: prefix = "premium_", suffix = "_vip"
+Strategy: sequence, base = "user", start = 1
+
+Generated usernames:
+  "premium_user1_vip"
+  "premium_user2_vip"
+  "premium_user3_vip"
+```
+
+### 批量创建过程
+
+1. **模板验证** - 模板存在且未禁用
+2. **策略验证** - 检查用户名策略规则
+3. **用户名生成** - 根据策略生成用户名
+4. **重复过滤** - 过滤现有用户名
+5. **用户创建** - 使用模板设置创建所有用户
+6. **订阅 URL** - 为所有创建的用户生成 URL
+
+### Response
+
+```json
+{
+  "subscription_urls": [
+    "https://example.com/sub/user1?token=...",
+    "https://example.com/sub/user2?token=..."
+  ],
+  "created": 10
+}
+```
+
+<Callout type="info">
+**注意：** 如果某些用户名已存在，`created` 计数可能少于 `count`。
+</Callout>
+
+### 约束
+
+- **最大数量：** 每个请求 500 个用户
+- **最小数量：** 1 个用户
+- **用户名唯一性：** 自动跳过重复用户名
+- **模板验证：** 模板必须存在且未禁用
+
+---
+
+## 验证规则和约束
+
+### 名称验证
+
+| Rule | Constraint | Error Message |
+|------|------------|---------------|
+| Required | 不能为空 | "name can't be empty" |
+| Length | 最多 64 个字符 | Name too long |
+| Uniqueness | 必须唯一 | "Template by this name already exists" |
+
+### Group IDs 验证
+
+| Rule | Constraint | Error Message |
+|------|------------|---------------|
+| Creation | 至少需要一个 | "you must select at least one group" |
+| Existence | 所有 ID 必须存在 | Group not found |
+| Modification | 可以为空/null | 修改时允许 |
+
+### 用户名前缀/后缀验证
+
+| Rule | Constraint | Error Message |
+|------|------------|---------------|
+| Length | 最多 20 个字符 | Prefix/suffix too long |
+| Characters | 与用户名规则相同 | Invalid characters |
+
+### 状态验证
+
+| Rule | Constraint | Error Message |
+|------|------------|---------------|
+| On Hold | 如果 `on_hold` 且 `expire_duration > 0`，需要 `on_hold_timeout` | "User cannot be on hold without a valid on_hold_expire_duration" |
+| On Hold | `on_hold` 时不能有 `expire` | "User cannot be on hold with specified expire" |
+
+### 数据限制验证
+
+| Rule | Constraint | Error Message |
+|------|------------|---------------|
+| Minimum | 必须 >= 0 | Data limit must be 0 or greater |
+
+### 过期持续时间验证
+
+| Rule | Constraint | Error Message |
+|------|------------|---------------|
+| Minimum | 必须 >= 0 | Expire duration must be 0 or greater |
+| Format | 秒（整数） | Must be integer |
+
+### 禁用模板验证
+
+<Callout type="warning">
+- 禁用的模板不能用于创建用户
+- 禁用的模板不能用于修改用户
+- 错误："this template is disabled"
+</Callout>
+
+---
+
+## API 端点
+
+### 创建模板
+
+**Endpoint:** `POST /api/user_template`
+
+**Authentication:** 需要 sudo 管理员
+
+**Request Body:**
+```json
+{
+  "name": "Premium Plan",
+  "data_limit": 1073741824,
+  "expire_duration": 2592000,
+  "username_prefix": "premium_",
+  "username_suffix": "_vip",
+  "group_ids": [1, 2],
+  "status": "active",
+  "data_limit_reset_strategy": "month",
+  "extra_settings": {
+    "flow": "xtls-rprx-vision",
+    "method": "aes-256-gcm"
+  },
+  "is_disabled": false
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "Premium Plan",
+  "data_limit": 1073741824,
+  "expire_duration": 2592000,
+  "username_prefix": "premium_",
+  "username_suffix": "_vip",
+  "group_ids": [1, 2],
+  "status": "active",
+  "data_limit_reset_strategy": "month",
+  "extra_settings": {
+    "flow": "xtls-rprx-vision",
+    "method": "aes-256-gcm"
+  },
+  "is_disabled": false
+}
+```
+
+### 获取所有模板
+
+**Endpoint:** `GET /api/user_templates`
+
+**Authentication:** 需要管理员
+
+**Query Parameters:**
+- `offset`（可选）：分页偏移量
+- `limit`（可选）：分页限制
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "name": "Premium Plan",
+    "group_ids": [1, 2],
+    ...
+  }
+]
+```
+
+### 按 ID 获取模板
+
+**Endpoint:** `GET /api/user_template/{template_id}`
+
+**Authentication:** 需要管理员
+
+**Response:** 与创建模板响应相同
+
+### 修改模板
+
+**Endpoint:** `PUT /api/user_template/{template_id}`
+
+**Authentication:** 需要 sudo 管理员
+
+**Request Body:** 与创建相同的字段（全部可选）
+
+**Response:** 更新的模板
+
+### 删除模板
+
+**Endpoint:** `DELETE /api/user_template/{template_id}`
+
+**Authentication:** 需要 sudo 管理员
+
+**Response:** `204 No Content`
+
+### 从模板创建用户
+
+**Endpoint:** `POST /api/user/from_template`
+
+**Authentication:** 需要管理员
+
+**Request Body:**
+```json
+{
+  "user_template_id": 1,
+  "username": "john",
+  "note": "Premium customer"
+}
+```
+
+**Response:** 用户对象
+
+### 使用模板修改用户
+
+**Endpoint:** `PUT /api/user/{username}/from_template`
+
+**Authentication:** 需要管理员
+
+**Request Body:**
+```json
+{
+  "user_template_id": 2,
+  "note": "Upgraded to premium"
+}
+```
+
+**Response:** 更新的用户对象
+
+### 从模板批量创建用户
+
+**Endpoint:** `POST /api/users/bulk/from_template`
+
+**Authentication:** 需要管理员
+
+**Request Body:**
+```json
+{
+  "user_template_id": 1,
+  "count": 10,
+  "strategy": "random",
+  "username": null,
+  "note": "Bulk created"
+}
+```
+
+**Response:**
+```json
+{
+  "subscription_urls": ["..."],
+  "created": 10
+}
+```
+
+---
+
+## 常见场景
+
+<Tabs items={['基本模板', '用户名前缀', '额外设置', '暂停', '每月重置', '创建用户', '批量随机', '批量序列', '更新用户', '重置使用量', '禁用模板', '多个组', '无限制', '前缀和后缀']}>
+<Tab value="基本模板">
+
+**问题：** 您想要一个用于高级用户的模板，限制 1 GB，过期 30 天。
+
+**解决方案：**
+```json
+POST /api/user_template
+{
+  "name": "Premium Plan",
+  "data_limit": 1073741824,
+  "expire_duration": 2592000,
+  "group_ids": [1],
+  "status": "active"
+}
+```
+
+</Tab>
+<Tab value="用户名前缀">
+
+**问题：** 您希望模板中的所有用户都有 "premium_" 前缀。
+
+**解决方案：**
+```json
+{
+  "name": "Premium Plan",
+  "username_prefix": "premium_",
+  "group_ids": [1]
+}
+```
+
+使用用户名 "john" 创建用户时，最终用户名为 "premium_john"。
+
+</Tab>
+<Tab value="额外设置">
+
+**问题：** 您希望模板设置 VLESS 流和 Shadowsocks 方法。
+
+**解决方案：**
+```json
+{
+  "name": "Advanced Plan",
+  "group_ids": [1],
+  "extra_settings": {
+    "flow": "xtls-rprx-vision",
+    "method": "aes-256-gcm"
+  }
+}
+```
+
+</Tab>
+<Tab value="暂停">
+
+**问题：** 您希望模板创建暂停 1 小时，然后活动 30 天的用户。
+
+**解决方案：**
+```json
+{
+  "name": "Trial Plan",
+  "status": "on_hold",
+  "expire_duration": 2592000,
+  "on_hold_timeout": 3600,
+  "group_ids": [1]
+}
+```
+
+用户以暂停状态开始，1 小时后变为活动，总共 30 天后过期。
+
+</Tab>
+<Tab value="每月重置">
+
+**问题：** 您希望模板限制 5 GB，每月重置。
+
+**解决方案：**
+```json
+{
+  "name": "Monthly Plan",
+  "data_limit": 5368709120,
+  "data_limit_reset_strategy": "month",
+  "group_ids": [1]
+}
+```
+
+</Tab>
+<Tab value="创建用户">
+
+**问题：** 您想使用模板快速创建用户。
+
+**解决方案：**
+```json
+POST /api/user/from_template
+{
+  "user_template_id": 1,
+  "username": "john",
+  "note": "New customer"
+}
+```
+
+用户使用所有模板设置自动应用创建。
+
+</Tab>
+<Tab value="批量随机">
+
+**问题：** 您想创建 50 个具有随机用户名的用户。
+
+**解决方案：**
+```json
+POST /api/users/bulk/from_template
+{
+  "user_template_id": 1,
+  "count": 50,
+  "strategy": "random",
+  "username": null
+}
+```
+
+创建了 50 个具有随机 5 字符用户名的用户。
+
+</Tab>
+<Tab value="批量序列">
+
+**问题：** 您想创建 100 个名为 "user1"、"user2" 等的用户。
+
+**解决方案：**
+```json
+POST /api/users/bulk/from_template
+{
+  "user_template_id": 1,
+  "count": 100,
+  "strategy": "sequence",
+  "username": "user",
+  "start_number": 1
+}
+```
+
+</Tab>
+<Tab value="更新用户">
+
+**问题：** 您想使用模板将现有用户升级到高级计划。
+
+**解决方案：**
+```json
+PUT /api/user/john/from_template
+{
+  "user_template_id": 2,
+  "note": "Upgraded to premium"
+}
+```
+
+用户 "john" 从模板 2 获取所有设置，保留其代理设置结构。
+
+</Tab>
+<Tab value="重置使用量">
+
+**问题：** 升级用户时，您想重置其数据使用量。
+
+**解决方案：**
+```json
+// 首先，更新模板以启用 reset_usages
+PUT /api/user_template/2
+{
+  "reset_usages": true
+}
+
+// 然后将模板应用于用户
+PUT /api/user/john/from_template
+{
+  "user_template_id": 2
+}
+```
+
+用户的数据使用量重置为 0。
+
+</Tab>
+<Tab value="禁用模板">
+
+**问题：** 您想暂时阻止使用模板。
+
+**解决方案：**
+```json
+PUT /api/user_template/1
+{
+  "is_disabled": true
+}
+```
+
+模板在重新启用之前无法使用。
+
+</Tab>
+<Tab value="多个组">
+
+**问题：** 您希望模板将用户分配到多个组。
+
+**解决方案：**
+```json
+{
+  "name": "Multi-Group Plan",
+  "group_ids": [1, 2, 3],
+  "data_limit": 1073741824
+}
+```
+
+从此模板创建的用户加入所有三个组。
+
+</Tab>
+<Tab value="无限制">
+
+**问题：** 您希望模板具有无限制数据和不过期。
+
+**解决方案：**
+```json
+{
+  "name": "Unlimited Plan",
+  "data_limit": 0,
+  "expire_duration": 0,
+  "group_ids": [1]
+}
+```
+
+</Tab>
+<Tab value="前缀和后缀">
+
+**问题：** 您希望用户名如 "premium_john_vip"。
+
+**解决方案：**
+```json
+{
+  "name": "VIP Plan",
+  "username_prefix": "premium_",
+  "username_suffix": "_vip",
+  "group_ids": [1]
+}
+```
+
+创建用户 "john" 时，最终用户名为 "premium_john_vip"。
+
+</Tab>
+</Tabs>
+
+---
+
+## 总结
+
+- ✅ **模板是蓝图** - 它们为创建用户提供默认值
+- ✅ **所有字段都应用** - 创建用户时模板设置会覆盖默认值
+- ✅ **用户名前缀/后缀** - 自动添加到用户名
+- ✅ **额外设置** - 应用协议特定设置（flow, method）
+- ✅ **组分配** - 用户自动加入模板的组
+- ✅ **状态处理** - 支持 active 和 on_hold 及超时
+- ✅ **过期计算** - 从 expire_duration 自动计算
+- ✅ **数据限制重置** - 可配置的重置策略
+- ✅ **批量创建** - 使用自动用户名生成创建最多 500 个用户
+- ✅ **禁用的模板** - 在重新启用之前无法使用
+- ✅ **用户修改** - 将模板应用于现有用户
+- ✅ **重置使用量** - 修改用户时重置数据使用量的选项
+
+有关更多信息：
+- 组：请参阅 [groups.mdx](./groups.mdx)
+- 主机：请参阅 [hosts.mdx](./hosts.mdx)
+- XRay 配置：请参阅 [xray.mdx](./xray.mdx)
+

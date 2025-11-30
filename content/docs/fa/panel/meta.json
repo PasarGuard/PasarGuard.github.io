@@ -9,7 +9,8 @@
     "features",
     "core",
     "host",
-    "groups"
+    "groups",
+    "user_template"
   ],
   "icon": "Monitor"
 }
