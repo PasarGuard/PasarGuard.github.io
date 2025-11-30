@@ -1,0 +1,849 @@
+---
+title: 组配置
+description: 组管理、访问控制、关系和 API 文档
+icon: Users
+---
+
+# 组文档
+
+本文档解释了组在 PasarGuard 中的工作原理。组是控制用户在其订阅中可以访问哪些入站（以及因此哪些主机）的主要机制。它旨在帮助初学者理解组管理、关系和访问控制。
+
+## 目录
+
+1. [概述](#overview)
+2. [组配置基础](#group-configuration-basics)
+3. [组的工作原理](#how-groups-work)
+4. [关系](#relationships)
+5. [入站访问控制](#inbound-access-control)
+6. [组管理](#group-management)
+7. [批量操作](#bulk-operations)
+8. [验证规则和约束](#validation-rules-and-constraints)
+9. [API 端点](#api-endpoints)
+10. [常见场景](#common-scenarios)
+
+---
+
+## 概述
+
+PasarGuard 中的组是访问控制机制，它们：
+
+- **连接用户到入站** - 组定义用户可以访问哪些入站标签
+- **控制主机可见性** - 用户只能看到其 `inbound_tag` 在其组中的主机
+- **启用批量管理** - 一次将组分配给多个用户
+- **支持模板** - 用户模板可以分配给组以自动分配组
+
+### 组流程
+
+```
+User → Groups → Inbound Tags → Hosts (in subscriptions)
+```
+
+**工作原理：**
+1. 用户被分配到组（多对多关系）
+2. 组被分配入站标签（多对多关系）
+3. 生成订阅时，PasarGuard 收集用户所有组中的所有入站标签
+4. 只有 `inbound_tag` 与这些可访问入站之一匹配的主机才会出现在订阅中
+
+<Callout type="warning">
+组是用户和主机之间的**网关**。没有组成员资格，用户无法在其订阅中看到任何主机。
+</Callout>
+
+---
+
+## 组配置基础
+
+### 必填字段
+
+每个组**必须**具有：
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `name` | string | 3-64 个字符，仅 a-z 和 0-9 | 唯一的组标识符/名称 |
+| `inbound_tags` | list[string] | 至少需要一个标签（创建时） | 此组可以访问的入站标签列表 |
+
+### 可选字段
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `is_disabled` | boolean | `false` | 禁用组（将其从访问计算中排除） |
+| `inbound_tags` | list[string] | 可以为空/null（修改时） | 修改时可以清除 |
+
+### 组响应字段
+
+检索组时，您还会获得：
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | integer | 唯一标识符（自动生成） |
+| `total_users` | integer | 当前在此组中的用户数 |
+
+---
+
+## 组的工作原理
+
+### 基本概念
+
+组充当**权限容器**，授予用户访问特定入站的权限。可以这样理解：
+
+- **Group** = 权限集
+- **Inbound Tags** = 组允许访问的内容
+- **Users** = 获得权限的人
+
+### 示例流程
+
+```
+1. 创建组 "Premium"，inbound_tags: ["vless-443", "trojan-8443"]
+2. 将用户 "john" 分配到组 "Premium"
+3. 当 "john" 请求订阅时：
+   - 系统收集：["vless-443", "trojan-8443"]（来自 Premium 组）
+   - 只有 inbound_tag 匹配这些的主机出现
+   - inbound_tag 为 "vmess-8080" 的主机不会出现（不在组中）
+```
+
+### 禁用的组
+
+当组具有 `is_disabled: true` 时：
+- 组从入站访问计算中**排除**
+- 禁用组中的用户**失去访问**这些入站的权限
+- 组仍然存在，可以重新启用
+
+**示例：**
+```
+User "john" 在：
+  - Group "Premium"（已禁用）带有 ["vless-443"]
+  - Group "Standard"（已启用）带有 ["vmess-8080"]
+
+结果：用户只能访问 ["vmess-8080"]
+```
+
+---
+
+## 关系
+
+### User ↔ Group 关系
+
+- **多对多**：用户可以属于多个组，组可以有多个用户
+- **关联表**：`users_groups_association`
+- **无限制**：用户可以在无限个组中
+
+**示例：**
+```
+User "john" 属于：
+  - Group "Premium"
+  - Group "Standard"
+  - Group "VIP"
+
+用户获得所有组的所有入站的访问权限（如果启用）
+```
+
+### Group ↔ Inbound 关系
+
+- **多对多**：组可以有多个入站，入站可以在多个组中
+- **关联表**：`inbounds_groups_association`
+- **入站标签**：组通过其 `tag`（不是 ID）引用入站
+
+**示例：**
+```
+Group "Premium" 有：
+  - inbound_tag: "vless-443"
+  - inbound_tag: "trojan-8443"
+  - inbound_tag: "vmess-8080"
+
+"Premium" 中的所有用户都可以访问具有这些入站标签的主机
+```
+
+### Group ↔ UserTemplate 关系
+
+- **多对多**：组可以分配给用户模板
+- **目的**：从模板创建用户时，它们会自动分配给模板的组
+- **关联表**：`template_group_association`
+
+**示例：**
+```
+UserTemplate "Basic Plan" 有：
+  - Group "Standard"
+  - Group "Free"
+
+从此模板创建的新用户会自动加入两个组
+```
+
+---
+
+## 入站访问控制
+
+### 如何计算入站访问
+
+当用户请求订阅时，PasarGuard：
+
+1. **收集用户所属的所有组**
+2. **过滤掉禁用的组**
+3. **从启用的组中收集所有入站标签**
+4. **去重**入站标签（用户可能从多个组中拥有相同的入站）
+5. **使用此列表**过滤订阅中出现的主机
+
+### 代码流程
+
+```python
+# 伪代码说明发生了什么
+user_groups = user.groups  # 获取用户的所有组
+enabled_groups = [g for g in user_groups if not g.is_disabled]
+accessible_inbounds = set()
+for group in enabled_groups:
+    accessible_inbounds.update(group.inbound_tags)
+
+# 现在过滤主机
+for host in all_hosts:
+    if host.inbound_tag in accessible_inbounds:
+        # 包含在订阅中
+        pass
+```
+
+### 访问示例
+
+<Tabs items={['单个组', '多个组', '禁用的组', '无组']}>
+<Tab value="单个组">
+
+```
+User "john" → Group "Premium" → ["vless-443", "trojan-8443"]
+结果：用户可以看到 inbound_tag 为 "vless-443" 或 "trojan-8443" 的主机
+```
+
+</Tab>
+<Tab value="多个组">
+
+```
+User "john" → 
+  - Group "Premium" → ["vless-443"]
+  - Group "Standard" → ["vmess-8080", "vless-443"]
+  
+结果：用户可以看到 inbound_tag 为 "vless-443" 或 "vmess-8080" 的主机
+注意："vless-443" 出现在两个组中，但会去重
+```
+
+</Tab>
+<Tab value="禁用的组">
+
+```
+User "john" →
+  - Group "Premium"（已禁用）→ ["vless-443"]
+  - Group "Standard"（已启用）→ ["vmess-8080"]
+  
+结果：用户只能看到 inbound_tag 为 "vmess-8080" 的主机
+注意：Premium 组被忽略，因为它已禁用
+```
+
+</Tab>
+<Tab value="无组">
+
+```
+User "john" → 未分配组
+结果：用户在订阅中看不到任何主机（空订阅）
+```
+
+</Tab>
+</Tabs>
+
+---
+
+## 组管理
+
+### 创建组
+
+创建组时：
+
+1. **名称验证**：必须是 3-64 个字符，仅 a-z 和 0-9
+2. **入站验证**：所有入站标签必须存在于 XRay 核心配置中
+3. **唯一性**：组名必须唯一
+4. **自动创建**：如果入站标签不存在，它们会在数据库中自动创建
+
+**示例：**
+```json
+POST /api/group
+{
+  "name": "premium",
+  "inbound_tags": ["vless-443", "trojan-8443"],
+  "is_disabled": false
+}
+```
+
+**验证：**
+- ✅ 名称有效（3-64 个字符）
+- ✅ 所有入站标签都存在于核心配置中
+
+### 修改组
+
+修改组时：
+
+1. **可以更改名称**（必须仍然唯一）
+2. **可以更新入站标签**（所有标签必须存在于核心配置中）
+3. **可以禁用/启用**
+4. **可以清除入站标签**（设置为空列表/null）
+5. **用户自动更新** - 活动用户和 on_hold 用户会更新其节点配置
+
+**示例：**
+```json
+PUT /api/group/1
+{
+  "name": "premium-v2",
+  "inbound_tags": ["vless-443", "trojan-8443", "vmess-8080"],
+  "is_disabled": false
+}
+```
+
+**会发生什么：**
+- 组名更改
+- 入站标签更新
+- 此组中的所有用户都会获得更新的节点配置
+- 他们的订阅现在包括具有新入站标签的主机
+
+### 删除组
+
+删除组时：
+
+1. **组从数据库中删除**
+2. **用户关联被删除**（用户不再在此组中）
+3. **用户更新** - 所有受影响的用户都会更新其节点配置
+4. **入站关联被删除**（但入站本身保留）
+
+<Callout type="warning">
+**重要：** 
+- 用户失去仅在此组中的入站的访问权限
+- 如果用户通过多个组访问入站，他们通过其他组保持访问权限
+- 已删除的组无法恢复
+</Callout>
+
+**示例：**
+```
+删除前：
+  User "john" → Group "Premium" → ["vless-443"]
+  User "john" → Group "Standard" → ["vless-443", "vmess-8080"]
+  
+删除 Group "Premium"：
+  User "john" → Group "Standard" → ["vless-443", "vmess-8080"]
+  
+结果：用户仍然可以访问两个入站（通过 Standard 组）
+```
+
+---
+
+## 批量操作
+
+PasarGuard 支持批量操作，以高效管理组分配。
+
+### 批量向用户添加组
+
+一次向多个用户添加一个或多个组。
+
+**Endpoint:** `POST /api/groups/bulk/add`
+
+**Request Body:**
+```json
+{
+  "group_ids": [1, 2, 3],
+  "users": [10, 11, 12],
+  "admins": [5, 6],
+  "has_group_ids": [4]
+}
+```
+
+**行为：**
+- 如果提供 `users`：向这些特定用户添加组
+- 如果提供 `admins`：向这些管理员创建的所有用户添加组
+- 如果既不提供 `users` 也不提供 `admins`：向**所有用户**添加组
+- `has_group_ids`：仅过滤已拥有这些组的用户
+- 忽略现有关联（不创建重复项）
+
+<Tabs items={['特定用户', '管理员的用户', '所有用户', '条件']}>
+<Tab value="特定用户">
+
+```json
+{
+  "group_ids": [1, 2],
+  "users": [10, 11, 12]
+}
+```
+结果：用户 10、11、12 获得组 1 和 2
+
+</Tab>
+<Tab value="管理员的用户">
+
+```json
+{
+  "group_ids": [1],
+  "admins": [5]
+}
+```
+结果：管理员 5 创建的所有用户获得组 1
+
+</Tab>
+<Tab value="所有用户">
+
+```json
+{
+  "group_ids": [1, 2]
+}
+```
+结果：系统中的所有用户获得组 1 和 2
+
+</Tab>
+<Tab value="条件">
+
+```json
+{
+  "group_ids": [2],
+  "has_group_ids": [1]
+}
+```
+结果：只有已拥有组 1 的用户获得组 2
+
+</Tab>
+</Tabs>
+
+### 批量从用户中删除组
+
+一次从多个用户中删除一个或多个组。
+
+**Endpoint:** `POST /api/groups/bulk/remove`
+
+**Request Body:**
+```json
+{
+  "group_ids": [1, 2, 3],
+  "users": [10, 11, 12],
+  "admins": [5, 6],
+  "has_group_ids": [4]
+}
+```
+
+**行为：**
+- 类似于批量添加，但删除组关联
+- 仅删除现有关联
+- 用户失去仅在被删除组中的入站的访问权限
+
+**示例：**
+```json
+{
+  "group_ids": [1],
+  "users": [10, 11]
+}
+```
+结果：用户 10 和 11 失去组 1（及其入站的访问权限）
+
+---
+
+## 验证规则和约束
+
+### 名称验证
+
+| Rule | Constraint | Error Message |
+|------|------------|---------------|
+| Length | 3-64 个字符 | 名称必须是 3-64 个字符 |
+
+<Tabs items={['有效名称', '无效名称']}>
+<Tab value="有效名称">
+
+- ✅ `premium`
+- ✅ `standard123`
+- ✅ `group1`
+- ✅ `vip`
+
+</Tab>
+<Tab value="无效名称">
+
+- ❌ `pr`（太短，< 3 个字符）
+
+</Tab>
+</Tabs>
+
+### 入站标签验证
+
+| Rule | Constraint | Error Message |
+|------|------------|---------------|
+| Existence | 必须存在于核心配置中 | 在核心配置中未找到入站标签 |
+| Creation | 至少需要一个 | 您必须选择至少一个入站 |
+| Modification | 可以为空/null | 修改时允许 |
+
+**验证过程：**
+1. 创建时：所有入站标签都针对 XRay 核心配置进行验证
+2. 修改时：如果提供了 inbound_tags，则全部验证
+3. 自动创建：如果入站标签存在于核心配置中，它们会在数据库中自动创建
+
+**示例：**
+```
+核心配置有入站：["vless-443", "trojan-8443"]
+
+有效组：
+  inbound_tags: ["vless-443", "trojan-8443"] ✅
+
+无效组：
+  inbound_tags: ["vmess-8080"] ❌（不在核心配置中）
+```
+
+### 组状态验证
+
+- **禁用的组**从访问计算中排除
+- **已删除的组**删除所有用户关联
+- **空的 inbound_tags**（修改时）意味着组不授予访问权限
+
+---
+
+## API 端点
+
+### 创建组
+
+**Endpoint:** `POST /api/group`
+
+**Authentication:** 需要 sudo 管理员
+
+**Request Body:**
+```json
+{
+  "name": "premium",
+  "inbound_tags": ["vless-443", "trojan-8443"],
+  "is_disabled": false
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "premium",
+  "inbound_tags": ["vless-443", "trojan-8443"],
+  "is_disabled": false,
+  "total_users": 0
+}
+```
+
+### 获取所有组
+
+**Endpoint:** `GET /api/groups`
+
+**Authentication:** 需要管理员
+
+**Query Parameters:**
+- `offset`（可选）：分页偏移量
+- `limit`（可选）：分页限制
+
+**Response:**
+```json
+{
+  "groups": [
+    {
+      "id": 1,
+      "name": "premium",
+      "inbound_tags": ["vless-443"],
+      "is_disabled": false,
+      "total_users": 5
+    }
+  ],
+  "total": 1
+}
+```
+
+### 按 ID 获取组
+
+**Endpoint:** `GET /api/group/{group_id}`
+
+**Authentication:** 需要管理员
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "premium",
+  "inbound_tags": ["vless-443", "trojan-8443"],
+  "is_disabled": false,
+  "total_users": 10
+}
+```
+
+### 修改组
+
+**Endpoint:** `PUT /api/group/{group_id}`
+
+**Authentication:** 需要 sudo 管理员
+
+**Request Body:**
+```json
+{
+  "name": "premium-v2",
+  "inbound_tags": ["vless-443", "trojan-8443", "vmess-8080"],
+  "is_disabled": false
+}
+```
+
+**Response:** 与按 ID 获取组相同
+
+<Callout type="info">
+此组中的所有活动用户和 on_hold 用户都会自动更新其节点配置。
+</Callout>
+
+### 删除组
+
+**Endpoint:** `DELETE /api/group/{group_id}`
+
+**Authentication:** 需要 sudo 管理员
+
+**Response:** `204 No Content`
+
+<Callout type="info">
+此组中的所有用户都会自动更新其节点配置。
+</Callout>
+
+### 批量添加组
+
+**Endpoint:** `POST /api/groups/bulk/add`
+
+**Authentication:** 需要管理员
+
+**Request Body:**
+```json
+{
+  "group_ids": [1, 2],
+  "users": [10, 11, 12],
+  "admins": [5],
+  "has_group_ids": [3]
+}
+```
+
+**Response:**
+```json
+{
+  "detail": "operation has been successfuly done on 15 users"
+}
+```
+
+### 批量删除组
+
+**Endpoint:** `POST /api/groups/bulk/remove`
+
+**Authentication:** 需要管理员
+
+**Request Body:** 与批量添加相同
+
+**Response:** 与批量添加相同
+
+---
+
+## 常见场景
+
+<Tabs items={['基本组', '分配给用户', '授予访问权限', '禁用组', '批量分配', '管理员用户', '分层访问', '删除入站', '清除入站', '迁移用户', '条件', '多个组']}>
+<Tab value="基本组">
+
+**问题：** 您想为具有特定入站访问权限的高级用户创建一个组。
+
+**解决方案：**
+```json
+POST /api/group
+{
+  "name": "premium",
+  "inbound_tags": ["vless-443", "trojan-8443"],
+  "is_disabled": false
+}
+```
+
+</Tab>
+<Tab value="分配给用户">
+
+**问题：** 您想将组分配给用户（通过用户修改完成，而不是组 API）。
+
+**解决方案：**
+```json
+PUT /api/user/john
+{
+  "group_ids": [1, 2]
+}
+```
+
+</Tab>
+<Tab value="授予访问权限">
+
+**问题：** 您向 XRay 配置添加了新的入站，并希望现有组能够访问它。
+
+**解决方案：**
+```json
+PUT /api/group/1
+{
+  "inbound_tags": ["vless-443", "trojan-8443", "vmess-8080"]
+}
+```
+
+组 1 中的所有用户现在都可以访问 `inbound_tag: "vmess-8080"` 的主机。
+
+</Tab>
+<Tab value="禁用组">
+
+**问题：** 您想在不删除组的情况下临时撤销访问权限。
+
+**解决方案：**
+```json
+PUT /api/group/1
+{
+  "is_disabled": true
+}
+```
+
+此组中的所有用户立即失去对其入站的访问权限。通过设置 `is_disabled: false` 重新启用。
+
+</Tab>
+<Tab value="批量分配">
+
+**问题：** 您想为所有用户提供对新组的访问权限。
+
+**解决方案：**
+```json
+POST /api/groups/bulk/add
+{
+  "group_ids": [1]
+}
+```
+
+</Tab>
+<Tab value="管理员用户">
+
+**问题：** 您想将高级组添加到特定管理员创建的所有用户。
+
+**解决方案：**
+```json
+POST /api/groups/bulk/add
+{
+  "group_ids": [1],
+  "admins": [5]
+}
+```
+
+</Tab>
+<Tab value="分层访问">
+
+**问题：** 您想要不同的访问级别：Free（有限）、Standard（更多）、Premium（全部）。
+
+**解决方案：**
+```json
+// 创建 Free 组
+POST /api/group
+{
+  "name": "free",
+  "inbound_tags": ["vmess-8080"]
+}
+
+// 创建 Standard 组
+POST /api/group
+{
+  "name": "standard",
+  "inbound_tags": ["vmess-8080", "vless-443"]
+}
+
+// 创建 Premium 组
+POST /api/group
+{
+  "name": "premium",
+  "inbound_tags": ["vmess-8080", "vless-443", "trojan-8443"]
+}
+```
+
+用户可以根据其订阅级别分配到相应的组。
+
+</Tab>
+<Tab value="删除入站">
+
+**问题：** 您想从组中删除对入站的访问权限。
+
+**解决方案：**
+```json
+PUT /api/group/1
+{
+  "inbound_tags": ["vless-443"]
+}
+```
+
+此组中的用户失去对 `inbound_tag: "trojan-8443"` 的主机的访问权限。
+
+</Tab>
+<Tab value="清除入站">
+
+**问题：** 您想从组中删除所有入站访问权限（但保留组）。
+
+**解决方案：**
+```json
+PUT /api/group/1
+{
+  "inbound_tags": []
+}
+```
+
+此组中的用户现在在其订阅中看不到任何主机。
+
+</Tab>
+<Tab value="迁移用户">
+
+**问题：** 您想将用户从 "Standard" 组移动到 "Premium" 组。
+
+**解决方案：**
+```json
+// 步骤 1：从 Standard 中删除
+POST /api/groups/bulk/remove
+{
+  "group_ids": [2],
+  "users": [10, 11, 12]
+}
+
+// 步骤 2：添加到 Premium
+POST /api/groups/bulk/add
+{
+  "group_ids": [1],
+  "users": [10, 11, 12]
+}
+```
+
+</Tab>
+<Tab value="条件">
+
+**问题：** 您想仅将组 2 添加到已拥有组 1 的用户。
+
+**解决方案：**
+```json
+POST /api/groups/bulk/add
+{
+  "group_ids": [2],
+  "has_group_ids": [1]
+}
+```
+
+</Tab>
+<Tab value="多个组">
+
+**问题：** 用户应该能够访问多个组的入站。
+
+**解决方案：**
+```json
+PUT /api/user/john
+{
+  "group_ids": [1, 2, 3]
+}
+```
+
+用户获得**所有**组中**所有**入站的访问权限（所有入站标签的并集）。
+
+</Tab>
+</Tabs>
+
+---
+
+## 总结
+
+- ✅ **组控制入站访问** - 用户只能看到其 inbound_tag 在其组中的主机
+- ✅ **多对多关系** - 用户可以在多个组中，组可以有多个入站
+- ✅ **禁用的组被排除** - 当用户的组被禁用时，用户失去访问权限
+- ✅ **名称约束** - 3-64 个字符
+- ✅ **入站验证** - 所有入站标签必须存在于 XRay 核心配置中
+- ✅ **自动更新** - 当组被修改/删除时，用户节点配置会更新
+- ✅ **批量操作** - 高效管理多个用户的组分配
+- ✅ **空组** - 没有入站的组不授予访问权限
+- ✅ **模板集成** - 用户模板可以自动分配组
+- ✅ **访问是累积的** - 用户获得其所有启用组中所有入站的访问权限
+
+有关更多信息：
+- 主机如何使用入站标签：请参阅 [hosts.md](./hosts.md)
+- XRay 配置：请参阅 [xray.md](./xray.md)
+

@@ -9,6 +9,7 @@
     "settings",
     "features",
     "core",
-    "host"
+    "host",
+    "groups"
   ]
 }
