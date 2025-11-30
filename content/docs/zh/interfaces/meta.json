@@ -1,7 +1,8 @@
 {
-  "title": "CLI & TUI",
-  "description": "Command-line and Text User Interface tools",
+  "title": "接口",
+  "description": "命令行和文本用户界面工具",
   "pages": [
+    "index",
     "cli",
     "tui"
   ],

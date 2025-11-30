@@ -1,7 +1,8 @@
 {
-  "title": "CLI و TUI",
+  "title": "رابط‌ها",
   "description": "ابزارهای خط فرمان و رابط کاربری متنی",
   "pages": [
+    "index",
     "cli",
     "tui"
   ],

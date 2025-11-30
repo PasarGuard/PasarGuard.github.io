@@ -1,7 +1,8 @@
 {
-  "title": "CLI & TUI",
-  "description": "Command-line and Text User Interface tools",
+  "title": "Интерфейсы",
+  "description": "Инструменты командной строки и текстового пользовательского интерфейса",
   "pages": [
+    "index",
     "cli",
     "tui"
   ],

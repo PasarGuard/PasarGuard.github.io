@@ -1,7 +1,8 @@
 {
-  "title": "CLI & TUI",
-  "description": "Command-line and Text User Interface tools",
+  "title": "Interfaces",
+  "description": "Interfaces tools for PasarGuard",
   "pages": [
+    "index",
     "cli",
     "tui"
   ],
