@@ -16,8 +16,9 @@ icon: Server
 4. [支持的协议](#supported-protocols)
 5. [网络类型](#network-types)
 6. [安全设置](#security-settings)
-7. [API 限制和约束](#api-limits-and-constraints)
-8. [常见验证错误](#common-validation-errors)
+7. [查看连接的 IP](#viewing-connected-ips)
+8. [API 限制和约束](#api-limits-and-constraints)
+9. [常见验证错误](#common-validation-errors)
 
 ---
 
@@ -375,6 +376,87 @@ PasarGuard 处理并验证以下协议：
     ```
   </Tab>
 </Tabs>
+
+---
+
+## 查看连接的 IP
+
+您可以启用用户在线统计跟踪功能，以查看连接到您核心的最新 IP 地址。此功能允许您监控当前连接到您的 XRay 核心的 IP。
+
+### 启用用户在线统计
+
+要启用此功能，您需要在 XRay 配置 JSON 文件的根目录添加 `policy` 部分。添加以下配置：
+
+```json
+{
+  "policy": {
+    "levels": {
+      "0": {
+        "statsUserOnline": true
+      }
+    }
+  },
+  "inbounds": [
+    // ... 您的 inbound 配置
+  ],
+  "outbounds": [
+    // ... 您的 outbound 配置
+  ]
+}
+```
+
+<Callout type="info" title="Policy 配置">
+`policy` 部分应添加到 JSON 配置文件的根级别，与 `inbounds` 和 `outbounds` 一起。`statsUserOnline: true` 设置启用用户连接统计跟踪。
+</Callout>
+
+### 查看连接的 IP
+
+启用 `statsUserOnline` policy 并重启您的节点后：
+
+1. **需要首次连接**：IP 跟踪将在建立第一个用户连接后开始工作
+2. **访问统计**：启用后并在首次连接后，您可以通过面板的统计界面查看最新连接的 IP
+
+<Callout type="warning" title="需要重启">
+添加 policy 配置后，您必须重启核心才能使更改生效。
+</Callout>
+
+### 完整示例
+
+以下是启用 policy 部分的完整配置示例：
+
+```json
+{
+  "policy": {
+    "levels": {
+      "0": {
+        "statsUserOnline": true
+      }
+    }
+  },
+  "inbounds": [
+    {
+      "tag": "vless-ws-443",
+      "port": 443,
+      "protocol": "vless",
+      "settings": {
+        "clients": []
+      },
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+          "path": "/path"
+        }
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "direct",
+      "protocol": "freedom"
+    }
+  ]
+}
+```
 
 ---
 

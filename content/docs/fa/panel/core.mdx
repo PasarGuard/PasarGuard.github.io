@@ -16,8 +16,9 @@ icon: Server
 4. [پروتکل‌های پشتیبانی شده](#supported-protocols)
 5. [انواع شبکه](#network-types)
 6. [تنظیمات امنیتی](#security-settings)
-7. [محدودیت‌ها و قیود API](#api-limits-and-constraints)
-8. [خطاهای رایج اعتبارسنجی](#common-validation-errors)
+7. [مشاهده IPهای متصل](#viewing-connected-ips)
+8. [محدودیت‌ها و قیود API](#api-limits-and-constraints)
+9. [خطاهای رایج اعتبارسنجی](#common-validation-errors)
 
 ---
 
@@ -375,6 +376,87 @@ PasarGuard این پروتکل‌ها را پردازش و اعتبارسنجی 
     ```
   </Tab>
 </Tabs>
+
+---
+
+## مشاهده IPهای متصل
+
+شما می‌توانید ردیابی آمار آنلاین کاربران را فعال کنید تا آخرین آدرس‌های IP متصل به هسته خود را مشاهده کنید. این ویژگی به شما امکان می‌دهد که IPهای در حال حاضر متصل به هسته XRay خود را نظارت کنید.
+
+### فعال‌سازی آمار آنلاین کاربران
+
+برای فعال‌سازی این ویژگی، باید یک بخش `policy` به ریشه فایل JSON پیکربندی XRay خود اضافه کنید. پیکربندی زیر را اضافه کنید:
+
+```json
+{
+  "policy": {
+    "levels": {
+      "0": {
+        "statsUserOnline": true
+      }
+    }
+  },
+  "inbounds": [
+    // ... پیکربندی‌های inbound شما
+  ],
+  "outbounds": [
+    // ... پیکربندی‌های outbound شما
+  ]
+}
+```
+
+<Callout type="info" title="پیکربندی Policy">
+بخش `policy` باید در سطح ریشه فایل JSON پیکربندی شما، در کنار `inbounds` و `outbounds` اضافه شود. تنظیم `statsUserOnline: true` ردیابی آمار اتصال کاربران را فعال می‌کند.
+</Callout>
+
+### مشاهده IPهای متصل
+
+پس از فعال‌سازی policy `statsUserOnline` و راه‌اندازی مجدد نود شما:
+
+1. **نیاز به اولین اتصال**: ردیابی IP پس از برقراری اولین اتصال کاربر شروع به کار می‌کند
+2. **دسترسی به آمار**: پس از فعال‌سازی و بعد از اولین اتصال، می‌توانید آخرین IPهای متصل را از طریق رابط آمار پنل خود مشاهده کنید
+
+<Callout type="warning" title="نیاز به راه‌اندازی مجدد">
+پس از اضافه کردن پیکربندی policy، باید هسته خود را راه‌اندازی مجدد کنید تا تغییرات اعمال شوند.
+</Callout>
+
+### مثال کامل
+
+در اینجا یک مثال کامل از پیکربندی با بخش policy فعال شده آورده شده است:
+
+```json
+{
+  "policy": {
+    "levels": {
+      "0": {
+        "statsUserOnline": true
+      }
+    }
+  },
+  "inbounds": [
+    {
+      "tag": "vless-ws-443",
+      "port": 443,
+      "protocol": "vless",
+      "settings": {
+        "clients": []
+      },
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+          "path": "/path"
+        }
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "direct",
+      "protocol": "freedom"
+    }
+  ]
+}
+```
 
 ---
 

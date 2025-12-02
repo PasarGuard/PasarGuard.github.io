@@ -16,8 +16,9 @@ This document explains how PasarGuard validates and processes XRay configuration
 4. [Supported Protocols](#supported-protocols)
 5. [Network Types](#network-types)
 6. [Security Settings](#security-settings)
-7. [API Limits and Constraints](#api-limits-and-constraints)
-8. [Common Validation Errors](#common-validation-errors)
+7. [Viewing Connected IPs](#viewing-connected-ips)
+8. [API Limits and Constraints](#api-limits-and-constraints)
+9. [Common Validation Errors](#common-validation-errors)
 
 ---
 
@@ -375,6 +376,87 @@ The following network/transport types are supported:
     ```
   </Tab>
 </Tabs>
+
+---
+
+## Viewing Connected IPs
+
+You can enable tracking of user online statistics to see the latest IP addresses connected to your core. This feature allows you to monitor which IPs are currently connected to your XRay core.
+
+### Enabling User Online Statistics
+
+To enable this feature, you need to add a `policy` section to the root of your XRay configuration JSON file. Add the following configuration:
+
+```json
+{
+  "policy": {
+    "levels": {
+      "0": {
+        "statsUserOnline": true
+      }
+    }
+  },
+  "inbounds": [
+    // ... your inbound configurations
+  ],
+  "outbounds": [
+    // ... your outbound configurations
+  ]
+}
+```
+
+<Callout type="info" title="Policy Configuration">
+The `policy` section should be added at the root level of your JSON configuration file, alongside `inbounds` and `outbounds`. The `statsUserOnline: true` setting enables tracking of user connection statistics.
+</Callout>
+
+### Viewing Connected IPs
+
+After enabling the `statsUserOnline` policy and restarting your node:
+
+1. **First Connection Required**: The IP tracking will start working after the first user connection is established
+2. **Access Statistics**: Once enabled and after the first connection, you can view the latest connected IPs through your panel's statistics interface
+
+<Callout type="warning" title="Restart Required">
+After adding the policy configuration, you must restart your core for the changes to take effect.
+</Callout>
+
+### Complete Example
+
+Here's a complete example configuration with the policy section enabled:
+
+```json
+{
+  "policy": {
+    "levels": {
+      "0": {
+        "statsUserOnline": true
+      }
+    }
+  },
+  "inbounds": [
+    {
+      "tag": "vless-ws-443",
+      "port": 443,
+      "protocol": "vless",
+      "settings": {
+        "clients": []
+      },
+      "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+          "path": "/path"
+        }
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "direct",
+      "protocol": "freedom"
+    }
+  ]
+}
+```
 
 ---
 
