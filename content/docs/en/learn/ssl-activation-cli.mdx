@@ -71,11 +71,9 @@ If you want the subscription domain or subdomain to be different from the panel,
 
 Set the following variables in the `.env` file.
 
-Replace `YOUR_DOMAIN` with your desired domain or subdomain.
 
 ```bash
 UVICORN_UDS = /var/lib/pasarguard/pasarguard.socket
-XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
 ```
 
 ### Restarting PasarGuard
@@ -106,7 +104,6 @@ Replace `YOUR_DOMAIN` with your desired domain or subdomain.
 UVICORN_PORT = 443
 UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/certs/YOUR_DOMAIN.cer"
 UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/certs/YOUR_DOMAIN.cer.key"
-XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
 ```
 
 Now the PasarGuard dashboard will be accessible at your domain or subdomain address via https.
@@ -181,7 +178,6 @@ Replace `YOUR_DOMAIN` with your desired domain or subdomain.
 
 ```bash
 UVICORN_UDS = /var/lib/pasarguard/pasarguard.socket
-XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
 ```
 
 ### Restarting PasarGuard

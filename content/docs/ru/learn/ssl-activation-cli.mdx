@@ -11,6 +11,7 @@ icon: Lock
 Во всех примерах ниже файлы `docker-compose.yml` и `.env` находятся в `/opt/pasarguard`, а `xray_config.json` в `/var/lib/pasarguard`.
 
 Если вы установили PasarGuard вручную, вам нужно будет внести необходимые изменения самостоятельно.
+
 </Callout>
 
 ## Активация SSL с Caddy
@@ -23,30 +24,30 @@ icon: Lock
 
 ```yml {9-10,12-22,24-25}
 services:
-  pasarguard:
-    image: pasarguard/panel:latest
-    restart: always
-    env_file: .env
-    network_mode: host
-    volumes:
-      - /var/lib/pasarguard:/var/lib/pasarguard
-    depends_on:
-      - caddy
+    pasarguard:
+        image: pasarguard/panel:latest
+        restart: always
+        env_file: .env
+        network_mode: host
+        volumes:
+            - /var/lib/pasarguard:/var/lib/pasarguard
+        depends_on:
+            - caddy
 
-  caddy:
-    image: caddy
-    restart: always
-    ports:
-      - 80:80
-      - 443:443
-    volumes:
-      - /var/lib/pasarguard:/var/lib/pasarguard
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_volume:/data
-      - caddy_volume:/config
+    caddy:
+        image: caddy
+        restart: always
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - /var/lib/pasarguard:/var/lib/pasarguard
+            - ./Caddyfile:/etc/caddy/Caddyfile
+            - caddy_volume:/data
+            - caddy_volume:/config
 
 volumes:
-  caddy_volume:
+    caddy_volume:
 ```
 
 ### Создание Caddyfile
@@ -54,7 +55,7 @@ volumes:
 Создайте новый файл с именем `Caddyfile` в `/opt/pasarguard` и замените `YOUR_DOMAIN` на желаемый домен или поддомен.
 
 <Callout type="warn">
-Первая буква в имени файла `Caddyfile` должна быть заглавной `C`.
+    Первая буква в имени файла `Caddyfile` должна быть заглавной `C`.
 </Callout>
 
 ```nginx
@@ -64,7 +65,9 @@ YOUR_DOMAIN {
 ```
 
 <Callout type="warn">
-Если вы хотите, чтобы домен или поддомен подписки отличался от панели, продублируйте приведенное выше содержимое в вашем Caddyfile и замените оба домена или поддомена вместо `YOUR_DOMAIN`.
+    Если вы хотите, чтобы домен или поддомен подписки отличался от панели,
+    продублируйте приведенное выше содержимое в вашем Caddyfile и замените оба
+    домена или поддомена вместо `YOUR_DOMAIN`.
 </Callout>
 
 ### Настройка переменных окружения
@@ -75,7 +78,7 @@ YOUR_DOMAIN {
 
 ```bash
 UVICORN_UDS = /var/lib/pasarguard/pasarguard.socket
-XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
+
 ```
 
 ### Перезапуск PasarGuard
@@ -106,7 +109,7 @@ PasarGuard по умолчанию работает с `Uvicorn`. `Uvicorn` та
 UVICORN_PORT = 443
 UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/certs/YOUR_DOMAIN.cer"
 UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/certs/YOUR_DOMAIN.cer.key"
-XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
+
 ```
 
 Теперь панель PasarGuard будет доступна по адресу вашего домена или поддомена через https.
@@ -125,25 +128,25 @@ XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
 
 ```yml {9-10,12-20}
 services:
-  pasarguard:
-      image: pasarguard/panel:latest
-      restart: always
-      env_file: .env
-      network_mode: host
-      volumes:
-        - /var/lib/pasarguard:/var/lib/pasarguard
-      depends_on:
-        - haproxy
-    
-  haproxy:
-    image: haproxy:latest
-    restart: always
-    volumes:
-      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
-      - /var/lib/pasarguard:/var/lib/pasarguard
-    ports:
-      - 80:80
-      - 443:443
+    pasarguard:
+        image: pasarguard/panel:latest
+        restart: always
+        env_file: .env
+        network_mode: host
+        volumes:
+            - /var/lib/pasarguard:/var/lib/pasarguard
+        depends_on:
+            - haproxy
+
+    haproxy:
+        image: haproxy:latest
+        restart: always
+        volumes:
+            - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+            - /var/lib/pasarguard:/var/lib/pasarguard
+        ports:
+            - 80:80
+            - 443:443
 ```
 
 ### Создание haproxy.cfg
@@ -181,7 +184,7 @@ backend PasarGuard_backend
 
 ```bash
 UVICORN_UDS = /var/lib/pasarguard/pasarguard.socket
-XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
+
 ```
 
 ### Перезапуск PasarGuard

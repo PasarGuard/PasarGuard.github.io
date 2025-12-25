@@ -11,6 +11,7 @@ icon: Lock
 在下面的所有示例中，`docker-compose.yml` 和 `.env` 文件位于 `/opt/pasarguard`，`xray_config.json` 位于 `/var/lib/pasarguard`。
 
 如果您手动安装了 PasarGuard，则需要自行进行必要的更改。
+
 </Callout>
 
 ## 使用 Caddy 激活 SSL
@@ -23,30 +24,30 @@ icon: Lock
 
 ```yml {9-10,12-22,24-25}
 services:
-  pasarguard:
-    image: pasarguard/panel:latest
-    restart: always
-    env_file: .env
-    network_mode: host
-    volumes:
-      - /var/lib/pasarguard:/var/lib/pasarguard
-    depends_on:
-      - caddy
+    pasarguard:
+        image: pasarguard/panel:latest
+        restart: always
+        env_file: .env
+        network_mode: host
+        volumes:
+            - /var/lib/pasarguard:/var/lib/pasarguard
+        depends_on:
+            - caddy
 
-  caddy:
-    image: caddy
-    restart: always
-    ports:
-      - 80:80
-      - 443:443
-    volumes:
-      - /var/lib/pasarguard:/var/lib/pasarguard
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_volume:/data
-      - caddy_volume:/config
+    caddy:
+        image: caddy
+        restart: always
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - /var/lib/pasarguard:/var/lib/pasarguard
+            - ./Caddyfile:/etc/caddy/Caddyfile
+            - caddy_volume:/data
+            - caddy_volume:/config
 
 volumes:
-  caddy_volume:
+    caddy_volume:
 ```
 
 ### 创建 Caddyfile
@@ -54,7 +55,7 @@ volumes:
 在 `/opt/pasarguard` 创建一个名为 `Caddyfile` 的新文件，并将 `YOUR_DOMAIN` 替换为您所需的域名或子域名。
 
 <Callout type="warn">
-`Caddyfile` 文件名中的第一个字母必须是大写的 `C`。
+    `Caddyfile` 文件名中的第一个字母必须是大写的 `C`。
 </Callout>
 
 ```nginx
@@ -64,7 +65,8 @@ YOUR_DOMAIN {
 ```
 
 <Callout type="warn">
-如果您希望订阅域名或子域名与面板不同，请在 Caddyfile 中复制上述内容，并将两个域名或子域名都替换为 `YOUR_DOMAIN`。
+    如果您希望订阅域名或子域名与面板不同，请在 Caddyfile
+    中复制上述内容，并将两个域名或子域名都替换为 `YOUR_DOMAIN`。
 </Callout>
 
 ### 设置环境变量
@@ -75,7 +77,7 @@ YOUR_DOMAIN {
 
 ```bash
 UVICORN_UDS = /var/lib/pasarguard/pasarguard.socket
-XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
+
 ```
 
 ### 重启 PasarGuard
@@ -106,7 +108,7 @@ PasarGuard 默认使用 `Uvicorn` 运行。`Uvicorn` 还允许您定义 SSL 证�
 UVICORN_PORT = 443
 UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/certs/YOUR_DOMAIN.cer"
 UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/certs/YOUR_DOMAIN.cer.key"
-XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
+
 ```
 
 现在 PasarGuard 面板将可通过 https 在您的域名或子域名地址上访问。
@@ -125,25 +127,25 @@ XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
 
 ```yml {9-10,12-20}
 services:
-  pasarguard:
-      image: pasarguard/panel:latest
-      restart: always
-      env_file: .env
-      network_mode: host
-      volumes:
-        - /var/lib/pasarguard:/var/lib/pasarguard
-      depends_on:
-        - haproxy
-    
-  haproxy:
-    image: haproxy:latest
-    restart: always
-    volumes:
-      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
-      - /var/lib/pasarguard:/var/lib/pasarguard
-    ports:
-      - 80:80
-      - 443:443
+    pasarguard:
+        image: pasarguard/panel:latest
+        restart: always
+        env_file: .env
+        network_mode: host
+        volumes:
+            - /var/lib/pasarguard:/var/lib/pasarguard
+        depends_on:
+            - haproxy
+
+    haproxy:
+        image: haproxy:latest
+        restart: always
+        volumes:
+            - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+            - /var/lib/pasarguard:/var/lib/pasarguard
+        ports:
+            - 80:80
+            - 443:443
 ```
 
 ### 创建 haproxy.cfg
@@ -181,7 +183,7 @@ backend PasarGuard_backend
 
 ```bash
 UVICORN_UDS = /var/lib/pasarguard/pasarguard.socket
-XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
+
 ```
 
 ### 重启 PasarGuard

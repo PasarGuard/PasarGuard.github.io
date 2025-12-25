@@ -11,6 +11,7 @@ icon: Lock
 در تمام مثال‌های زیر فایل‌های `docker-compose.yml` و `.env` در مسیر `/opt/pasarguard` و فایل `xray_config.json` در مسیر `/var/lib/pasarguard` قرار دارند.
 
 اگر پاسارگارد را به‌صورت دستی نصب کرده‌اید، باید تغییرات لازم را خودتان اعمال کنید.
+
 </Callout>
 
 ## فعال‌سازی SSL با Caddy
@@ -23,30 +24,30 @@ icon: Lock
 
 ```yml {9-10,12-22,24-25}
 services:
-  pasarguard:
-    image: pasarguard/Panel:latest
-    restart: always
-    env_file: .env
-    network_mode: host
-    volumes:
-      - /var/lib/pasarguard:/var/lib/pasarguard
-    depends_on:
-      - caddy
+    pasarguard:
+        image: pasarguard/Panel:latest
+        restart: always
+        env_file: .env
+        network_mode: host
+        volumes:
+            - /var/lib/pasarguard:/var/lib/pasarguard
+        depends_on:
+            - caddy
 
-  caddy:
-    image: caddy
-    restart: always
-    ports:
-      - 80:80
-      - 443:443
-    volumes:
-      - /var/lib/pasarguard:/var/lib/pasarguard
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_volume:/data
-      - caddy_volume:/config
+    caddy:
+        image: caddy
+        restart: always
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - /var/lib/pasarguard:/var/lib/pasarguard
+            - ./Caddyfile:/etc/caddy/Caddyfile
+            - caddy_volume:/data
+            - caddy_volume:/config
 
 volumes:
-  caddy_volume:
+    caddy_volume:
 ```
 
 ### ایجاد فایل `Caddyfile`
@@ -54,7 +55,7 @@ volumes:
 یک فایل جدید به نام `Caddyfile` در مسیر `/opt/pasarguard` بسازید و `YOUR_DOMAIN` را با دامنه یا زیردامنهٔ مدنظر خود جایگزین کنید.
 
 <Callout type="warn">
-نام فایل `Caddyfile` باید با حرف بزرگ `C` شروع شود.
+    نام فایل `Caddyfile` باید با حرف بزرگ `C` شروع شود.
 </Callout>
 
 ```nginx
@@ -64,7 +65,9 @@ YOUR_DOMAIN {
 ```
 
 <Callout type="warn">
-اگر می‌خواهید دامنهٔ اشتراک (subscription) با دامنهٔ پنل متفاوت باشد، محتوای بالا را برای هر دامنه/زیردامنه تکرار کرده و `YOUR_DOMAIN` را در هر مورد جایگزین کنید.
+    اگر می‌خواهید دامنهٔ اشتراک (subscription) با دامنهٔ پنل متفاوت باشد، محتوای
+    بالا را برای هر دامنه/زیردامنه تکرار کرده و `YOUR_DOMAIN` را در هر مورد
+    جایگزین کنید.
 </Callout>
 
 ### تنظیم متغیرهای محیطی
@@ -75,7 +78,7 @@ YOUR_DOMAIN {
 
 ```bash
 UVICORN_UDS = /var/lib/pasarguard/pasarguard.socket
-XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
+
 ```
 
 ### راه‌اندازی مجدد پاسارگارد
@@ -106,7 +109,7 @@ PasarGuard restart
 UVICORN_PORT = 443
 UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/certs/YOUR_DOMAIN.cer"
 UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/certs/YOUR_DOMAIN.cer.key"
-XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
+
 ```
 
 حالا داشبورد پاسارگارد از طریق https و دامنه/زیردامنهٔ شما در دسترس خواهد بود.
@@ -125,25 +128,25 @@ XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
 
 ```yml {9-10,12-20}
 services:
-  PasarGuard:
-      image: pasarguard/panel:latest
-      restart: always
-      env_file: .env
-      network_mode: host
-      volumes:
-        - /var/lib/pasarguard:/var/lib/pasarguard
-      depends_on:
-        - haproxy
-    
-  haproxy:
-    image: haproxy:latest
-    restart: always
-    volumes:
-      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
-      - /var/lib/pasarguard:/var/lib/pasarguard
-    ports:
-      - 80:80
-      - 443:443
+    PasarGuard:
+        image: pasarguard/panel:latest
+        restart: always
+        env_file: .env
+        network_mode: host
+        volumes:
+            - /var/lib/pasarguard:/var/lib/pasarguard
+        depends_on:
+            - haproxy
+
+    haproxy:
+        image: haproxy:latest
+        restart: always
+        volumes:
+            - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+            - /var/lib/pasarguard:/var/lib/pasarguard
+        ports:
+            - 80:80
+            - 443:443
 ```
 
 ### ایجاد `haproxy.cfg`
@@ -181,7 +184,7 @@ backend PasarGuard_backend
 
 ```bash
 UVICORN_UDS = /var/lib/pasarguard/pasarguard.socket
-XRAY_SUBSCRIPTION_URL_PREFIX = https://YOUR_DOMAIN
+
 ```
 
 ### راه‌اندازی مجدد پاسارگارد
