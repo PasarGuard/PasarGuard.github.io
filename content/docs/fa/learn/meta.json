@@ -4,6 +4,7 @@
   "pages": [
     "ssl-certificate-cli",
     "ssl-activation-cli",
+    "multi-worker",
     "warp"
   ],
   "icon": "BookOpen"
