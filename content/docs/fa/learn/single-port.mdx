@@ -1,0 +1,534 @@
+---
+title: تک‌پورت کردن با HAProxy
+icon: Network
+---
+
+با این آموزش می‌تونید تمام ارتباطات سرورتون (پنل، کانفیگ‌های TLS و REALITY) رو از طریق یک یا دو پورت انجام بدید. این کار باعث می‌شه ارتباطات سرور طبیعی‌تر به نظر برسه، محدودیت‌های روی یک پورت خاص رو دور بزنید و امنیت بیشتری داشته باشید.
+
+<Alert type="info">
+اگه پورت پنلتون رو توی گذشته عوض کردید و می‌خواید لینک‌های سابسکریپشن قبلی هم کار کنن، می‌تونید با این روش HAProxy رو روی پورت قدیمی listen کنید و ترافیک رو به پورت جدید بفرستید تا هر دو لینک فعال بمونن.
+</Alert>
+
+## پیش‌نیازها
+
+توی این آموزش، فرض می‌کنیم که:
+- ساب‌دامنه پنل شما: `panel.example.com`
+- ساب‌دامنه کانفیگ‌های TLS: `sub.example.com`
+- آدرس SNI کانفیگ REALITY: `reality.com`
+
+<Alert type="warning">
+اگه قبلاً از HAProxy برای گرفتن SSL پنل استفاده کردید، باید از روش دیگه‌ای  شده در داکیومنت هست) برای SSL استفاده کنید تا تداخل پیش نیاد.
+</Alert>
+
+## نصب و راه‌اندازی HAProxy
+
+### نصب HAProxy
+
+<Alert type="info">
+ما HAProxy رو مستقیم روی سرور نصب می‌کنیم، ولی شما می‌تونید توی Docker هم نصبش کنید. اگه قراره بعداً از قوانین پیچیده‌تر استفاده کنید، HAProxy رو از مخزن اصلی خودش نصب کنید، نه از مخازن لینوکس.
+</Alert>
+
+برای نصب این دستورات رو اجرا کنید:
+
+```bash
+apt update
+apt install -y haproxy
+```
+
+### آماده‌سازی SSL Certificate
+
+قبل از پیکربندی، باید SSL certificate برای دامنه‌هاتون داشته باشید. اگه هنوز ندارید، می‌تونید با Certbot گواهی بگیرید:
+
+```bash
+apt install -y certbot
+certbot certonly --standalone -d panel.example.com -d sub.example.com
+```
+
+بعد certificate ها رو برای HAProxy آماده کنید:
+
+```bash
+mkdir -p /etc/haproxy/certs
+cat /etc/letsencrypt/live/panel.example.com/fullchain.pem \
+    /etc/letsencrypt/live/panel.example.com/privkey.pem \
+    > /etc/haproxy/certs/panel.example.com.pem
+cat /etc/letsencrypt/live/sub.example.com/fullchain.pem \
+    /etc/letsencrypt/live/sub.example.com/privkey.pem \
+    > /etc/haproxy/certs/sub.example.com.pem
+```
+
+### پیکربندی HAProxy
+
+بعد از نصب، فایل پیکربندی اینجا قرار می‌گیره: `/etc/haproxy/haproxy.cfg`
+
+فایل رو با nano باز کنید:
+
+```bash
+nano /etc/haproxy/haproxy.cfg
+```
+
+حالا این پیکربندی رو بعد از تغییر دامنه‌هاتون به انتهای فایل اضافه کنید:
+
+```nginx
+listen front
+    mode http
+    option httplog
+    log /dev/log local0
+    
+    # Listen کردن روی چند پورت همزمان
+    bind :::443 ssl crt /etc/haproxy/certs/
+    bind :::80
+    bind :::8443 ssl crt /etc/haproxy/certs/
+    bind 0.0.0.0:9000
+    
+    # Capture کردن اطلاعات برای لاگ
+    capture request header X-Forwarded-For len 15
+    capture request header Host len 50
+    log-format "%ci:%cp [%tr] %ft %b/%s %TR/%Tw/%Tc/%Tr/%Ta %ST %B %CC %CS %tsc %ac/%fc/%bc/%sc/%rc %sq/%bq %hr %hs %{+Q}r %U"
+    
+    # ACL بر اساس دامنه
+    acl host_panel hdr(host) -i panel.example.com
+    acl host_sub   hdr(host) -i sub.example.com
+    
+    # روتینگ امن
+    use_backend panel if host_panel
+    use_backend sub   if host_sub
+    http-request deny
+
+backend panel
+    mode http
+    server srv1 127.0.0.1:8000
+
+backend sub
+    mode http
+    acl is_sub path_beg /sub/
+    http-request deny if !is_sub
+    server srv1 127.0.0.1:8000
+```
+
+#### توضیح پیکربندی
+
+این پیکربندی حرفه‌ای شامل:
+
+**Frontend (listen front):**
+- **mode http**: از HTTP mode استفاده می‌کنه که امکانات بیشتری داره
+- **bind**: روی چند پورت همزمان گوش می‌ده (443, 80, 8443, 9000)
+- **ssl crt**: خودش SSL handling رو انجام می‌ده
+- **capture**: اطلاعات مهم رو برای لاگ ذخیره می‌کنه
+- **log-format**: فرمت لاگ دقیق و حرفه‌ای
+
+**ACL (Access Control List):**
+- بر اساس دامنه (`Host` header) تشخیص می‌ده که ترافیک باید به کجا بره
+- امنیت بیشتر با `http-request deny` در انتها که هر درخواست ناشناس رو رد می‌کنه
+
+**Backends:**
+- هر backend براساس دامنه، ترافیک رو به سرویس مربوطه می‌فرسته
+- backend `sub` یک لایه امنیتی اضافی داره که فقط pathهای `/sub/` رو قبول می‌کنه
+
+<Alert type="info">
+با `http-request deny` در انتهای frontend، هر درخواستی که با دامنه‌های تعریف‌شده مطابقت نداره، مسدود می‌شه. این از سواستفاده از IP شما جلوگیری می‌کنه.
+</Alert>
+
+بعد از ویرایش، فایل رو save کنید (Ctrl+X، سپس Y، سپس Enter) و HAProxy رو ریستارت کنید:
+
+```bash
+systemctl restart haproxy
+systemctl status haproxy
+```
+
+## پیکربندی کانفیگ‌ها
+
+<Alert type="info">
+با استفاده از HTTP mode در HAProxy، پنل و سرویس‌های TLS شما به راحتی روی چند پورت در دسترس می‌شن و SSL handling هم توسط HAProxy انجام می‌شه.
+</Alert>
+
+### کانفیگ‌های پنل و TLS
+
+اگه از پیکربندی بالا استفاده می‌کنید، پنل و کانفیگ‌های TLS شما باید روی پورت‌های لوکال (مثل `8000`) listen کنن و HAProxy ترافیک رو به اونها هدایت می‌کنه.
+
+در تنظیمات پنل:
+- **Panel Host**: `127.0.0.1`  
+- **Panel Port**: `8000`
+
+### کانفیگ‌های REALITY (برای Nodeها)
+
+برای نودها که نیاز به REALITY دارن، بهتره از TCP mode استفاده کنید. این پیکربندی رو روی نودهاتون قرار بدید:
+
+```nginx
+listen front_node
+    mode tcp
+    bind *:443
+
+    tcp-request inspect-delay 5s
+    tcp-request content accept if { req_ssl_hello_type 1 }
+
+    use_backend reality if { req.ssl_sni -m end reality.com }
+    default_backend fallback_node
+
+backend fallback_node
+    mode tcp
+    server srv1 127.0.0.1:11000
+
+backend reality
+    mode tcp
+    server srv1 127.0.0.1:12000 send-proxy
+```
+
+نمونه پیکربندی Inbound REALITY:
+
+```json
+{
+    "tag": "VLESS_TCP_REALITY",
+    "listen": "127.0.0.1",
+    "port": 12000,
+    "protocol": "vless",
+    "settings": {
+        "clients": [],
+        "decryption": "none"
+    },
+    "streamSettings": {
+        "network": "tcp",
+        "tcpSettings": {
+            "acceptProxyProtocol": true
+        },
+        "security": "reality",
+        "realitySettings": {
+            "show": false,
+            "dest": "example.com:443",
+            "xver": 0,
+            "serverNames": [
+                "reality.com"
+            ],
+            "privateKey": "YOUR_PRIVATE_KEY",
+            "shortIds": [
+                ""
+            ]
+        }
+    },
+    "sniffing": {
+        "enabled": true,
+        "destOverride": [
+            "http",
+            "tls"
+        ]
+    }
+}
+```
+
+**نکات مهم:**
+- `listen` رو روی `127.0.0.1` بذارید (نه `0.0.0.0`)
+- `acceptProxyProtocol` رو `true` کنید
+- هر Inbound باید پورت لوکال منحصربه‌فرد داشته باشه
+
+### کانفیگ‌های TLS با Fallback
+
+برای تک‌پورت کردن کانفیگ‌های TLS، از قابلیت Fallback استفاده می‌کنیم.
+
+#### Inbound اصلی Fallback
+
+```json
+{
+    "tag": "TROJAN_FALLBACK_INBOUND",
+    "listen": "127.0.0.1",
+    "port": 11000,
+    "protocol": "trojan",
+    "settings": {
+        "clients": [],
+        "decryption": "none",
+        "fallbacks": [
+            {
+                "path": "/vless",
+                "dest": "@vless-ws",
+                "xver": 2
+            },
+            {
+                "path": "/vmess",
+                "dest": "@vmess-ws",
+                "xver": 2
+            },
+            {
+                "path": "/trojan",
+                "dest": "@trojan-ws",
+                "xver": 2
+            }
+        ]
+    },
+    "streamSettings": {
+        "network": "tcp",
+        "security": "tls",
+        "tlsSettings": {
+            "serverName": "sub.example.com",
+            "certificates": [
+                {
+                    "ocspStapling": 3600,
+                    "certificateFile": "/var/lib/pasarguard/certs/fullchain.pem",
+                    "keyFile": "/var/lib/pasarguard/certs/key.pem"
+                }
+            ],
+            "minVersion": "1.2",
+            "cipherSuites": "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256:TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256:TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384:TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+            "alpn": [
+                "http/1.1"
+            ]
+        }
+    },
+    "sniffing": {
+        "enabled": true,
+        "destOverride": [
+            "http",
+            "tls"
+        ]
+    }
+}
+```
+
+#### Inboundهای WebSocket
+
+حالا باید Inboundهای WebSocket رو با listen به صورت Unix socket تعریف کنید:
+
+**VLESS WebSocket:**
+
+```json
+{
+    "tag": "VLESS_WS_INBOUND",
+    "listen": "@vless-ws",
+    "protocol": "vless",
+    "settings": {
+        "clients": [],
+        "decryption": "none"
+    },
+    "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+            "acceptProxyProtocol": true,
+            "path": "/vless"
+        }
+    }
+}
+```
+
+**VMess WebSocket:**
+
+```json
+{
+    "tag": "VMESS_WS_INBOUND",
+    "listen": "@vmess-ws",
+    "protocol": "vmess",
+    "settings": {
+        "clients": []
+    },
+    "streamSettings": {
+        "network": "ws",
+        "wsSettings": {
+            "acceptProxyProtocol": true,
+            "path": "/vmess"
+        }
+    }
+}
+```
+
+<Alert type="warning">
+در Inboundهایی که `listen` به صورت `@xxx` تعریف شده، خط `port` رو حذف کنید.
+</Alert>
+
+#### تنظیم Fallback Tag
+
+اگه از Fallback استفاده می‌کنید، باید در تنظیمات پاسارگارد این متغیر رو ست کنید:
+
+توی پنل بروید به **تنظیمات → هسته** و Fallback Inbound Tag رو مطابق با tag Inbound اصلیتون تنظیم کنید:
+
+```
+TROJAN_FALLBACK_INBOUND
+```
+
+<Alert type="tip">
+می‌تونید به جای استفاده از Fallback، برای هر کانفیگ یک ساب‌دامنه جداگانه تعریف کنید و با HAProxy بر اساس SNI بینشون تفکیک ایجاد کنید. این روش بار پردازشی کمتری داره.
+</Alert>
+
+## تنظیمات پنل
+
+با استفاده از HTTP mode در HAProxy، پنل شما به راحتی در دسترس می‌شه.
+
+توی پنل پاسارگارد بروید به **تنظیمات → پنل** و این موارد رو تنظیم کنید:
+
+- **Panel Host**: `127.0.0.1`
+- **Panel Port**: `8000`
+
+<Alert type="tip">
+چون HAProxy خودش SSL handling رو انجام می‌ده، نیازی نیست که پنل روی HTTPS اجرا بشه. ارتباط بین HAProxy و پنل روی localhost و HTTP هست، ولی کاربران از طریق HTTPS به پنل دسترسی دارن.
+</Alert>
+
+## تنظیمات Host
+
+با پیکربندی HAProxy جدید:
+
+1. برید به **هاست‌ها** در پنل
+2. هر Host رو ویرایش کنید  
+3. پورت رو روی `443` (یا `80` یا `8443` یا `9000` - هر کدوم که می‌خواید) بذارید
+4. ذخیره کنید
+
+<Alert type="info">
+چون HAProxy روی چند پورت همزمان listen می‌کنه، می‌تونید به کاربران مختلف پورت‌های مختلف بدید. مثلاً یه کاربر از پورت 443 و یکی دیگه از پورت 8443 استفاده کنه.
+</Alert>
+
+## پیکربندی Nodeها
+
+<Alert type="warning">
+تنظیمات HAProxy باید روی **تمام Nodeهای شما** هم انجام بشه. برای نودها توصیه می‌کنیم از TCP mode استفاده کنید (مثل پیکربندی بالا برای REALITY).
+</Alert>
+
+### نمونه پیکربندی Node با TCP Mode
+
+```nginx
+listen front_node
+    mode tcp
+    bind *:443
+
+    tcp-request inspect-delay 5s
+    tcp-request content accept if { req_ssl_hello_type 1 }
+
+    # تفکیک بر اساس SNI
+    use_backend vless_reality if { req.ssl_sni -m end reality1.com }
+    use_backend vmess_tls if { req.ssl_sni -m end tls1.com }
+    default_backend fallback_node
+
+backend fallback_node
+    mode tcp
+    server srv1 127.0.0.1:11000
+
+backend vless_reality
+    mode tcp
+    server srv1 127.0.0.1:12000 send-proxy
+
+backend vmess_tls
+    mode tcp  
+    server srv1 127.0.0.1:13000
+```
+
+این روش برای نودهایی که چند protocol مختلف دارن و نیاز به تفکیک بر اساس SNI دارن، مناسبه.
+
+## نکات مهم
+
+<Alert type="danger">
+**SSL Certificate**: Certificate های SSL باید به صورت ترکیبی (fullchain + privkey) در پوشه `/etc/haproxy/certs/` قرار بگیرن. اگه certificate ها رو تمدید کردید، حتماً فایل‌های ترکیبی رو دوباره بسازید و HAProxy رو reload کنید:
+
+```bash
+systemctl reload haproxy
+```
+</Alert>
+
+<Alert type="danger">
+**محدودکننده IP:** اگه از IP limiter استفاده می‌کنید و از TCP mode (برای REALITY) استفاده می‌کنید، حتماً:
+1. `send-proxy` رو به انتهای هر `server` در backend HAProxy اضافه کنید
+2. `"acceptProxyProtocol": true` رو در کانفیگ Inbound قرار بدید
+
+در HTTP mode نیازی به این تنظیمات نیست، چون HAProxy خودش IP واقعی رو با header `X-Forwarded-For` می‌فرسته.
+</Alert>
+
+<Alert type="warning">
+**Firewall**: مطمئن بشید که پورت‌های مورد استفاده (443, 80, 8443, 9000) در فایروال باز هستن:
+
+```bash
+ufw allow 443/tcp
+ufw allow 80/tcp
+ufw allow 8443/tcp
+ufw allow 9000/tcp
+```
+</Alert>
+
+<Alert type="info">
+**لاگ‌گیری حرفه‌ای**: با فرمت لاگ تعریف‌شده در HAProxy، اطلاعات کاملی از تمام درخواست‌ها ذخیره می‌شه. این لاگ‌ها رو می‌تونید در `/var/log/haproxy.log` ببینید.
+
+برای فعال‌سازی لاگ‌گیری، ممکنه نیاز باشه rsyslog رو پیکربندی کنید:
+
+```bash
+echo '$ModLoad imudp' >> /etc/rsyslog.d/49-haproxy.conf
+echo '$UDPServerRun 514' >> /etc/rsyslog.d/49-haproxy.conf
+echo 'local0.* /var/log/haproxy.log' >> /etc/rsyslog.d/49-haproxy.conf
+systemctl restart rsyslog
+```
+</Alert>
+
+## عیب‌یابی
+
+### HAProxy شروع نمی‌شه
+
+وضعیت و لاگ‌های HAProxy رو چک کنید:
+
+```bash
+systemctl status haproxy
+journalctl -u haproxy -n 50
+```
+
+اگه خطای syntax داره، فایل کانفیگ رو تست کنید:
+
+```bash
+haproxy -c -f /etc/haproxy/haproxy.cfg
+```
+
+### خطای SSL Certificate
+
+اگه HAProxy با خطای certificate شروع نمی‌شه:
+
+```bash
+# چک کنید که فایل certificate وجود داره
+ls -la /etc/haproxy/certs/
+
+# مجوزها رو چک کنید
+chmod 600 /etc/haproxy/certs/*.pem
+
+# certificate رو تست کنید
+openssl x509 -in /etc/haproxy/certs/panel.example.com.pem -text -noout
+```
+
+### پنل یا کانفیگ‌ها وصل نمی‌شن
+
+1. مطمئن بشید HAProxy در حال اجراست:
+```bash
+systemctl status haproxy
+```
+
+2. چک کنید که پورت‌ها به درستی باز باشن:
+```bash
+netstat -tulpn | grep haproxy
+```
+
+3. تست کنید که سرویس‌های لوکال کار می‌کنن:
+```bash
+curl -I http://127.0.0.1:8000
+netstat -tulpn | grep "8000"
+```
+
+4. لاگ‌های HAProxy رو real-time ببینید:
+```bash
+tail -f /var/log/haproxy.log
+```
+
+### ترافیک به backend اشتباه می‌ره
+
+1. ACL ها رو چک کنید - مطمئن بشید دامنه‌ها درست نوشته شدن
+2. تست کنید با curl:
+```bash
+curl -H "Host: panel.example.com" https://YOUR_SERVER_IP
+curl -H "Host: sub.example.com" https://YOUR_SERVER_IP
+```
+
+3. مطمئن بشید DNS ها درست تنظیم شدن:
+```bash
+nslookup panel.example.com
+nslookup sub.example.com
+```
+
+## جمع‌بندی
+
+با تکمیل این مراحل:
+- ✅ تمام ترافیک از چند پورت همزمان (443, 80, 8443, 9000) قابل دسترسی هست
+- ✅ پنل با HTTPS ایمن در دسترسه
+- ✅ HAProxy خودش SSL handling رو انجام می‌ده
+- ✅ لاگ‌گیری حرفه‌ای و دقیق
+- ✅ امنیت بالا با ACL و deny کردن ترافیک‌های ناخواسته
+- ✅ مدیریت راحت‌تر و مرکزی
+- ✅ قابلیت استفاده از TCP mode برای نودها
+
+<Alert type="success">
+حالا می‌تونید با خیال راحت از سرور تک‌پورت (یا چند پورت) خودتون استفاده کنید! این پیکربندی حرفه‌ای به شما امکان می‌ده تا همه سرویس‌هاتون رو از یک نقطه مدیریت کنید. 🎉
+</Alert>

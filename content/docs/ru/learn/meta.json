@@ -5,7 +5,9 @@
     "ssl-certificate-cli",
     "ssl-activation-cli",
     "multi-worker",
-    "warp"
+    "warp",
+    "single-port",
+    "node-data-limit"
   ],
   "icon": "BookOpen"
 }
