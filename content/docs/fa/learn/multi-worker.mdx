@@ -77,7 +77,7 @@ SQLALCHEMY_MAX_OVERFLOW = 30
     ```yml
     services:
         nats:
-            image: nats:latest
+            image: nats:2.10-alpine
             restart: unless-stopped
             command: ["-js"]
             ports:
@@ -93,11 +93,13 @@ SQLALCHEMY_MAX_OVERFLOW = 30
 
         panel:
             container_name: pasarguard
-            image: pasarguard/panel:latest
+            image: pasarguard/panel:dev
             restart: unless-stopped
             env_file: .env
             environment:
                 ROLE: backend
+                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
+                NATS_URL: "nats://nats:4222"
             depends_on:
                 nats:
                     condition: service_healthy
@@ -116,11 +118,13 @@ SQLALCHEMY_MAX_OVERFLOW = 30
 
         node-worker:
             container_name: node-worker
-            image: pasarguard/panel:latest
+            image: pasarguard/panel:dev
             restart: unless-stopped
             env_file: .env
             environment:
                 ROLE: node
+                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
+                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -129,11 +133,13 @@ SQLALCHEMY_MAX_OVERFLOW = 30
 
         scheduler:
             container_name: scheduler
-            image: pasarguard/panel:latest
+            image: pasarguard/panel:dev
             restart: unless-stopped
             env_file: .env
             environment:
                 ROLE: scheduler
+                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
+                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -209,7 +215,7 @@ SQLALCHEMY_MAX_OVERFLOW = 30
     ```yml
     services:
         nats:
-            image: nats:latest
+            image: nats:2.10-alpine
             restart: unless-stopped
             command: ["-js"]
             ports:
@@ -225,11 +231,13 @@ SQLALCHEMY_MAX_OVERFLOW = 30
 
         panel:
             container_name: pasarguard
-            image: pasarguard/panel:latest
+            image: pasarguard/panel:dev
             restart: unless-stopped
             env_file: .env
             environment:
                 ROLE: backend
+                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
+                NATS_URL: "nats://nats:4222"
             depends_on:
                 nats:
                     condition: service_healthy
@@ -248,11 +256,13 @@ SQLALCHEMY_MAX_OVERFLOW = 30
 
         node-worker:
             container_name: node-worker
-            image: pasarguard/panel:latest
+            image: pasarguard/panel:dev
             restart: unless-stopped
             env_file: .env
             environment:
                 ROLE: node
+                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
+                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -261,11 +271,13 @@ SQLALCHEMY_MAX_OVERFLOW = 30
 
         scheduler:
             container_name: scheduler
-            image: pasarguard/panel:latest
+            image: pasarguard/panel:dev
             restart: unless-stopped
             env_file: .env
             environment:
                 ROLE: scheduler
+                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
+                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -342,7 +354,7 @@ SQLALCHEMY_MAX_OVERFLOW = 30
     ```yml
     services:
         nats:
-            image: nats:latest
+            image: nats:2.10-alpine
             restart: unless-stopped
             command: ["-js"]
             ports:
@@ -358,11 +370,13 @@ SQLALCHEMY_MAX_OVERFLOW = 30
 
         panel:
             container_name: pasarguard
-            image: pasarguard/panel:latest
+            image: pasarguard/panel:dev
             restart: unless-stopped
             env_file: .env
             environment:
                 ROLE: backend
+                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mysql:3306/${DB_NAME}"
+                NATS_URL: "nats://nats:4222"
             depends_on:
                 nats:
                     condition: service_healthy
@@ -381,11 +395,13 @@ SQLALCHEMY_MAX_OVERFLOW = 30
 
         node-worker:
             container_name: node-worker
-            image: pasarguard/panel:latest
+            image: pasarguard/panel:dev
             restart: unless-stopped
             env_file: .env
             environment:
                 ROLE: node
+                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mysql:3306/${DB_NAME}"
+                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -394,11 +410,13 @@ SQLALCHEMY_MAX_OVERFLOW = 30
 
         scheduler:
             container_name: scheduler
-            image: pasarguard/panel:latest
+            image: pasarguard/panel:dev
             restart: unless-stopped
             env_file: .env
             environment:
                 ROLE: scheduler
+                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mysql:3306/${DB_NAME}"
+                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -469,7 +487,7 @@ SQLALCHEMY_MAX_OVERFLOW = 30
     ```yml
     services:
         nats:
-            image: nats:latest
+            image: nats:2.10-alpine
             restart: unless-stopped
             command: ["-js"]
             ports:
@@ -485,11 +503,13 @@ SQLALCHEMY_MAX_OVERFLOW = 30
 
         panel:
             container_name: pasarguard
-            image: pasarguard/panel:latest
+            image: pasarguard/panel:dev
             restart: unless-stopped
             env_file: .env
             environment:
                 ROLE: backend
+                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mariadb:3306/${DB_NAME}"
+                NATS_URL: "nats://nats:4222"
             depends_on:
                 nats:
                     condition: service_healthy
@@ -508,11 +528,13 @@ SQLALCHEMY_MAX_OVERFLOW = 30
 
         node-worker:
             container_name: node-worker
-            image: pasarguard/panel:latest
+            image: pasarguard/panel:dev
             restart: unless-stopped
             env_file: .env
             environment:
                 ROLE: node
+                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mariadb:3306/${DB_NAME}"
+                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -521,11 +543,13 @@ SQLALCHEMY_MAX_OVERFLOW = 30
 
         scheduler:
             container_name: scheduler
-            image: pasarguard/panel:latest
+            image: pasarguard/panel:dev
             restart: unless-stopped
             env_file: .env
             environment:
                 ROLE: scheduler
+                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mariadb:3306/${DB_NAME}"
+                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
