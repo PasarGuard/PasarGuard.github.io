@@ -31,7 +31,7 @@ In the examples below, the `docker-compose.yml` and `.env` files live in `/opt/p
 - All workers must share `/var/lib/pasarguard` (templates, certs, runtime files).
 
 <Callout type="warn">
-Multi-worker mode requires `NATS_ENABLED=1`. If NATS is disabled, node/scheduler workers cannot coordinate with the backend.
+Multi-worker mode requires `NATS_ENABLED=True`. If NATS is disabled, node/scheduler workers cannot coordinate with the backend.
 </Callout>
 
 ## Step 1: Prepare `.env`
@@ -40,8 +40,8 @@ Below is a minimal set. Add the database block from your selected tab.
 
 ```bash
 # NATS
-NATS_ENABLED = 1
-NATS_URL = "nats://nats:4222"
+NATS_ENABLED = True
+NATS_URL = "nats://127.0.0.1:4222"
 
 # Web server
 UVICORN_PORT = 8000
@@ -70,7 +70,7 @@ SQLALCHEMY_MAX_OVERFLOW = 30
     DB_NAME = "pasarguard"
     DB_USER = "pasarguard"
     DB_PASSWORD = "CHANGE_ME"
-    SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:CHANGE_ME@pgbouncer:6432/pasarguard"
+    SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:CHANGE_ME@127.0.0.1:6432/pasarguard"
     ```
 
     **docker-compose.yml**
@@ -96,17 +96,14 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             image: pasarguard/panel:latest
             restart: unless-stopped
             env_file: .env
+            network_mode: host
             environment:
                 ROLE: backend
-                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 nats:
                     condition: service_healthy
                 pgbouncer:
                     condition: service_healthy
-            ports:
-                - "${UVICORN_PORT}:${UVICORN_PORT}"
             volumes:
                 - /var/lib/pasarguard:/var/lib/pasarguard
             healthcheck:
@@ -123,8 +120,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: node
-                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -138,8 +133,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: scheduler
-                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -208,7 +201,7 @@ SQLALCHEMY_MAX_OVERFLOW = 30
     DB_NAME = "pasarguard"
     DB_USER = "pasarguard"
     DB_PASSWORD = "CHANGE_ME"
-    SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:CHANGE_ME@pgbouncer:6432/pasarguard"
+    SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:CHANGE_ME@127.0.0.1:6432/pasarguard"
     ```
 
     **docker-compose.yml**
@@ -234,17 +227,14 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             image: pasarguard/panel:latest
             restart: unless-stopped
             env_file: .env
+            network_mode: host
             environment:
                 ROLE: backend
-                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 nats:
                     condition: service_healthy
                 pgbouncer:
                     condition: service_healthy
-            ports:
-                - "${UVICORN_PORT}:${UVICORN_PORT}"
             volumes:
                 - /var/lib/pasarguard:/var/lib/pasarguard
             healthcheck:
@@ -261,8 +251,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: node
-                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -276,8 +264,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: scheduler
-                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -347,7 +333,7 @@ SQLALCHEMY_MAX_OVERFLOW = 30
     DB_USER = "pasarguard"
     DB_PASSWORD = "CHANGE_ME"
     MYSQL_ROOT_PASSWORD = "CHANGE_ME"
-    SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://pasarguard:CHANGE_ME@mysql:3306/pasarguard"
+    SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://pasarguard:CHANGE_ME@127.0.0.1:3306/pasarguard"
     ```
 
     **docker-compose.yml**
@@ -373,17 +359,14 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             image: pasarguard/panel:latest
             restart: unless-stopped
             env_file: .env
+            network_mode: host
             environment:
                 ROLE: backend
-                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mysql:3306/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 nats:
                     condition: service_healthy
                 mysql:
                     condition: service_healthy
-            ports:
-                - "${UVICORN_PORT}:${UVICORN_PORT}"
             volumes:
                 - /var/lib/pasarguard:/var/lib/pasarguard
             healthcheck:
@@ -400,8 +383,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: node
-                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mysql:3306/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -415,8 +396,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: scheduler
-                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mysql:3306/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -480,7 +459,7 @@ SQLALCHEMY_MAX_OVERFLOW = 30
     DB_USER = "pasarguard"
     DB_PASSWORD = "CHANGE_ME"
     MYSQL_ROOT_PASSWORD = "CHANGE_ME"
-    SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://pasarguard:CHANGE_ME@mariadb:3306/pasarguard"
+    SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://pasarguard:CHANGE_ME@127.0.0.1:3306/pasarguard"
     ```
 
     **docker-compose.yml**
@@ -506,17 +485,14 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             image: pasarguard/panel:latest
             restart: unless-stopped
             env_file: .env
+            network_mode: host
             environment:
                 ROLE: backend
-                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mariadb:3306/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 nats:
                     condition: service_healthy
                 mariadb:
                     condition: service_healthy
-            ports:
-                - "${UVICORN_PORT}:${UVICORN_PORT}"
             volumes:
                 - /var/lib/pasarguard:/var/lib/pasarguard
             healthcheck:
@@ -533,8 +509,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: node
-                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mariadb:3306/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -548,8 +522,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: scheduler
-                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mariadb:3306/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
