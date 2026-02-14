@@ -98,8 +98,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: backend
-                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 nats:
                     condition: service_healthy
@@ -123,8 +121,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: node
-                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -138,8 +134,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: scheduler
-                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -236,8 +230,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: backend
-                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 nats:
                     condition: service_healthy
@@ -261,8 +253,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: node
-                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -276,8 +266,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: scheduler
-                SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -375,8 +363,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: backend
-                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mysql:3306/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 nats:
                     condition: service_healthy
@@ -400,8 +386,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: node
-                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mysql:3306/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -415,8 +399,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: scheduler
-                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mysql:3306/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -508,8 +490,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: backend
-                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mariadb:3306/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 nats:
                     condition: service_healthy
@@ -533,8 +513,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: node
-                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mariadb:3306/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
@@ -548,8 +526,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             env_file: .env
             environment:
                 ROLE: scheduler
-                SQLALCHEMY_DATABASE_URL: "mysql+asyncmy://${DB_USER}:${DB_PASSWORD}@mariadb:3306/${DB_NAME}"
-                NATS_URL: "nats://nats:4222"
             depends_on:
                 panel:
                     condition: service_healthy
