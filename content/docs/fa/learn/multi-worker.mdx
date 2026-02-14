@@ -31,7 +31,7 @@ icon: Server
 - همه workerها باید مسیر `/var/lib/pasarguard` را مشترک داشته باشند (قالب‌ها، گواهی‌ها، فایل‌های زمان اجرا).
 
 <Callout type="warn">
-حالت Multi-Worker نیازمند `NATS_ENABLED=1` است. اگر NATS غیرفعال باشد، workerهای node/scheduler نمی‌توانند با backend هماهنگ شوند.
+حالت Multi-Worker نیازمند `NATS_ENABLED=True` است. اگر NATS غیرفعال باشد، workerهای node/scheduler نمی‌توانند با backend هماهنگ شوند.
 </Callout>
 
 ## مرحله ۱: آماده‌سازی `.env`
@@ -40,8 +40,8 @@ icon: Server
 
 ```bash
 # NATS
-NATS_ENABLED = 1
-NATS_URL = "nats://nats:4222"
+NATS_ENABLED = True
+NATS_URL = "nats://127.0.0.1:4222"
 
 # Web server
 UVICORN_PORT = 8000
@@ -70,7 +70,7 @@ SQLALCHEMY_MAX_OVERFLOW = 30
     DB_NAME = "pasarguard"
     DB_USER = "pasarguard"
     DB_PASSWORD = "CHANGE_ME"
-    SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:CHANGE_ME@pgbouncer:6432/pasarguard"
+    SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:CHANGE_ME@127.0.0.1:6432/pasarguard"
     ```
 
     **docker-compose.yml**
@@ -96,6 +96,7 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             image: pasarguard/panel:latest
             restart: unless-stopped
             env_file: .env
+            network_mode: host
             environment:
                 ROLE: backend
             depends_on:
@@ -103,8 +104,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
                     condition: service_healthy
                 pgbouncer:
                     condition: service_healthy
-            ports:
-                - "${UVICORN_PORT}:${UVICORN_PORT}"
             volumes:
                 - /var/lib/pasarguard:/var/lib/pasarguard
             healthcheck:
@@ -202,7 +201,7 @@ SQLALCHEMY_MAX_OVERFLOW = 30
     DB_NAME = "pasarguard"
     DB_USER = "pasarguard"
     DB_PASSWORD = "CHANGE_ME"
-    SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:CHANGE_ME@pgbouncer:6432/pasarguard"
+    SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:CHANGE_ME@127.0.0.1:6432/pasarguard"
     ```
 
     **docker-compose.yml**
@@ -228,6 +227,7 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             image: pasarguard/panel:latest
             restart: unless-stopped
             env_file: .env
+            network_mode: host
             environment:
                 ROLE: backend
             depends_on:
@@ -235,8 +235,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
                     condition: service_healthy
                 pgbouncer:
                     condition: service_healthy
-            ports:
-                - "${UVICORN_PORT}:${UVICORN_PORT}"
             volumes:
                 - /var/lib/pasarguard:/var/lib/pasarguard
             healthcheck:
@@ -335,7 +333,7 @@ SQLALCHEMY_MAX_OVERFLOW = 30
     DB_USER = "pasarguard"
     DB_PASSWORD = "CHANGE_ME"
     MYSQL_ROOT_PASSWORD = "CHANGE_ME"
-    SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://pasarguard:CHANGE_ME@mysql:3306/pasarguard"
+    SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://pasarguard:CHANGE_ME@127.0.0.1:3306/pasarguard"
     ```
 
     **docker-compose.yml**
@@ -361,6 +359,7 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             image: pasarguard/panel:latest
             restart: unless-stopped
             env_file: .env
+            network_mode: host
             environment:
                 ROLE: backend
             depends_on:
@@ -368,8 +367,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
                     condition: service_healthy
                 mysql:
                     condition: service_healthy
-            ports:
-                - "${UVICORN_PORT}:${UVICORN_PORT}"
             volumes:
                 - /var/lib/pasarguard:/var/lib/pasarguard
             healthcheck:
@@ -462,7 +459,7 @@ SQLALCHEMY_MAX_OVERFLOW = 30
     DB_USER = "pasarguard"
     DB_PASSWORD = "CHANGE_ME"
     MYSQL_ROOT_PASSWORD = "CHANGE_ME"
-    SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://pasarguard:CHANGE_ME@mariadb:3306/pasarguard"
+    SQLALCHEMY_DATABASE_URL = "mysql+asyncmy://pasarguard:CHANGE_ME@127.0.0.1:3306/pasarguard"
     ```
 
     **docker-compose.yml**
@@ -488,6 +485,7 @@ SQLALCHEMY_MAX_OVERFLOW = 30
             image: pasarguard/panel:latest
             restart: unless-stopped
             env_file: .env
+            network_mode: host
             environment:
                 ROLE: backend
             depends_on:
@@ -495,8 +493,6 @@ SQLALCHEMY_MAX_OVERFLOW = 30
                     condition: service_healthy
                 mariadb:
                     condition: service_healthy
-            ports:
-                - "${UVICORN_PORT}:${UVICORN_PORT}"
             volumes:
                 - /var/lib/pasarguard:/var/lib/pasarguard
             healthcheck:
