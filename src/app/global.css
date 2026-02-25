@@ -178,6 +178,15 @@ button:has([data-lucide="languages"]) {
   text-align: right;
 }
 
+/* Force Fumadocs tabs to follow RTL page direction */
+[dir="rtl"] .prose [dir="ltr"][data-orientation="horizontal"] {
+  direction: rtl !important;
+}
+
+[dir="rtl"] .prose [role="tablist"][data-orientation="horizontal"] {
+  direction: rtl !important;
+}
+
 [dir="rtl"] .sidebar {
   right: 0;
   left: auto;
@@ -773,6 +782,15 @@ button,
   min-width: 0 !important;
 }
 
+[dir="rtl"] .prose table th,[dir="rtl"] .prose table td {
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+[dir="rtl"] .prose strong{
+  direction: rtl !important;
+}
+
 /* Responsive table wrapper */
 .prose table {
   overflow-x: auto !important;
@@ -1011,29 +1029,29 @@ main::-webkit-scrollbar-thumb:hover,
     padding: 0.5rem !important;
   }
   
-  /* Stack table columns on very small screens */
-  .prose table,
-  .prose thead,
-  .prose tbody,
-  .prose th,
-  .prose td,
-  .prose tr {
+  /* Stack only tables that provide data-label metadata for each cell */
+  .prose table:has(td[data-label]),
+  .prose table:has(td[data-label]) thead,
+  .prose table:has(td[data-label]) tbody,
+  .prose table:has(td[data-label]) th,
+  .prose table:has(td[data-label]) td,
+  .prose table:has(td[data-label]) tr {
     display: block !important;
   }
   
-  .prose thead tr {
+  .prose table:has(td[data-label]) thead tr {
     position: absolute !important;
     top: -9999px !important;
     left: -9999px !important;
   }
   
-  .prose tr {
+  .prose table:has(td[data-label]) tr {
     border: 1px solid hsl(var(--border)) !important;
     margin-bottom: 0.5rem !important;
     padding: 0.5rem !important;
   }
   
-  .prose td {
+  .prose table:has(td[data-label]) td {
     border: none !important;
     border-bottom: 1px solid hsl(var(--border)) !important;
     position: relative !important;
@@ -1041,7 +1059,7 @@ main::-webkit-scrollbar-thumb:hover,
     text-align: left !important;
   }
   
-  .prose td:before {
+  .prose table:has(td[data-label]) td:before {
     content: attr(data-label) ": " !important;
     position: absolute !important;
     left: 6px !important;
@@ -1049,6 +1067,10 @@ main::-webkit-scrollbar-thumb:hover,
     padding-right: 10px !important;
     white-space: nowrap !important;
     font-weight: bold !important;
+  }
+
+  .prose table:not(:has(td[data-label])) td:before {
+    content: none !important;
   }
 }
 

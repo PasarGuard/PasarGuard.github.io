@@ -11,14 +11,14 @@ interface FooterProps {
 export function Footer({ lang }: FooterProps) {
   const { t } = useTranslations();
   const currentYear = new Date().getFullYear();
-  
+
   return (
     <footer dir='ltr' className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <div className="flex flex-col items-center gap-2 text-center md:flex-row md:text-left">
             <p className="text-sm text-muted-foreground">
-              © {currentYear}Made with{' '}
+              (c) {currentYear} Made with{' '}
               <Heart className="inline h-4 w-4 text-red-500" /> in PasarGuard Team
             </p>
           </div>

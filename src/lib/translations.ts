@@ -46,7 +46,7 @@ export function loadTranslations(locale: string): Translations {
     return {
       appName: 'PasarGuard',
       appDescription: 'Censorship-resistant GUI integrated solution',
-      version: 'V1 First Version',
+      version: 'V2 Out Now',
       documentation: 'Documentation',
       github: 'GitHub',
       panel: {

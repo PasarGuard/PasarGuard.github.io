@@ -108,123 +108,118 @@ export default async function LocaleHomePage({ params }: { params: Promise<{ lan
   
   // Validate if the lang parameter is a valid language
   if (!validLanguages.includes(lang)) {
-    // Redirect to English if invalid language
-    redirect('/fa');
+    redirect('/en');
   }
   
   const translations = loadTranslations(lang);
   const isRTL = ['fa', 'ar'].includes(lang);
+  const features = [
+    {
+      href: `/${lang}/panel`,
+      title: translations.panel.title,
+      description: translations.panel.description,
+      icon: Box,
+      className: 'block',
+    },
+    {
+      href: `/${lang}/node`,
+      title: translations.node.title,
+      description: translations.node.description,
+      icon: Network,
+      className: 'block',
+    },
+    {
+      href: `/${lang}/interfaces`,
+      title: translations.commands.title,
+      description: translations.commands.description,
+      icon: Terminal,
+      className: 'block md:col-span-2 lg:col-span-1',
+    },
+  ];
   
   return (
     <div className="min-h-screen bg-background">
-      {/* Custom Header */}
       <CustomHeader lang={lang} isRTL={isRTL} translations={translations} />
       
-      <main className="min-h-screen">
-        {/* Hero Section */}
-        <div className="flex py-12 sm:py-10 flex-col items-center justify-center min-h-screen px-4 text-center">
-          {/* Version Badge */}
-          <div className="mb-6">
-            <Link 
-              href="https://github.com/PasarGuard/panel/releases" 
-              target="_blank" 
+      <main className="relative flex-1 overflow-hidden">
+        <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-gradient-to-b from-primary/15 via-primary/5 to-transparent" />
+
+        <section className="container mx-auto px-4 pt-14 pb-10 sm:pt-16 md:pt-20">
+          <div className="mx-auto max-w-4xl text-center">
+            <Link
+              href="https://github.com/PasarGuard/panel/releases"
+              target="_blank"
               rel="noopener noreferrer"
               className="inline-block"
             >
-              <Badge variant="secondary" className="px-4 py-2 text-sm font-medium hover:bg-secondary/80 transition-colors cursor-pointer">
-                <ArrowRight className={`w-3 h-3 ${isRTL ? 'ml-2 rotate-180' : 'mr-2'}`} />
-                {translations.version}
-                <div className={`w-2 h-2 bg-primary rounded-full ${isRTL ? 'mr-2' : 'ml-2'}`}></div>
+              <Badge
+                variant="secondary"
+                className="gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors hover:bg-secondary/80"
+              >
+                <span className="inline-block h-2 w-2 rounded-full bg-primary" />
+                <span>{translations.version}</span>
+                <ArrowRight className={`h-3.5 w-3.5 ${isRTL ? 'rotate-180' : ''}`} />
               </Badge>
             </Link>
+
+            <h1 className="mt-6 text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+              {translations.appName}
+            </h1>
+
+            <p className="mx-auto mt-5 max-w-3xl text-base leading-relaxed text-muted-foreground sm:text-lg md:text-xl">
+              {translations.appDescription}
+            </p>
+
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+              <Button asChild size="lg" className="h-11 min-w-[180px] px-7 font-semibold">
+                <Link href={`/${lang}/introduction`}>
+                  {translations.documentation}
+                  <ArrowRight className={`h-4 w-4 ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="h-11 min-w-[180px] px-7 font-semibold">
+                <Link href="https://github.com/PasarGuard" target="_blank" rel="noopener noreferrer">
+                  <Github className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                  {translations.github}
+                </Link>
+              </Button>
+            </div>
           </div>
+        </section>
 
-          {/* Main Title */}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight text-foreground">
-            {translations.appName}
-          </h1>
+        <section className="container mx-auto px-4 pb-16 md:pb-24">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {features.map((feature) => {
+              const Icon = feature.icon;
 
-          {/* Subtitle */}
-          <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground mb-12 max-w-3xl leading-relaxed">
-            {translations.appDescription}
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-20">
-            <Button asChild size="lg" className="px-8 py-3 text-lg font-semibold">
-              <Link href={`/${lang}/introduction`}>
-                {translations.documentation}
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="px-8 py-3 text-lg font-semibold">
-              <Link href="https://github.com/PasarGuard" target="_blank" rel="noopener noreferrer">
-                <Github className={`w-5 h-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-                {translations.github}
-              </Link>
-            </Button>
+              return (
+                <Link key={feature.href} href={feature.href} className={feature.className}>
+                  <Card className="group h-full cursor-pointer border-border/70 bg-card/80 transition-all duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
+                    <CardHeader className="pb-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <div className="rounded-lg border bg-background/80 p-2">
+                          <Icon className="h-5 w-5 text-primary" />
+                        </div>
+                        <ArrowRight
+                          className={`h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground ${isRTL ? 'rotate-180' : ''}`}
+                        />
+                      </div>
+                      <CardTitle className="text-xl">{feature.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <CardDescription className="text-sm leading-relaxed">
+                        {feature.description}
+                      </CardDescription>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
-
-          {/* Feature Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl w-full">
-            {/* Panel Card */}
-            <Link href={`/${lang}/panel`} className="block">
-              <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer h-full">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <Box className="w-8 h-8 text-primary" />
-                    <ArrowRight className={`w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors ${isRTL ? 'rotate-180' : ''}`} />
-                  </div>
-                  <CardTitle className="text-2xl">{translations.panel.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-sm leading-relaxed">
-                    {translations.panel.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            </Link>
-
-            {/* Node Card */}
-            <Link href={`/${lang}/node`} className="block">
-              <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer h-full">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <Network className="w-8 h-8 text-primary" />
-                    <ArrowRight className={`w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors ${isRTL ? 'rotate-180' : ''}`} />
-                  </div>
-                  <CardTitle className="text-2xl">{translations.node.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-sm leading-relaxed">
-                    {translations.node.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            </Link>
-
-            {/* Commands Card */}
-            <Link href={`/${lang}/interfaces`} className="block md:col-span-2 lg:col-span-1">
-              <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer h-full">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <Terminal className="w-8 h-8 text-primary" />
-                    <ArrowRight className={`w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors ${isRTL ? 'rotate-180' : ''}`} />
-                  </div>
-                  <CardTitle className="text-2xl">{translations.commands.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-sm leading-relaxed">
-                    {translations.commands.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
-        </div>
-        
-        {/* Footer */}
-        <Footer lang={lang} />
+        </section>
       </main>
+
+      <Footer lang={lang} />
     </div>
   );
 }

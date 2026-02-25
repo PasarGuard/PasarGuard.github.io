@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
 export default function RootPage() {
-  // For static export, redirect to English by default
-  redirect('/fa');
+  // Default landing language
+  redirect('/en');
 }

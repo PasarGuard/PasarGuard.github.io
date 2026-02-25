@@ -70,14 +70,7 @@ export function Language() {
   }, [pathname])
 
   const changeLanguage = async (lang: string) => {
-    if (lang === 'system') {
-      // detect browser language and change without reload
-      const detectedLang = navigator.language.split('-')[0] // e.g., 'en-US' -> 'en'
-      const langToSet = supportedLangs.includes(detectedLang) ? detectedLang : 'en'
-      await handleLanguageChange(langToSet)
-    } else {
-      await handleLanguageChange(lang)
-    }
+    await handleLanguageChange(lang)
   }
 
   const handleLanguageChange = async (locale: string) => {
@@ -117,9 +110,6 @@ export function Language() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="top" className="w-36">
-        <DropdownMenuItem onClick={() => changeLanguage('system')} className="transition-colors duration-150 hover:bg-accent cursor-pointer">
-          <span className="text-sm">System</span>
-        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => changeLanguage('en')} className="transition-colors duration-150 hover:bg-accent cursor-pointer">
           <span className="text-sm">English</span>
         </DropdownMenuItem>
