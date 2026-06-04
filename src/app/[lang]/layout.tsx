@@ -2,9 +2,11 @@ import { RootProvider } from 'fumadocs-ui/provider';
 import { NextProvider } from 'fumadocs-core/framework/next';
 import { ThemeProvider as NextThemeProvider } from 'next-themes';
 import { ThemeProvider } from '@/components/theme-provider';
+import { NavigationLoadingBar } from '@/components/NavigationLoadingBar';
 import { Inter } from 'next/font/google';
 import { Vazirmatn } from 'next/font/google';
 import { i18n } from '@/lib/i18n';
+import { Suspense } from 'react';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -64,6 +66,9 @@ export default async function LangLayout({
           <ThemeProvider>
             <NextProvider>
               <RootProvider i18n={{ ...i18n, locale: lang }}>
+                <Suspense fallback={null}>
+                  <NavigationLoadingBar />
+                </Suspense>
                 {children}
               </RootProvider>
             </NextProvider>

@@ -9,6 +9,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { useTranslations } from '@/lib/use-translations'
 import { cn } from '@/lib/utils'
+import { startNavigationLoading } from '@/components/NavigationLoadingBar'
 
 // Theme Toggle Component
 export function ThemeToggle() {
@@ -88,6 +89,7 @@ export function Language() {
     // Build the new path with the selected locale (treat all locales equally)
     const newPath = `/${locale}${cleanPath}`
     
+    startNavigationLoading()
     router.push(newPath)
     
     document.documentElement.lang = locale
