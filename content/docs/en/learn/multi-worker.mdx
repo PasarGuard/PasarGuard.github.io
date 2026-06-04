@@ -46,8 +46,9 @@ NATS_URL = "nats://127.0.0.1:4222"
 # Web server
 # UVICORN_PORT = 8000
 
-# Optional: Uvicorn processes inside the backend container
-# UVICORN_WORKERS = 2
+# Uvicorn processes inside the backend container
+# Set this to the number of CPU cores on your server for best performance
+# UVICORN_WORKERS = 4
 
 # Database connection (set per database section)
 # SQLALCHEMY_DATABASE_URL = "..."
@@ -385,7 +386,7 @@ NATS_URL = "nats://127.0.0.1:4222"
         pasarguard:
             container_name: pasarguard
             image: pasarguard/panel:latest
-            restart: unless-stopped
+            restart: always
             env_file: .env
             network_mode: host
             environment:
@@ -407,7 +408,7 @@ NATS_URL = "nats://127.0.0.1:4222"
         node-worker:
             container_name: node-worker
             image: pasarguard/panel:latest
-            restart: unless-stopped
+            restart: always
             env_file: .env
             network_mode: host
             environment:
@@ -421,7 +422,7 @@ NATS_URL = "nats://127.0.0.1:4222"
         scheduler:
             container_name: scheduler
             image: pasarguard/panel:latest
-            restart: unless-stopped
+            restart: always
             env_file: .env
             network_mode: host
             environment:
@@ -434,6 +435,7 @@ NATS_URL = "nats://127.0.0.1:4222"
 
         mysql:
             image: mysql:lts
+            network_mode: host
             restart: always
             environment:
                 MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -443,23 +445,17 @@ NATS_URL = "nats://127.0.0.1:4222"
                 MYSQL_PASSWORD: ${DB_PASSWORD}
             command:
                 - --mysqlx=OFF
-                - --bind-address=0.0.0.0
+                - --bind-address=127.0.0.1
                 - --character_set_server=utf8mb4
                 - --collation_server=utf8mb4_unicode_ci
-                - --log-bin=mysql-bin
                 - --skip-log-bin
-                - --binlog_expire_logs_seconds=1209600
                 - --host-cache-size=0
                 - --innodb-open-files=1024
                 - --innodb-buffer-pool-size=256M
-                - --innodb-log-file-size=64M
-                - --innodb-log-files-in-group=2
                 - --general_log=0
                 - --slow_query_log=1
                 - --slow_query_log_file=/var/lib/mysql/slow.log
                 - --long_query_time=2
-            ports:
-                - "127.0.0.1:3306:3306"
             volumes:
                 - /var/lib/mysql/pasarguard:/var/lib/mysql
             healthcheck:
@@ -478,6 +474,20 @@ NATS_URL = "nats://127.0.0.1:4222"
                 interval: 5s
                 timeout: 5s
                 retries: 55
+
+        phpmyadmin:
+            container_name: phpmyadmin
+            image: phpmyadmin:latest
+            restart: always
+            env_file: .env
+            network_mode: host
+            environment:
+                PMA_HOST: 127.0.0.1
+                APACHE_PORT: 8010
+                UPLOAD_LIMIT: 1024M
+            depends_on:
+                mysql:
+                    condition: service_healthy
 
     volumes:
         nats-data:
