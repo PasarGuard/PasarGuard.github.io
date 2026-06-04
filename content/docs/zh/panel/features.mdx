@@ -94,24 +94,20 @@ PasarGuard 生成与流行客户端兼容的订阅链接：
 - **管理员命令**：通过 Telegram 管理面板
 - **实时警报**：系统状态通知
 
-### CLI 工具
+### CLI Tools
 
-用于自动化的命令行界面：
+用于设置和维护的命令行接口：
 
 ```bash
-# 管理员终端用户界面
-pasarguard tui
+# 生成一次性所有者设置密钥
+pasarguard cli generate-temp-key
 
-# 管理员管理
-pasarguard cli admin create --sudo
-pasarguard cli admin list
+# 显示 CLI 帮助
+pasarguard cli --help
 
-# 系统操作
-pasarguard status
-pasarguard restart
-pasarguard update
+# 显示已安装版本
+pasarguard cli version
 ```
-
 ## 安全功能
 
 ### TLS 支持

@@ -18,7 +18,7 @@ icon: Cog
 | `SUDO_PASSWORD` | string | - | Пароль суперпользователя для начальной учетной записи администратора |
 
 <Callout type="warn">
-  `SUDO_USERNAME` и `SUDO_PASSWORD` работают только когда включен режим `DEBUG`. Для продакшена создавайте администраторов через TUI: `pasarguard tui`
+  `SUDO_USERNAME` и `SUDO_PASSWORD` работают только при включенном режиме `DEBUG`. Для production создайте учетную запись владельца через форму настройки в панели, используя `pasarguard cli generate-temp-key`.
 </Callout>
 
 ### Конфигурация базы данных
@@ -95,10 +95,6 @@ DEBUG = false
 ### Настройка для продакшена
 
 ```bash
-# Конфигурация администратора
-SUDO_USERNAME = "admin"
-SUDO_PASSWORD = "your-secure-password"
-
 # База данных (рекомендуется TimescaleDB)
 SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:password@localhost/pasarguard"
 

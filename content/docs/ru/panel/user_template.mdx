@@ -22,7 +22,6 @@ icon: FileText
 10. [Изменение пользователей с помощью шаблонов](#modifying-users-with-templates)
 11. [Массовое создание пользователей](#bulk-user-creation)
 12. [Правила валидации и ограничения](#validation-rules-and-constraints)
-13. [API Endpoints](#api-endpoints)
 14. [Распространенные сценарии](#common-scenarios)
 
 ---
@@ -722,161 +721,6 @@ Generated usernames:
 
 ---
 
-## API Endpoints
-
-### Создать шаблон
-
-**Endpoint:** `POST /api/user_template`
-
-**Authentication:** Требуется sudo администратор
-
-**Request Body:**
-```json
-{
-  "name": "Premium Plan",
-  "data_limit": 1073741824,
-  "expire_duration": 2592000,
-  "username_prefix": "premium_",
-  "username_suffix": "_vip",
-  "group_ids": [1, 2],
-  "status": "active",
-  "data_limit_reset_strategy": "month",
-  "extra_settings": {
-    "flow": "xtls-rprx-vision",
-    "method": "aes-256-gcm"
-  },
-  "is_disabled": false
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Premium Plan",
-  "data_limit": 1073741824,
-  "expire_duration": 2592000,
-  "username_prefix": "premium_",
-  "username_suffix": "_vip",
-  "group_ids": [1, 2],
-  "status": "active",
-  "data_limit_reset_strategy": "month",
-  "extra_settings": {
-    "flow": "xtls-rprx-vision",
-    "method": "aes-256-gcm"
-  },
-  "is_disabled": false
-}
-```
-
-### Получить все шаблоны
-
-**Endpoint:** `GET /api/user_templates`
-
-**Authentication:** Требуется администратор
-
-**Query Parameters:**
-- `offset` (необязательно): Смещение пагинации
-- `limit` (необязательно): Лимит пагинации
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "name": "Premium Plan",
-    "group_ids": [1, 2],
-    ...
-  }
-]
-```
-
-### Получить шаблон по ID
-
-**Endpoint:** `GET /api/user_template/{template_id}`
-
-**Authentication:** Требуется администратор
-
-**Response:** То же, что и ответ создания шаблона
-
-### Изменить шаблон
-
-**Endpoint:** `PUT /api/user_template/{template_id}`
-
-**Authentication:** Требуется sudo администратор
-
-**Request Body:** Те же поля, что и при создании (все необязательны)
-
-**Response:** Обновленный шаблон
-
-### Удалить шаблон
-
-**Endpoint:** `DELETE /api/user_template/{template_id}`
-
-**Authentication:** Требуется sudo администратор
-
-**Response:** `204 No Content`
-
-### Создать пользователя из шаблона
-
-**Endpoint:** `POST /api/user/from_template`
-
-**Authentication:** Требуется администратор
-
-**Request Body:**
-```json
-{
-  "user_template_id": 1,
-  "username": "john",
-  "note": "Premium customer"
-}
-```
-
-**Response:** Объект пользователя
-
-### Изменить пользователя с помощью шаблона
-
-**Endpoint:** `PUT /api/user/{username}/from_template`
-
-**Authentication:** Требуется администратор
-
-**Request Body:**
-```json
-{
-  "user_template_id": 2,
-  "note": "Upgraded to premium"
-}
-```
-
-**Response:** Обновленный объект пользователя
-
-### Массовое создание пользователей из шаблона
-
-**Endpoint:** `POST /api/users/bulk/from_template`
-
-**Authentication:** Требуется администратор
-
-**Request Body:**
-```json
-{
-  "user_template_id": 1,
-  "count": 10,
-  "strategy": "random",
-  "username": null,
-  "note": "Bulk created"
-}
-```
-
-**Response:**
-```json
-{
-  "subscription_urls": ["..."],
-  "created": 10
-}
-```
-
----
-
 ## Распространенные сценарии
 
 <Tabs items={['Базовый шаблон', 'Префикс имени пользователя', 'Дополнительные настройки', 'On Hold', 'Ежемесячный сброс', 'Создать пользователя', 'Массовое случайное', 'Массовое последовательное', 'Обновить пользователя', 'Сброс использования', 'Отключить шаблон', 'Несколько групп', 'Неограниченно', 'Префикс и суффикс']}>
@@ -1136,7 +980,6 @@ PUT /api/user_template/1
 - ✅ **Сброс использования** - Опция сброса использования данных при изменении пользователей
 
 Для получения дополнительной информации о:
-- Группах: См. [groups.mdx](./groups.mdx)
-- Хостах: См. [hosts.mdx](./hosts.mdx)
-- Конфигурации XRay: См. [xray.mdx](./xray.mdx)
+- Группах: См. [groups](./groups)
+- Хостах: См. [host](./host)
 

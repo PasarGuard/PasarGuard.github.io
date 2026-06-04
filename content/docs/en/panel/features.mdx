@@ -96,22 +96,18 @@ Integrate with Telegram for notifications and management:
 
 ### CLI Tools
 
-Command-line interface for automation:
+Command-line interface for setup and maintenance:
 
 ```bash
-# Admin Terminal User Interface
-pasarguard tui
+# Generate a one-time owner setup key
+pasarguard cli generate-temp-key
 
-# Admin management
-pasarguard cli admin create --sudo
-pasarguard cli admin list
+# Show CLI help
+pasarguard cli --help
 
-# System operations
-pasarguard status
-pasarguard restart
-pasarguard update
+# Show installed version
+pasarguard cli version
 ```
-
 ## Security Features
 
 ### TLS Support

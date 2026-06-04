@@ -1,10 +1,9 @@
 {
   "title": "接口",
-  "description": "命令行和文本用户界面工具",
+  "description": "PasarGuard 命令行工具",
   "pages": [
     "index",
-    "cli",
-    "tui"
+    "cli"
   ],
   "icon": "Terminal"
 }

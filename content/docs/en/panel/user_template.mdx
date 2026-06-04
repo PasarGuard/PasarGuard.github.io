@@ -1,6 +1,6 @@
 ---
 title: User Templates Configuration
-description: Template management, field application, bulk user creation, and API documentation
+description: Template management, field application, bulk user creation
 icon: FileText
 ---
 
@@ -22,7 +22,6 @@ This document explains how user templates work in PasarGuard. Templates are pre-
 10. [Modifying Users with Templates](#modifying-users-with-templates)
 11. [Bulk User Creation](#bulk-user-creation)
 12. [Validation Rules and Constraints](#validation-rules-and-constraints)
-13. [API Endpoints](#api-endpoints)
 14. [Common Scenarios](#common-scenarios)
 
 ---
@@ -722,161 +721,6 @@ Generated usernames:
 
 ---
 
-## API Endpoints
-
-### Create Template
-
-**Endpoint:** `POST /api/user_template`
-
-**Authentication:** Sudo admin required
-
-**Request Body:**
-```json
-{
-  "name": "Premium Plan",
-  "data_limit": 1073741824,
-  "expire_duration": 2592000,
-  "username_prefix": "premium_",
-  "username_suffix": "_vip",
-  "group_ids": [1, 2],
-  "status": "active",
-  "data_limit_reset_strategy": "month",
-  "extra_settings": {
-    "flow": "xtls-rprx-vision",
-    "method": "aes-256-gcm"
-  },
-  "is_disabled": false
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Premium Plan",
-  "data_limit": 1073741824,
-  "expire_duration": 2592000,
-  "username_prefix": "premium_",
-  "username_suffix": "_vip",
-  "group_ids": [1, 2],
-  "status": "active",
-  "data_limit_reset_strategy": "month",
-  "extra_settings": {
-    "flow": "xtls-rprx-vision",
-    "method": "aes-256-gcm"
-  },
-  "is_disabled": false
-}
-```
-
-### Get All Templates
-
-**Endpoint:** `GET /api/user_templates`
-
-**Authentication:** Admin required
-
-**Query Parameters:**
-- `offset` (optional): Pagination offset
-- `limit` (optional): Pagination limit
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "name": "Premium Plan",
-    "group_ids": [1, 2],
-    ...
-  }
-]
-```
-
-### Get Template by ID
-
-**Endpoint:** `GET /api/user_template/{template_id}`
-
-**Authentication:** Admin required
-
-**Response:** Same as Create Template response
-
-### Modify Template
-
-**Endpoint:** `PUT /api/user_template/{template_id}`
-
-**Authentication:** Sudo admin required
-
-**Request Body:** Same fields as Create (all optional)
-
-**Response:** Updated template
-
-### Delete Template
-
-**Endpoint:** `DELETE /api/user_template/{template_id}`
-
-**Authentication:** Sudo admin required
-
-**Response:** `204 No Content`
-
-### Create User from Template
-
-**Endpoint:** `POST /api/user/from_template`
-
-**Authentication:** Admin required
-
-**Request Body:**
-```json
-{
-  "user_template_id": 1,
-  "username": "john",
-  "note": "Premium customer"
-}
-```
-
-**Response:** User object
-
-### Modify User with Template
-
-**Endpoint:** `PUT /api/user/{username}/from_template`
-
-**Authentication:** Admin required
-
-**Request Body:**
-```json
-{
-  "user_template_id": 2,
-  "note": "Upgraded to premium"
-}
-```
-
-**Response:** Updated user object
-
-### Bulk Create Users from Template
-
-**Endpoint:** `POST /api/users/bulk/from_template`
-
-**Authentication:** Admin required
-
-**Request Body:**
-```json
-{
-  "user_template_id": 1,
-  "count": 10,
-  "strategy": "random",
-  "username": null,
-  "note": "Bulk created"
-}
-```
-
-**Response:**
-```json
-{
-  "subscription_urls": ["..."],
-  "created": 10
-}
-```
-
----
-
 ## Common Scenarios
 
 <Tabs items={['Basic Template', 'Username Prefix', 'Extra Settings', 'On Hold', 'Monthly Reset', 'Create User', 'Bulk Random', 'Bulk Sequential', 'Update User', 'Reset Usages', 'Disable Template', 'Multiple Groups', 'Unlimited', 'Prefix & Suffix']}>
@@ -1136,6 +980,5 @@ When creating user "john", final username is "premium_john_vip".
 - ✅ **Reset usages** - Option to reset data usage when modifying users
 
 For more information about:
-- Groups: See [groups.mdx](./groups.mdx)
-- Hosts: See [hosts.mdx](./hosts.mdx)
-- XRay configuration: See [xray.mdx](./xray.mdx)
+- Groups: See [groups](./groups)
+- Hosts: See [host](./host)

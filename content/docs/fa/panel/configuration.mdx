@@ -18,7 +18,7 @@ icon: Cog
 | `SUDO_PASSWORD` | string | - | رمز عبور ادمین اصلی برای حساب کاربری اولیه |
 
 <Callout type="warn">
-  `SUDO_USERNAME` و `SUDO_PASSWORD` فقط وقتی کار میکنن که حالت `DEBUG` فعال باشه. برای محیط واقعی (production)، از طریق TUI ادمین بسازید: `pasarguard tui`
+  `SUDO_USERNAME` و `SUDO_PASSWORD` فقط وقتی کار می‌کنند که حالت `DEBUG` فعال باشد. برای محیط production، حساب مالک را از فرم راه‌اندازی داشبورد و با دستور `pasarguard cli generate-temp-key` بسازید.
 </Callout>
 
 ### تنظیمات دیتابیس
@@ -95,10 +95,6 @@ DEBUG = false
 ### تنظیمات برای محیط واقعی (Production)
 
 ```bash
-# تنظیمات ادمین
-SUDO_USERNAME = "admin"
-SUDO_PASSWORD = "your-secure-password"
-
 # دیتابیس (TimescaleDB توصیه میشه)
 SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:password@localhost/pasarguard"
 

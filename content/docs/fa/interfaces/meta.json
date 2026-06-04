@@ -1,10 +1,9 @@
 {
   "title": "رابط‌ها",
-  "description": "ابزارهای خط فرمان و رابط کاربری متنی",
+  "description": "ابزارهای خط فرمان PasarGuard",
   "pages": [
     "index",
-    "cli",
-    "tui"
+    "cli"
   ],
   "icon": "Terminal"
 }

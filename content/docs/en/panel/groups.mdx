@@ -1,6 +1,6 @@
 ---
 title: Groups Configuration
-description: Group management, access control, relationships, and API documentation
+description: Group management, access control, relationships
 icon: Users
 ---
 
@@ -18,7 +18,6 @@ This document explains how groups work in PasarGuard. Groups are the primary mec
 6. [Group Management](#group-management)
 7. [Bulk Operations](#bulk-operations)
 8. [Validation Rules and Constraints](#validation-rules-and-constraints)
-9. [API Endpoints](#api-endpoints)
 10. [Common Scenarios](#common-scenarios)
 
 ---
@@ -487,145 +486,6 @@ Invalid group:
 
 ---
 
-## API Endpoints
-
-### Create Group
-
-**Endpoint:** `POST /api/group`
-
-**Authentication:** Sudo admin required
-
-**Request Body:**
-```json
-{
-  "name": "premium",
-  "inbound_tags": ["vless-443", "trojan-8443"],
-  "is_disabled": false
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "premium",
-  "inbound_tags": ["vless-443", "trojan-8443"],
-  "is_disabled": false,
-  "total_users": 0
-}
-```
-
-### Get All Groups
-
-**Endpoint:** `GET /api/groups`
-
-**Authentication:** Admin required
-
-**Query Parameters:**
-- `offset` (optional): Pagination offset
-- `limit` (optional): Pagination limit
-
-**Response:**
-```json
-{
-  "groups": [
-    {
-      "id": 1,
-      "name": "premium",
-      "inbound_tags": ["vless-443"],
-      "is_disabled": false,
-      "total_users": 5
-    }
-  ],
-  "total": 1
-}
-```
-
-### Get Group by ID
-
-**Endpoint:** `GET /api/group/{group_id}`
-
-**Authentication:** Admin required
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "premium",
-  "inbound_tags": ["vless-443", "trojan-8443"],
-  "is_disabled": false,
-  "total_users": 10
-}
-```
-
-### Modify Group
-
-**Endpoint:** `PUT /api/group/{group_id}`
-
-**Authentication:** Sudo admin required
-
-**Request Body:**
-```json
-{
-  "name": "premium-v2",
-  "inbound_tags": ["vless-443", "trojan-8443", "vmess-8080"],
-  "is_disabled": false
-}
-```
-
-**Response:** Same as Get Group by ID
-
-<Callout type="info">
-All active and on_hold users in this group get their node configs updated automatically.
-</Callout>
-
-### Delete Group
-
-**Endpoint:** `DELETE /api/group/{group_id}`
-
-**Authentication:** Sudo admin required
-
-**Response:** `204 No Content`
-
-<Callout type="info">
-All users in this group get their node configs updated automatically.
-</Callout>
-
-### Bulk Add Groups
-
-**Endpoint:** `POST /api/groups/bulk/add`
-
-**Authentication:** Admin required
-
-**Request Body:**
-```json
-{
-  "group_ids": [1, 2],
-  "users": [10, 11, 12],
-  "admins": [5],
-  "has_group_ids": [3]
-}
-```
-
-**Response:**
-```json
-{
-  "detail": "operation has been successfuly done on 15 users"
-}
-```
-
-### Bulk Remove Groups
-
-**Endpoint:** `POST /api/groups/bulk/remove`
-
-**Authentication:** Admin required
-
-**Request Body:** Same as bulk add
-
-**Response:** Same as bulk add
-
----
-
 ## Common Scenarios
 
 <Tabs items={['Basic Group', 'Assign to User', 'Grant Access', 'Disable Group', 'Bulk Assign', 'Admin Users', 'Tiered Access', 'Remove Inbound', 'Clear Inbounds', 'Migrate Users', 'Conditional', 'Multiple Groups']}>
@@ -844,6 +704,5 @@ User gets access to **all** inbounds from **all** groups (union of all inbound t
 - ✅ **Access is cumulative** - Users get access to inbounds from ALL their enabled groups
 
 For more information about:
-- How hosts use inbound tags: See [hosts.md](./hosts.md)
-- XRay configuration: See [xray.md](./xray.md)
+- How hosts use inbound tags: See [host](./host)
 

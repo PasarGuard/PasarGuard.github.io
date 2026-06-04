@@ -22,7 +22,6 @@ icon: FileText
 10. [تغییر کاربران با قالب‌ها](#modifying-users-with-templates)
 11. [ایجاد دسته‌ای کاربران](#bulk-user-creation)
 12. [قوانین اعتبارسنجی و محدودیت‌ها](#validation-rules-and-constraints)
-13. [نقاط پایانی API](#api-endpoints)
 14. [سناریوهای رایج](#common-scenarios)
 
 ---
@@ -722,161 +721,6 @@ Generated usernames:
 
 ---
 
-## نقاط پایانی API
-
-### ایجاد قالب
-
-**Endpoint:** `POST /api/user_template`
-
-**Authentication:** ادمین Sudo الزامی است
-
-**Request Body:**
-```json
-{
-  "name": "Premium Plan",
-  "data_limit": 1073741824,
-  "expire_duration": 2592000,
-  "username_prefix": "premium_",
-  "username_suffix": "_vip",
-  "group_ids": [1, 2],
-  "status": "active",
-  "data_limit_reset_strategy": "month",
-  "extra_settings": {
-    "flow": "xtls-rprx-vision",
-    "method": "aes-256-gcm"
-  },
-  "is_disabled": false
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Premium Plan",
-  "data_limit": 1073741824,
-  "expire_duration": 2592000,
-  "username_prefix": "premium_",
-  "username_suffix": "_vip",
-  "group_ids": [1, 2],
-  "status": "active",
-  "data_limit_reset_strategy": "month",
-  "extra_settings": {
-    "flow": "xtls-rprx-vision",
-    "method": "aes-256-gcm"
-  },
-  "is_disabled": false
-}
-```
-
-### دریافت تمام قالب‌ها
-
-**Endpoint:** `GET /api/user_templates`
-
-**Authentication:** ادمین الزامی است
-
-**Query Parameters:**
-- `offset` (اختیاری): آفست صفحه‌بندی
-- `limit` (اختیاری): محدودیت صفحه‌بندی
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "name": "Premium Plan",
-    "group_ids": [1, 2],
-    ...
-  }
-]
-```
-
-### دریافت قالب بر اساس ID
-
-**Endpoint:** `GET /api/user_template/{template_id}`
-
-**Authentication:** ادمین الزامی است
-
-**Response:** همانند پاسخ ایجاد قالب
-
-### تغییر قالب
-
-**Endpoint:** `PUT /api/user_template/{template_id}`
-
-**Authentication:** ادمین Sudo الزامی است
-
-**Request Body:** همان فیلدهای ایجاد (همه اختیاری)
-
-**Response:** قالب به‌روزرسانی شده
-
-### حذف قالب
-
-**Endpoint:** `DELETE /api/user_template/{template_id}`
-
-**Authentication:** ادمین Sudo الزامی است
-
-**Response:** `204 No Content`
-
-### ایجاد کاربر از قالب
-
-**Endpoint:** `POST /api/user/from_template`
-
-**Authentication:** ادمین الزامی است
-
-**Request Body:**
-```json
-{
-  "user_template_id": 1,
-  "username": "john",
-  "note": "Premium customer"
-}
-```
-
-**Response:** شیء کاربر
-
-### تغییر کاربر با قالب
-
-**Endpoint:** `PUT /api/user/{username}/from_template`
-
-**Authentication:** ادمین الزامی است
-
-**Request Body:**
-```json
-{
-  "user_template_id": 2,
-  "note": "Upgraded to premium"
-}
-```
-
-**Response:** شیء کاربر به‌روزرسانی شده
-
-### ایجاد دسته‌ای کاربران از قالب
-
-**Endpoint:** `POST /api/users/bulk/from_template`
-
-**Authentication:** ادمین الزامی است
-
-**Request Body:**
-```json
-{
-  "user_template_id": 1,
-  "count": 10,
-  "strategy": "random",
-  "username": null,
-  "note": "Bulk created"
-}
-```
-
-**Response:**
-```json
-{
-  "subscription_urls": ["..."],
-  "created": 10
-}
-```
-
----
-
 ## سناریوهای رایج
 
 <Tabs items={['قالب پایه', 'پیشوند نام کاربری', 'تنظیمات اضافی', 'On Hold', 'بازنشانی ماهانه', 'ایجاد کاربر', 'دسته‌ای تصادفی', 'دسته‌ای ترتیبی', 'به‌روزرسانی کاربر', 'بازنشانی استفاده', 'غیرفعال کردن قالب', 'چندین گروه', 'نامحدود', 'پیشوند و پسوند']}>
@@ -1136,7 +980,6 @@ PUT /api/user_template/1
 - ✅ **بازنشانی استفاده** - گزینه بازنشانی استفاده داده هنگام تغییر کاربران
 
 برای اطلاعات بیشتر درباره:
-- گروه‌ها: [groups.mdx](./groups.mdx) را ببینید
-- Hostها: [hosts.mdx](./hosts.mdx) را ببینید
-- پیکربندی XRay: [xray.mdx](./xray.mdx) را ببینید
+- گروه‌ها: [groups](./groups) را ببینید
+- Hostها: [host](./host) را ببینید
 

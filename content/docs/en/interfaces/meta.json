@@ -3,8 +3,7 @@
   "description": "Interfaces tools for PasarGuard",
   "pages": [
     "index",
-    "cli",
-    "tui"
+    "cli"
   ],
   "icon": "Terminal"
 }

@@ -1,461 +1,158 @@
 ---
 title: راهنمای API
-description: راهنمای کامل REST API و gRPC برای نود PasarGuard
+description: راهنمای فعلی REST API و gRPC برای نود PasarGuard
 icon: Code
 ---
 
 ## معرفی API
 
-نود PasarGuard هم **REST API** و هم **gRPC** رو در اختیارتون میذاره تا بتونید نود، کاربرا و آماره‌ها رو مدیریت کنید.
+نود PasarGuard هم **REST API** و هم **gRPC** ارائه می‌دهد. در REST، بدنه درخواست‌ها و پاسخ‌ها با Protocol Buffers سریال‌سازی می‌شوند؛ فقط استریم لاگ‌ها با Server-Sent Events ارسال می‌شود.
 
 ### احراز هویت
 
-برای همه‌ی درخواست‌های API باید از `API_KEY` که تو فایل `.env` تنظیم کردید استفاده کنید.
+همه درخواست‌ها به `API_KEY` نود نیاز دارند.
 
-**REST API:**
 ```http
 Authorization: Bearer <api_key>
 ```
 
-**gRPC:**
-```
+در gRPC همین مقدار را به‌عنوان metadata بفرستید:
+
+```text
 authorization: Bearer <api_key>
 ```
 
 ### آدرس پایه
 
-درخواست‌های REST API باید به این آدرس فرستاده بشن:
-```
+```text
 https://your-node-address:port/
 ```
 
 ### نوع محتوا
 
-REST API از Protocol Buffers برای سریال‌سازی داده استفاده می‌کنه:
 ```http
 Content-Type: application/x-protobuf
 ```
 
----
-
 ## ساختارهای داده
 
-### Backend
-
 ```protobuf
+enum BackendType {
+  XRAY = 0;
+  WIREGUARD = 1;
+}
+
 message Backend {
-  BackendType type;      // نوع بکند (XRAY = 0)
-  string config;         // پیکربندی بکند
-  repeated User users;   // لیست کاربران
-  uint64 keepAlive;      // مدت زمان keep alive به ثانیه
+  BackendType type = 1;
+  string config = 2;
+  repeated User users = 3;
+  uint64 keep_alive = 4;
+  repeated string exclude_inbounds = 5;
+}
+
+message User {
+  string email = 1;
+  Proxy proxies = 2;
+  repeated string inbounds = 3;
+}
+
+message Proxy {
+  Vmess vmess = 1;
+  Vless vless = 2;
+  Trojan trojan = 3;
+  Shadowsocks shadowsocks = 4;
+  Wireguard wireguard = 5;
+  Hysteria hysteria = 6;
 }
 ```
 
-### User
+## مدیریت نود
+
+| عملیات | REST | gRPC | بدنه | پاسخ |
+|---|---|---|---|---|
+| شروع backend | `POST /start` | `Start(Backend)` | `Backend` | `BaseInfoResponse` |
+| توقف backend | `PUT /stop` | `Stop(Empty)` | ندارد | `Empty` |
+| اطلاعات پایه | `GET /info` | `GetBaseInfo(Empty)` | ندارد | `BaseInfoResponse` |
 
 ```protobuf
-message User {
-  string email;           // شناسه یکتای ایمیل کاربر
-  Proxy proxies;          // پیکربندی‌های پروکسی
-  repeated string inbounds; // لیست تگ‌های ورودی
+message BaseInfoResponse {
+  bool started = 1;
+  string core_version = 2;
+  string node_version = 3;
 }
 ```
 
-### StatRequest
+<Callout type="info">
+`/start` و `/info` قبل از اجرای backend هم در دسترس هستند. بقیه endpointهای REST به backend فعال نیاز دارند.
+</Callout>
+
+## لاگ‌ها
+
+| عملیات | REST | gRPC | پاسخ |
+|---|---|---|---|
+| استریم لاگ backend | `GET /logs` | `GetLogs(Empty)` | استریم `Log` |
+
+در REST، لاگ‌ها با `text/event-stream` برگردانده می‌شوند.
+
+## آمارها
+
+| عملیات | REST | gRPC | بدنه | پاسخ |
+|---|---|---|---|---|
+| آمار ترافیک | `GET /stats/` | `GetStats(StatRequest)` | `StatRequest` | `StatResponse` |
+| latency خروجی‌ها | `GET /stats/latency` | `GetOutboundsLatency(LatencyRequest)` | `LatencyRequest` | `LatencyResponse` |
+| تعداد اتصال آنلاین کاربر | `GET /stats/user/online` | `GetUserOnlineStats(StatRequest)` | `StatRequest` | `OnlineStatResponse` |
+| لیست IPهای آنلاین کاربر | `GET /stats/user/online_ip` | `GetUserOnlineIpListStats(StatRequest)` | `StatRequest` | `StatsOnlineIpListResponse` |
+| آمار runtime بک‌اند | `GET /stats/backend` | `GetBackendStats(Empty)` | ندارد | `BackendStatsResponse` |
+| آمار سیستم | `GET /stats/system` | `GetSystemStats(Empty)` | ندارد | `SystemStatsResponse` |
 
 ```protobuf
 message StatRequest {
-  string name;      // ایمیل کاربر یا تگ ورودی/خروجی
-  bool reset;       // بازنشانی آمار ترافیک پس از بازیابی
-  StatType type;    // نوع آمار برای بازیابی
+  string name = 1;
+  bool reset = 2;
+  StatType type = 3;
 }
 
-enum StatType {
-  Outbounds = 0;   // تمام آمار خروجی
-  Outbound = 1;    // آمار خروجی تکی
-  Inbounds = 2;    // تمام آمار ورودی
-  Inbound = 3;     // آمار ورودی تکی
-  UsersStat = 4;   // تمام آمار کاربران
-  UserStat = 5;    // آمار کاربر تکی
+message LatencyRequest {
+  string name = 1;
 }
 ```
 
----
+`StatRequest.name` ایمیل کاربر یا تگ inbound/outbound است. اگر می‌خواهید شمارنده‌ها بعد از خواندن پاک شوند، `reset` را `true` بفرستید.
 
-## متدهای API
+## همگام‌سازی کاربران
 
-### مدیریت نود
+| عملیات | REST | gRPC | بدنه |
+|---|---|---|---|
+| همگام‌سازی یک کاربر | `PUT /user/sync` | `SyncUser(stream User)` | `User` |
+| همگام‌سازی کاربران | `PUT /users/sync` | `SyncUsers(Users)` | `Users` |
+| همگام‌سازی chunked کاربران | `PUT /users/sync/chunked` | `SyncUsersChunked(stream UsersChunk)` | استریم `UsersChunk` |
 
-#### راه‌اندازی Backend
+```protobuf
+message Users {
+  repeated User users = 1;
+}
 
-نود رو با کانفیگ موردنظر استارت بزنید.
+message UsersChunk {
+  repeated User users = 1;
+  uint64 index = 2;
+  bool last = 3;
+}
+```
 
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    POST /start
-    Authorization: Bearer <api_key>
-    Content-Type: application/x-protobuf
+در REST chunked sync، هر پیام `UsersChunk` با طول uvarint و سپس payload پروتوباف ارسال می‌شود. chunkها با `index` مرتب می‌شوند و chunk دارای `last = true` پایان ارسال را مشخص می‌کند.
 
-    Body: Backend (protobuf)
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc Start(Backend) returns (BaseInfoResponse)
-    ```
-  </Tab>
-</Tabs>
-
-<Callout type="info">
-  این تنها متدیه که قبل از برقراری ارتباط با نود صدا زده میشه.
+<Callout type="warning">
+`/users/sync` کل لیست کاربران را جایگزین می‌کند. در chunked sync، batchهای بزرگ ممکن است بعد از به‌روزرسانی کاربران در حافظه، backend را restart کنند.
 </Callout>
 
----
+## خطاها
 
-#### خاموش کردن Backend
-
-Backend رو متوقف کنید و کانکشن‌های کاربرا رو قطع کنید.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    PUT /stop
-    Authorization: Bearer <api_key>
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc Stop(Empty) returns (Empty)
-    ```
-  </Tab>
-</Tabs>
-
----
-
-#### دریافت اطلاعات پایه
-
-اطلاعات اولیه نود رو بگیرید و وضعیت اتصال رو چک کنید.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    GET /info
-    Authorization: Bearer <api_key>
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc GetBaseInfo(Empty) returns (BaseInfoResponse)
-    ```
-  </Tab>
-</Tabs>
-
-**پاسخ:**
-```protobuf
-message BaseInfoResponse {
-  string version;
-  string core_type;
-  bool running;
-}
-```
-
----
-
-### لاگ‌گیری
-
-#### دریافت لاگ‌ها
-
-لاگ‌های لحظه‌ای backend رو دریافت کنید.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    GET /logs
-    Authorization: Bearer <api_key>
-
-    // Returns Server-Sent Events (SSE) stream
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc GetLogs(Empty) returns (stream Log)
-    ```
-  </Tab>
-</Tabs>
-
-**ساختار لاگ:**
-```protobuf
-message Log {
-  string detail;  // Log message
-}
-```
-
----
-
-### آمار و آمارگیری
-
-#### دریافت آمار سیستم
-
-آمار سطح سیستم رو دریافت کنید.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    GET /stats/system
-    Authorization: Bearer <api_key>
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc GetSystemStats(Empty) returns (SystemStatsResponse)
-    ```
-  </Tab>
-</Tabs>
-
-**پاسخ:**
-```protobuf
-message SystemStatsResponse {
-  uint64 mem_total;                  // Total memory
-  uint64 mem_used;                   // Used memory
-  uint64 cpu_cores;                  // CPU cores
-  double cpu_usage;                  // CPU usage %
-  uint64 incoming_bandwidth_speed;   // Download speed
-  uint64 outgoing_bandwidth_speed;   // Upload speed
-}
-```
-
----
-
-#### دریافت آمار Backend
-
-آمار اجرایی backend رو بگیرید.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    GET /stats/backend
-    Authorization: Bearer <api_key>
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc GetBackendStats(Empty) returns (BackendStatsResponse)
-    ```
-  </Tab>
-</Tabs>
-
-**پاسخ:**
-```protobuf
-message BackendStatsResponse {
-  uint32 num_goroutine;    // Active goroutines
-  uint32 num_gc;           // GC runs
-  uint64 alloc;            // Allocated memory
-  uint64 total_alloc;      // Total allocated
-  uint64 sys;              // System memory
-  uint64 mallocs;          // Malloc count
-  uint64 frees;            // Free count
-  uint64 live_objects;     // Live objects
-  uint64 pause_total_ns;   // Total GC pause
-  uint32 uptime;           // Uptime in seconds
-}
-```
-
----
-
-#### دریافت آمار ترافیک
-
-آمار ترافیک کاربرا، inbound یا outbound رو دریافت کنید.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    GET /stats
-    Authorization: Bearer <api_key>
-    Content-Type: application/x-protobuf
-
-    Body: StatRequest (protobuf)
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc GetStats(StatRequest) returns (StatResponse)
-    ```
-  </Tab>
-</Tabs>
-
-**مثال‌ها:**
-
-دریافت آمار همه کاربرا:
-```protobuf
-StatRequest {
-  type: UsersStat,
-  reset: false
-}
-```
-
-دریافت آمار یک کاربر خاص:
-```protobuf
-StatRequest {
-  name: "user@example.com",
-  type: UserStat,
-  reset: true  // Reset after retrieval
-}
-```
-
-**پاسخ:**
-```protobuf
-message StatResponse {
-  repeated Stat stats;
-}
-
-message Stat {
-  string name;   // User email or tag
-  string type;   // Stat type
-  string link;   // Link identifier
-  int64 value;   // Traffic value in bytes
-}
-```
-
----
-
-#### دریافت آمار آنلاین بودن کاربر
-
-تعداد کانکشن‌های فعال یک کاربر رو بگیرید.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    GET /stats/user/online
-    Authorization: Bearer <api_key>
-    Content-Type: application/x-protobuf
-
-    Body: StatRequest (protobuf)
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc GetUserOnlineStats(StatRequest) returns (OnlineStatResponse)
-    ```
-  </Tab>
-</Tabs>
-
-**پاسخ:**
-```protobuf
-message OnlineStatResponse {
-  string name;   // User email
-  int64 value;   // Online connection count
-}
-```
-
----
-
-#### دریافت لیست IP های آنلاین کاربر
-
-لیست IP های کانکشن‌های فعال یک کاربر رو دریافت کنید.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    GET /stats/user/online_ip
-    Authorization: Bearer <api_key>
-    Content-Type: application/x-protobuf
-
-    Body: StatRequest (protobuf)
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc GetUserOnlineIpListStats(StatRequest) returns (StatsOnlineIpListResponse)
-    ```
-  </Tab>
-</Tabs>
-
----
-
-### مدیریت کاربرا
-
-#### همگام‌سازی کاربر
-
-یک کاربر رو اضافه، ویرایش یا حذف کنید.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    PUT /user/sync
-    Authorization: Bearer <api_key>
-    Content-Type: application/x-protobuf
-
-    Body: User (protobuf)
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc SyncUser(stream User) returns (Empty)
-    ```
-  </Tab>
-</Tabs>
-
-<Callout type="info">
-  برای **حذف** یک کاربر، یک آرایه خالی از inbounds بفرستید. gRPC یک اینترفیس stream داره، ولی REST برای هر کاربر نیاز به یک درخواست جداگانه داره.
-</Callout>
-
----
-
-#### همگام‌سازی همه کاربرا
-
-همه کاربرا رو با یک لیست جدید جایگزین کنید.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    PUT /users/sync
-    Authorization: Bearer <api_key>
-    Content-Type: application/x-protobuf
-
-    Body: Users (protobuf)
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc SyncUsers(Users) returns (Empty)
-    ```
-  </Tab>
-</Tabs>
-
-<Callout type="warn">
-  این متد **همه کاربرای قبلی رو پاک می‌کنه** و با لیست جدیدی که میدید جایگزین می‌کنه.
-</Callout>
-
----
-
-## پاسخ‌های خطا
-
-### کدهای وضعیت HTTP
+REST خطاها را با status code مناسب HTTP برمی‌گرداند. gRPC از status codeهای استاندارد gRPC استفاده می‌کند.
 
 | کد | معنی |
-|------|---------|
-| 200 | موفق |
-| 400 | درخواست نامعتبر - داده اشتباه |
-| 401 | عدم احراز هویت - API_KEY نامعتبره |
-| 404 | پیدا نشد - endpoint وجود نداره |
-| 500 | خطای داخلی سرور |
-
-### فرمت خطا
-
-```json
-{
-  "error": "Error description",
-  "code": "ERROR_CODE"
-}
-```
-
----
-
-## محدودیت تعداد درخواست
-
-الان محدودیت داخلی برای تعداد درخواست‌ها نیست، ولی پیشنهاد میشه:
-- تا جایی که میشه آپدیت‌های کاربرا رو دسته‌جمعی انجام بدید
-- آمارها رو به صورت محلی کش کنید
-- از درخواست‌های زیاد و مکرر خودداری کنید
-
+|---|---|
+| `400` | بدنه protobuf یا داده درخواست نامعتبر است |
+| `401` | `API_KEY` وجود ندارد یا نامعتبر است |
+| `404` | هدف آماری پیدا نشد |
+| `500` | خطای backend یا سرور |
+| `503` | خطا در شروع backend یا listener |

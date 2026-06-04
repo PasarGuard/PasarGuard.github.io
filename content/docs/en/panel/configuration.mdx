@@ -18,7 +18,7 @@ PasarGuard Panel is configured through environment variables stored in the `.env
 | `SUDO_PASSWORD` | string | - | Superuser's password for initial admin account |
 
 <Callout type="warn">
-  `SUDO_USERNAME` and `SUDO_PASSWORD` only work when `DEBUG` mode is enabled. For production, create admin users using the TUI: `pasarguard tui`
+  `SUDO_USERNAME` and `SUDO_PASSWORD` only work when `DEBUG` mode is enabled. For production, create the owner account from the dashboard setup form using `pasarguard cli generate-temp-key`.
 </Callout>
 
 ### Database Configuration
@@ -95,10 +95,6 @@ DEBUG = false
 ### Production Setup
 
 ```bash
-# Admin Configuration
-SUDO_USERNAME = "admin"
-SUDO_PASSWORD = "your-secure-password"
-
 # Database (TimescaleDB recommended)
 SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:password@localhost/pasarguard"
 
@@ -119,7 +115,7 @@ DEBUG = false
 ### Development/Testing Setup
 
 ```bash
-# Admin Configuration
+# Debug admin configuration; only used when DEBUG = true
 SUDO_USERNAME = "admin"
 SUDO_PASSWORD = "admin123"
 

@@ -13,7 +13,7 @@ icon: Download
 - **Storage:** 10 GB
 
 <Callout type="warning">
-**Important:** With minimum requirements, you may encounter issues with MySQL log files consuming disk space and running the TUI (Text User Interface). It's recommended to monitor disk usage regularly and consider upgrading if you experience problems.
+**Important:** With minimum requirements, monitor disk usage regularly, especially when using MySQL-family databases. Consider upgrading resources if logs or database files begin consuming too much disk space.
 </Callout>
 
 ### Recommended Requirements
@@ -90,17 +90,28 @@ http://localhost:8000/dashboard/
 
 You will lose access to the dashboard as soon as you close the SSH terminal. Therefore, this method is recommended only for testing purposes.
 
-### Create Admin User
+### Create Owner Account
 
-Next, you need to create a sudo admin for logging into the PasarGuard dashboard by the following command
+Use the setup form on the panel login page with a one-time temporary key to create the first owner account.
+
+1. Open the panel login page from the previous step.
+2. On the login page, choose **Owner access**.
+3. Select **Create owner**.
+4. On the server, generate a temporary setup key:
 
 ```bash
-pasarguard tui
+pasarguard cli generate-temp-key
 ```
 
-That's it! You can login to your dashboard using these credentials
+5. Paste the key into the setup form, enter the owner username and password, then create the owner account.
 
-To see the help message of the PasarGuard script, run the following command
+<Callout type="warning">
+The temporary setup key is valid for 5 minutes and can only be used once. Generate a new key if it expires.
+</Callout>
+
+To make an existing admin the owner, go back to the login page, choose **Owner access**, select **Make admin owner**, generate a new temporary key, then enter the existing admin username and the key. This only works when there is no owner account already.
+
+To see the help message of the PasarGuard script, run the following command:
 
 ```bash
 pasarguard --help
