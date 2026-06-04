@@ -2,8 +2,8 @@ import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import { baseOptions } from '@/lib/layout.shared';
 import { source } from '@/lib/source';
 import { CompactControls } from '@/components/CompactControls';
+import { GithubInfo } from 'fumadocs-ui/components/github-info';
 import { CustomSearch } from '@/components/CustomSearch';
-import Link from 'next/link';
 
 export default async function Layout({
   children,
@@ -34,14 +34,10 @@ export default async function Layout({
             {/* GitHub Info - Responsive layout */}
             <div className="flex items-center justify-center sm:justify-start">
               <div dir='ltr' className="w-full">
-                <Link
-                  href="https://github.com/PasarGuard/panel"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  GitHub: PasarGuard/panel
-                </Link>
+                <GithubInfo
+                  owner="Pasarguard"
+                  repo="panel"
+                />
               </div>
             </div>
 
