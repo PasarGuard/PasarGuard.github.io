@@ -7,6 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useCallback, useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
+import { startNavigationLoading } from '@/components/NavigationLoadingBar';
 
 const languages = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -36,6 +37,7 @@ export function MobileHeaderControls({ currentLang, isRTL = false }: MobileHeade
       const segments = pathname.split('/');
       segments[1] = newLang;
       const newPath = segments.join('/');
+      startNavigationLoading();
       router.push(newPath);
       setIsOpen(false);
     },
