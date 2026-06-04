@@ -5,12 +5,128 @@ import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
 import type { MDXComponents } from 'mdx/types';
 import { LocalizedCard } from '@/components/LocalizedCard';
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import {
+  Info,
+  TriangleAlert,
+  CircleX,
+  CircleCheck,
+  Lightbulb,
+} from 'lucide-react';
+import type { ReactNode } from 'react';
 
 // Custom Cards component for Fumadocs
 function Cards({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
       {children}
+    </div>
+  );
+}
+
+type CalloutType =
+  | 'info'
+  | 'tip'
+  | 'warn'
+  | 'warning'
+  | 'error'
+  | 'danger'
+  | 'success';
+
+const calloutStyles: Record<
+  Exclude<CalloutType, 'warn' | 'tip' | 'danger'>,
+  { container: string; icon: string; bar: string; Icon: typeof Info }
+> = {
+  info: {
+    container:
+      'bg-blue-50/60 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900/60',
+    icon: 'text-blue-600 dark:text-blue-400',
+    bar: 'bg-blue-500/70',
+    Icon: Info,
+  },
+  warning: {
+    container:
+      'bg-amber-50/70 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900/60',
+    icon: 'text-amber-600 dark:text-amber-400',
+    bar: 'bg-amber-500/70',
+    Icon: TriangleAlert,
+  },
+  error: {
+    container:
+      'bg-red-50/70 border-red-200 dark:bg-red-950/30 dark:border-red-900/60',
+    icon: 'text-red-600 dark:text-red-400',
+    bar: 'bg-red-500/70',
+    Icon: CircleX,
+  },
+  success: {
+    container:
+      'bg-emerald-50/70 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900/60',
+    icon: 'text-emerald-600 dark:text-emerald-400',
+    bar: 'bg-emerald-500/70',
+    Icon: CircleCheck,
+  },
+};
+
+function Callout({
+  type = 'info',
+  title,
+  icon,
+  children,
+}: {
+  type?: CalloutType;
+  title?: ReactNode;
+  icon?: ReactNode;
+  children: ReactNode;
+}) {
+  let normalized: keyof typeof calloutStyles;
+  if (type === 'warn') normalized = 'warning';
+  else if (type === 'danger') normalized = 'error';
+  else if (type === 'tip') {
+    const tipStyle = {
+      container:
+        'bg-violet-50/70 border-violet-200 dark:bg-violet-950/30 dark:border-violet-900/60',
+      icon: 'text-violet-600 dark:text-violet-400',
+      bar: 'bg-violet-500/70',
+      Icon: Lightbulb,
+    };
+    return (
+      <div
+        className={`my-4 flex gap-3 rounded-xl border p-4 shadow-sm ${tipStyle.container}`}
+      >
+        <div className={`w-1 rounded-full shrink-0 ${tipStyle.bar}`} />
+        <tipStyle.Icon
+          className={`size-5 mt-0.5 shrink-0 ${tipStyle.icon}`}
+          aria-hidden
+        />
+        <div className="flex flex-col gap-1 min-w-0 flex-1">
+          {title && <p className="font-semibold !my-0">{title}</p>}
+          <div className="prose-no-margin text-sm text-fd-foreground/90 empty:hidden">
+            {children}
+          </div>
+        </div>
+      </div>
+    );
+  } else normalized = type;
+
+  const style = calloutStyles[normalized];
+  const IconComponent = style.Icon;
+
+  return (
+    <div
+      className={`my-4 flex gap-3 rounded-xl border p-4 shadow-sm ${style.container}`}
+    >
+      <div className={`w-1 rounded-full shrink-0 ${style.bar}`} />
+      {icon ?? (
+        <IconComponent
+          className={`size-5 mt-0.5 shrink-0 ${style.icon}`}
+          aria-hidden
+        />
+      )}
+      <div className="flex flex-col gap-1 min-w-0 flex-1">
+        {title && <p className="font-semibold !my-0">{title}</p>}
+        <div className="prose-no-margin text-sm text-fd-foreground/90 empty:hidden">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }
@@ -55,6 +171,7 @@ function Field({ name, type, defaultValue, children }: { name: string; type: str
 export function getMDXComponents(components?: MDXComponents): MDXComponents {
   return {
     ...defaultMdxComponents,
+    Callout,
     Tab,
     Tabs,
     Step,

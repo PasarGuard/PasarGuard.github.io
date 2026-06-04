@@ -46,8 +46,14 @@ SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
 |----------|------|---------|-------------|
 | `UVICORN_HOST` | string | `0.0.0.0` | Web 服务器绑定的主机地址 |
 | `UVICORN_PORT` | int | `8000` | Web 服务器的端口号 |
+| `UVICORN_UDS` | string | - | Unix socket 路径；设置后 Uvicorn 会绑定 socket，而不是 host/port |
 | `UVICORN_SSL_CERTFILE` | string | - | SSL 证书文件路径 |
 | `UVICORN_SSL_KEYFILE` | string | - | SSL 私钥文件路径 |
+| `UVICORN_SSL_CA_TYPE` | string | `public` | SSL 验证使用的证书机构类型 |
+| `UVICORN_WORKERS` | int | `1` | Uvicorn worker 进程数量 |
+| `UVICORN_LOOP` | string | `auto` | Uvicorn event loop 设置 |
+| `UVICORN_PROXY_HEADERS` | bool | `false` | 信任代理头，例如 forwarded 客户端 IP |
+| `UVICORN_FORWARDED_ALLOW_IPS` | string/list | `127.0.0.1` | 允许使用 forwarded headers 的可信代理 IP；只有可信私有网络才使用 `*` |
 
 **示例：**
 
@@ -56,7 +62,13 @@ UVICORN_HOST = "0.0.0.0"
 UVICORN_PORT = 8000
 UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
 UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
+UVICORN_PROXY_HEADERS = true
+UVICORN_FORWARDED_ALLOW_IPS = "127.0.0.1"
 ```
+
+<Callout type="warn">
+只有当 PasarGuard 位于可信 reverse proxy 后面时才启用 `UVICORN_PROXY_HEADERS`。不要在不可信网络中使用 `UVICORN_FORWARDED_ALLOW_IPS = "*"`。
+</Callout>
 
 ### 身份验证与安全
 
@@ -80,12 +92,52 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 10080
 |----------|------|---------|-------------|
 | `DOCS` | bool | `false` | 启用/禁用 API 文档端点 |
 | `DEBUG` | bool | `false` | 启用调试模式以获取详细日志 |
+| `ROLE` | string | `all-in-one` | 运行角色：`backend`、`node`、`scheduler` 或 `all-in-one` |
+| `DASHBOARD_PATH` | string | `/dashboard/` | Dashboard 服务的 URL 路径 |
+| `VITE_BASE_API` | string | `/` | Dashboard 使用的 API 基础 URL |
+| `ALLOWED_ORIGINS` | string | `*` | 逗号分隔的 CORS origins |
 
 **示例：**
 
 ```bash
 DOCS = true
 DEBUG = false
+```
+
+### WireGuard
+
+| 变量 | 类型 | 默认值 | 描述 |
+|----------|------|---------|-------------|
+| `WIREGUARD_ENABLED` | bool | `true` | 启用 WireGuard peer IP 分配和 WireGuard 订阅输出 |
+| `WIREGUARD_GLOBAL_POOL` | CIDR | `10.0.0.0/8` | 用于自动分配用户 WireGuard peer IP 并验证手动 peer IP 的 IPv4 池 |
+| `WIREGUARD_RESERVED` | CIDR list | `10.0.0.0/31` | 逗号分隔的 IPv4 CIDR 范围，永远不会被分配 |
+
+**示例：**
+
+```bash
+WIREGUARD_ENABLED = false
+WIREGUARD_GLOBAL_POOL = "10.66.0.0/16"
+WIREGUARD_RESERVED = "10.66.0.0/31,10.66.0.10/32"
+```
+
+<Callout type="info">
+当 `WIREGUARD_ENABLED = false` 时，WireGuard 订阅输出会被跳过，自动 peer IP 分配也会禁用。
+</Callout>
+
+### 用量记录
+
+| 变量 | 类型 | 默认值 | 描述 |
+|----------|------|---------|-------------|
+| `DISABLE_RECORDING_NODE_USAGE` | bool | `false` | 禁用节点用量采样记录 |
+| `ENABLE_RECORDING_NODES_STATS` | bool | `false` | 启用详细节点统计记录；仅 PostgreSQL/TimescaleDB 可用 |
+| `RESET_USER_USAGE_CLEAN_CHART_DATA` | bool | `false` | 重置用户用量时删除用户图表历史 |
+
+**示例：**
+
+```bash
+DISABLE_RECORDING_NODE_USAGE = false
+ENABLE_RECORDING_NODES_STATS = true
+RESET_USER_USAGE_CLEAN_CHART_DATA = false
 ```
 
 ---
@@ -103,6 +155,8 @@ UVICORN_HOST = "0.0.0.0"
 UVICORN_PORT = 8000
 UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
 UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
+UVICORN_PROXY_HEADERS = true
+UVICORN_FORWARDED_ALLOW_IPS = "127.0.0.1"
 
 # 安全
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
@@ -110,6 +164,11 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 # 面板设置
 DOCS = false
 DEBUG = false
+
+# WireGuard
+WIREGUARD_ENABLED = true
+WIREGUARD_GLOBAL_POOL = "10.0.0.0/8"
+WIREGUARD_RESERVED = "10.0.0.0/31"
 ```
 
 ### 开发/测试环境设置

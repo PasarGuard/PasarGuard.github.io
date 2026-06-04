@@ -3,14 +3,22 @@
   "description": "PasarGuard 面板管理",
   "pages": [
     "index",
+    "dashboard",
     "installation",
     "configuration",
     "settings",
     "features",
+    "users",
+    "wireguard",
+    "bulk",
+    "admins",
+    "admin_roles",
+    "statistics",
     "core",
     "host",
     "groups",
-    "user_template"
+    "user_template",
+    "client_template"
   ],
   "icon": "Monitor"
 }
