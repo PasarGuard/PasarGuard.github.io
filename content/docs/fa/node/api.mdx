@@ -1,0 +1,158 @@
+---
+title: راهنمای API
+description: راهنمای فعلی REST API و gRPC برای نود PasarGuard
+icon: Code
+---
+
+## معرفی API
+
+نود PasarGuard هم **REST API** و هم **gRPC** ارائه می‌دهد. در REST، بدنه درخواست‌ها و پاسخ‌ها با Protocol Buffers سریال‌سازی می‌شوند؛ فقط استریم لاگ‌ها با Server-Sent Events ارسال می‌شود.
+
+### احراز هویت
+
+همه درخواست‌ها به `API_KEY` نود نیاز دارند.
+
+```http
+Authorization: Bearer <api_key>
+```
+
+در gRPC همین مقدار را به‌عنوان metadata بفرستید:
+
+```text
+authorization: Bearer <api_key>
+```
+
+### آدرس پایه
+
+```text
+https://your-node-address:port/
+```
+
+### نوع محتوا
+
+```http
+Content-Type: application/x-protobuf
+```
+
+## ساختارهای داده
+
+```protobuf
+enum BackendType {
+  XRAY = 0;
+  WIREGUARD = 1;
+}
+
+message Backend {
+  BackendType type = 1;
+  string config = 2;
+  repeated User users = 3;
+  uint64 keep_alive = 4;
+  repeated string exclude_inbounds = 5;
+}
+
+message User {
+  string email = 1;
+  Proxy proxies = 2;
+  repeated string inbounds = 3;
+}
+
+message Proxy {
+  Vmess vmess = 1;
+  Vless vless = 2;
+  Trojan trojan = 3;
+  Shadowsocks shadowsocks = 4;
+  Wireguard wireguard = 5;
+  Hysteria hysteria = 6;
+}
+```
+
+## مدیریت نود
+
+| عملیات | REST | gRPC | بدنه | پاسخ |
+|---|---|---|---|---|
+| شروع backend | `POST /start` | `Start(Backend)` | `Backend` | `BaseInfoResponse` |
+| توقف backend | `PUT /stop` | `Stop(Empty)` | ندارد | `Empty` |
+| اطلاعات پایه | `GET /info` | `GetBaseInfo(Empty)` | ندارد | `BaseInfoResponse` |
+
+```protobuf
+message BaseInfoResponse {
+  bool started = 1;
+  string core_version = 2;
+  string node_version = 3;
+}
+```
+
+<Callout type="info">
+`/start` و `/info` قبل از اجرای backend هم در دسترس هستند. بقیه endpointهای REST به backend فعال نیاز دارند.
+</Callout>
+
+## لاگ‌ها
+
+| عملیات | REST | gRPC | پاسخ |
+|---|---|---|---|
+| استریم لاگ backend | `GET /logs` | `GetLogs(Empty)` | استریم `Log` |
+
+در REST، لاگ‌ها با `text/event-stream` برگردانده می‌شوند.
+
+## آمارها
+
+| عملیات | REST | gRPC | بدنه | پاسخ |
+|---|---|---|---|---|
+| آمار ترافیک | `GET /stats/` | `GetStats(StatRequest)` | `StatRequest` | `StatResponse` |
+| latency خروجی‌ها | `GET /stats/latency` | `GetOutboundsLatency(LatencyRequest)` | `LatencyRequest` | `LatencyResponse` |
+| تعداد اتصال آنلاین کاربر | `GET /stats/user/online` | `GetUserOnlineStats(StatRequest)` | `StatRequest` | `OnlineStatResponse` |
+| لیست IPهای آنلاین کاربر | `GET /stats/user/online_ip` | `GetUserOnlineIpListStats(StatRequest)` | `StatRequest` | `StatsOnlineIpListResponse` |
+| آمار runtime بک‌اند | `GET /stats/backend` | `GetBackendStats(Empty)` | ندارد | `BackendStatsResponse` |
+| آمار سیستم | `GET /stats/system` | `GetSystemStats(Empty)` | ندارد | `SystemStatsResponse` |
+
+```protobuf
+message StatRequest {
+  string name = 1;
+  bool reset = 2;
+  StatType type = 3;
+}
+
+message LatencyRequest {
+  string name = 1;
+}
+```
+
+`StatRequest.name` ایمیل کاربر یا تگ inbound/outbound است. اگر می‌خواهید شمارنده‌ها بعد از خواندن پاک شوند، `reset` را `true` بفرستید.
+
+## همگام‌سازی کاربران
+
+| عملیات | REST | gRPC | بدنه |
+|---|---|---|---|
+| همگام‌سازی یک کاربر | `PUT /user/sync` | `SyncUser(stream User)` | `User` |
+| همگام‌سازی کاربران | `PUT /users/sync` | `SyncUsers(Users)` | `Users` |
+| همگام‌سازی chunked کاربران | `PUT /users/sync/chunked` | `SyncUsersChunked(stream UsersChunk)` | استریم `UsersChunk` |
+
+```protobuf
+message Users {
+  repeated User users = 1;
+}
+
+message UsersChunk {
+  repeated User users = 1;
+  uint64 index = 2;
+  bool last = 3;
+}
+```
+
+در REST chunked sync، هر پیام `UsersChunk` با طول uvarint و سپس payload پروتوباف ارسال می‌شود. chunkها با `index` مرتب می‌شوند و chunk دارای `last = true` پایان ارسال را مشخص می‌کند.
+
+<Callout type="warning">
+`/users/sync` کل لیست کاربران را جایگزین می‌کند. در chunked sync، batchهای بزرگ ممکن است بعد از به‌روزرسانی کاربران در حافظه، backend را restart کنند.
+</Callout>
+
+## خطاها
+
+REST خطاها را با status code مناسب HTTP برمی‌گرداند. gRPC از status codeهای استاندارد gRPC استفاده می‌کند.
+
+| کد | معنی |
+|---|---|
+| `400` | بدنه protobuf یا داده درخواست نامعتبر است |
+| `401` | `API_KEY` وجود ندارد یا نامعتبر است |
+| `404` | هدف آماری پیدا نشد |
+| `500` | خطای backend یا سرور |
+| `503` | خطا در شروع backend یا listener |

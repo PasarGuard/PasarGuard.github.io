@@ -1,7 +1,7 @@
 {
   "appName": "PasarGuard",
-  "appDescription": "抗审查的GUI集成解决方案",
-  "version": "V2 现已发布",
+  "appDescription": "用于代理服务、WireGuard、用户操作、模板和服务监控的面板与节点系统。",
+  "version": "V5 已发布",
   "documentation": "文档",
   "github": "GitHub",
   "panel": {
@@ -13,8 +13,8 @@
     "description": "发现PasarGuard节点和其他功能"
   },
   "commands": {
-    "title": "命令",
-    "description": "用于启动、分析、构建和预览应用程序的命令列表"
+    "title": "接口",
+    "description": "连接应用和客户端到 PasarGuard 服务的接口指南"
   },
   "search": {
     "placeholder": "搜索文档...",

@@ -45,8 +45,8 @@ export function useTranslations(): { t: (key: string) => string; locale: string 
             // Use hardcoded fallback
             const fallbackTranslations: Translations = {
               appName: 'PasarGuard',
-              appDescription: 'Censorship-resistant GUI integrated solution',
-              version: 'V1 First Version',
+              appDescription: 'A production-focused panel and node system for proxy services, WireGuard, user operations, templates, and service monitoring.',
+              version: 'V5 Released',
               documentation: 'Documentation',
               github: 'GitHub',
               panel: {
@@ -58,8 +58,8 @@ export function useTranslations(): { t: (key: string) => string; locale: string 
                 description: 'Discover PasarGuard Node and other features'
               },
               commands: {
-                title: 'Commands',
-                description: 'List of commands for launching, analyzing, building, and previewing your application'
+                title: 'Interfaces',
+                description: 'Interface guides for connecting apps and clients to PasarGuard services'
               },
               search: {
                 placeholder: 'Search documentation...',
@@ -82,8 +82,8 @@ export function useTranslations(): { t: (key: string) => string; locale: string 
           // Use hardcoded fallback for English
           const fallbackTranslations: Translations = {
             appName: 'PasarGuard',
-            appDescription: 'Censorship-resistant GUI integrated solution',
-            version: 'V1 First Version',
+            appDescription: 'A production-focused panel and node system for proxy services, WireGuard, user operations, templates, and service monitoring.',
+            version: 'V5 Released',
             documentation: 'Documentation',
             github: 'GitHub',
             panel: {
@@ -95,8 +95,8 @@ export function useTranslations(): { t: (key: string) => string; locale: string 
               description: 'Discover PasarGuard Node and other features'
             },
             commands: {
-              title: 'Commands',
-              description: 'List of commands for launching, analyzing, building, and previewing your application'
+              title: 'Interfaces',
+              description: 'Interface guides for connecting apps and clients to PasarGuard services'
             },
             search: {
               placeholder: 'Search documentation...',

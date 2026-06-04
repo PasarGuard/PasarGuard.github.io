@@ -1,0 +1,158 @@
+---
+title: Справочник API
+description: Текущий справочник REST API и gRPC для PasarGuard Node
+icon: Code
+---
+
+## Обзор API
+
+PasarGuard Node предоставляет интерфейсы **REST API** и **gRPC**. В REST тело запросов и ответов сериализуется через Protocol Buffers; поток логов возвращается как Server-Sent Events.
+
+### Аутентификация
+
+Все запросы требуют `API_KEY` ноды.
+
+```http
+Authorization: Bearer <api_key>
+```
+
+Для gRPC передайте то же значение как metadata:
+
+```text
+authorization: Bearer <api_key>
+```
+
+### Базовый URL
+
+```text
+https://your-node-address:port/
+```
+
+### Тип содержимого
+
+```http
+Content-Type: application/x-protobuf
+```
+
+## Структуры данных
+
+```protobuf
+enum BackendType {
+  XRAY = 0;
+  WIREGUARD = 1;
+}
+
+message Backend {
+  BackendType type = 1;
+  string config = 2;
+  repeated User users = 3;
+  uint64 keep_alive = 4;
+  repeated string exclude_inbounds = 5;
+}
+
+message User {
+  string email = 1;
+  Proxy proxies = 2;
+  repeated string inbounds = 3;
+}
+
+message Proxy {
+  Vmess vmess = 1;
+  Vless vless = 2;
+  Trojan trojan = 3;
+  Shadowsocks shadowsocks = 4;
+  Wireguard wireguard = 5;
+  Hysteria hysteria = 6;
+}
+```
+
+## Управление нодой
+
+| Операция | REST | gRPC | Тело | Ответ |
+|---|---|---|---|---|
+| Запустить backend | `POST /start` | `Start(Backend)` | `Backend` | `BaseInfoResponse` |
+| Остановить backend | `PUT /stop` | `Stop(Empty)` | нет | `Empty` |
+| Получить базовую информацию | `GET /info` | `GetBaseInfo(Empty)` | нет | `BaseInfoResponse` |
+
+```protobuf
+message BaseInfoResponse {
+  bool started = 1;
+  string core_version = 2;
+  string node_version = 3;
+}
+```
+
+<Callout type="info">
+`/start` и `/info` доступны до запуска backend. Остальные REST endpoint'ы требуют активного backend.
+</Callout>
+
+## Логи
+
+| Операция | REST | gRPC | Ответ |
+|---|---|---|---|
+| Поток логов backend | `GET /logs` | `GetLogs(Empty)` | поток `Log` |
+
+В REST логи возвращаются как `text/event-stream`.
+
+## Статистика
+
+| Операция | REST | gRPC | Тело | Ответ |
+|---|---|---|---|---|
+| Статистика трафика | `GET /stats/` | `GetStats(StatRequest)` | `StatRequest` | `StatResponse` |
+| Latency исходящих соединений | `GET /stats/latency` | `GetOutboundsLatency(LatencyRequest)` | `LatencyRequest` | `LatencyResponse` |
+| Количество онлайн-соединений пользователя | `GET /stats/user/online` | `GetUserOnlineStats(StatRequest)` | `StatRequest` | `OnlineStatResponse` |
+| IP-адреса онлайн-подключений пользователя | `GET /stats/user/online_ip` | `GetUserOnlineIpListStats(StatRequest)` | `StatRequest` | `StatsOnlineIpListResponse` |
+| Runtime-статистика backend | `GET /stats/backend` | `GetBackendStats(Empty)` | нет | `BackendStatsResponse` |
+| Системная статистика | `GET /stats/system` | `GetSystemStats(Empty)` | нет | `SystemStatsResponse` |
+
+```protobuf
+message StatRequest {
+  string name = 1;
+  bool reset = 2;
+  StatType type = 3;
+}
+
+message LatencyRequest {
+  string name = 1;
+}
+```
+
+`StatRequest.name` — email пользователя или тег inbound/outbound. Установите `reset = true`, если счетчики нужно сбросить после чтения.
+
+## Синхронизация пользователей
+
+| Операция | REST | gRPC | Тело |
+|---|---|---|---|
+| Синхронизировать одного пользователя | `PUT /user/sync` | `SyncUser(stream User)` | `User` |
+| Синхронизировать пользователей | `PUT /users/sync` | `SyncUsers(Users)` | `Users` |
+| Chunked-синхронизация пользователей | `PUT /users/sync/chunked` | `SyncUsersChunked(stream UsersChunk)` | поток `UsersChunk` |
+
+```protobuf
+message Users {
+  repeated User users = 1;
+}
+
+message UsersChunk {
+  repeated User users = 1;
+  uint64 index = 2;
+  bool last = 3;
+}
+```
+
+В REST chunked sync каждое сообщение `UsersChunk` отправляется как длина uvarint и затем protobuf payload. Чанки собираются по `index`; чанк с `last = true` завершает передачу.
+
+<Callout type="warning">
+`/users/sync` заменяет весь набор пользователей. В chunked sync большие batch'и могут перезапустить backend после обновления пользователей в памяти.
+</Callout>
+
+## Ошибки
+
+REST возвращает обычные HTTP ошибки с подходящим status code. gRPC использует стандартные gRPC status code.
+
+| Код | Значение |
+|---|---|
+| `400` | Неверное protobuf-тело или данные запроса |
+| `401` | `API_KEY` отсутствует или неверен |
+| `404` | Цель статистики не найдена |
+| `500` | Ошибка backend или сервера |
+| `503` | Ошибка запуска backend или listener |

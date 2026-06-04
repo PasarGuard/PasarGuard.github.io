@@ -1,0 +1,158 @@
+---
+title: API 参考
+description: PasarGuard Node 当前 REST API 和 gRPC 参考
+icon: Code
+---
+
+## API 概述
+
+PasarGuard Node 同时提供 **REST API** 和 **gRPC** 接口。REST 请求和响应使用 Protocol Buffers；日志流使用 Server-Sent Events。
+
+### 身份验证
+
+所有请求都需要节点的 `API_KEY`。
+
+```http
+Authorization: Bearer <api_key>
+```
+
+gRPC 使用相同的值作为 metadata：
+
+```text
+authorization: Bearer <api_key>
+```
+
+### 基础 URL
+
+```text
+https://your-node-address:port/
+```
+
+### 内容类型
+
+```http
+Content-Type: application/x-protobuf
+```
+
+## 数据结构
+
+```protobuf
+enum BackendType {
+  XRAY = 0;
+  WIREGUARD = 1;
+}
+
+message Backend {
+  BackendType type = 1;
+  string config = 2;
+  repeated User users = 3;
+  uint64 keep_alive = 4;
+  repeated string exclude_inbounds = 5;
+}
+
+message User {
+  string email = 1;
+  Proxy proxies = 2;
+  repeated string inbounds = 3;
+}
+
+message Proxy {
+  Vmess vmess = 1;
+  Vless vless = 2;
+  Trojan trojan = 3;
+  Shadowsocks shadowsocks = 4;
+  Wireguard wireguard = 5;
+  Hysteria hysteria = 6;
+}
+```
+
+## 节点管理
+
+| 操作 | REST | gRPC | 请求体 | 响应 |
+|---|---|---|---|---|
+| 启动 backend | `POST /start` | `Start(Backend)` | `Backend` | `BaseInfoResponse` |
+| 停止 backend | `PUT /stop` | `Stop(Empty)` | 无 | `Empty` |
+| 获取基础信息 | `GET /info` | `GetBaseInfo(Empty)` | 无 | `BaseInfoResponse` |
+
+```protobuf
+message BaseInfoResponse {
+  bool started = 1;
+  string core_version = 2;
+  string node_version = 3;
+}
+```
+
+<Callout type="info">
+`/start` 和 `/info` 在 backend 启动前也可用。其他 REST endpoint 需要 active backend。
+</Callout>
+
+## 日志
+
+| 操作 | REST | gRPC | 响应 |
+|---|---|---|---|
+| 流式 backend 日志 | `GET /logs` | `GetLogs(Empty)` | `Log` 流 |
+
+REST 日志流返回 `text/event-stream`。
+
+## 统计
+
+| 操作 | REST | gRPC | 请求体 | 响应 |
+|---|---|---|---|---|
+| 流量统计 | `GET /stats/` | `GetStats(StatRequest)` | `StatRequest` | `StatResponse` |
+| 出站 latency | `GET /stats/latency` | `GetOutboundsLatency(LatencyRequest)` | `LatencyRequest` | `LatencyResponse` |
+| 用户在线连接数 | `GET /stats/user/online` | `GetUserOnlineStats(StatRequest)` | `StatRequest` | `OnlineStatResponse` |
+| 用户在线 IP 列表 | `GET /stats/user/online_ip` | `GetUserOnlineIpListStats(StatRequest)` | `StatRequest` | `StatsOnlineIpListResponse` |
+| Backend 运行时统计 | `GET /stats/backend` | `GetBackendStats(Empty)` | 无 | `BackendStatsResponse` |
+| 系统统计 | `GET /stats/system` | `GetSystemStats(Empty)` | 无 | `SystemStatsResponse` |
+
+```protobuf
+message StatRequest {
+  string name = 1;
+  bool reset = 2;
+  StatType type = 3;
+}
+
+message LatencyRequest {
+  string name = 1;
+}
+```
+
+`StatRequest.name` 是用户 email 或 inbound/outbound 标签。需要读取后重置计数器时，将 `reset` 设为 `true`。
+
+## 用户同步
+
+| 操作 | REST | gRPC | 请求体 |
+|---|---|---|---|
+| 同步单个用户 | `PUT /user/sync` | `SyncUser(stream User)` | `User` |
+| 同步用户列表 | `PUT /users/sync` | `SyncUsers(Users)` | `Users` |
+| 分块同步用户 | `PUT /users/sync/chunked` | `SyncUsersChunked(stream UsersChunk)` | `UsersChunk` 流 |
+
+```protobuf
+message Users {
+  repeated User users = 1;
+}
+
+message UsersChunk {
+  repeated User users = 1;
+  uint64 index = 2;
+  bool last = 3;
+}
+```
+
+REST chunked sync 中，每个 `UsersChunk` protobuf 消息前需要发送 uvarint 长度，然后发送 protobuf payload。chunk 通过 `index` 重组；`last = true` 的 chunk 表示结束。
+
+<Callout type="warning">
+`/users/sync` 会替换完整用户集合。chunked sync 中，大批量用户可能会在更新内存用户后重启 backend。
+</Callout>
+
+## 错误
+
+REST 使用合适的 HTTP status code 返回普通错误。gRPC 使用标准 gRPC status code。
+
+| 代码 | 含义 |
+|---|---|
+| `400` | protobuf 请求体或请求数据无效 |
+| `401` | 缺少或无效的 `API_KEY` |
+| `404` | 未找到统计目标 |
+| `500` | Backend 或服务器错误 |
+| `503` | Backend 启动或 listener 错误 |

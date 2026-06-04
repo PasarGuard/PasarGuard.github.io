@@ -14,8 +14,9 @@ export const source = loader({
       // Return undefined for no default icon
       return;
     }
-    if (icon in icons) {
-      return createElement(icons[icon as keyof typeof icons]);
+    const resolvedIcon = icon === 'BarChart3' ? 'ChartColumn' : icon;
+    if (resolvedIcon in icons) {
+      return createElement(icons[resolvedIcon as keyof typeof icons]);
     }
   },
 });

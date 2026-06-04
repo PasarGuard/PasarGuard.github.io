@@ -22,7 +22,6 @@ icon: FileText
 10. [使用模板修改用户](#modifying-users-with-templates)
 11. [批量用户创建](#bulk-user-creation)
 12. [验证规则和约束](#validation-rules-and-constraints)
-13. [API 端点](#api-endpoints)
 14. [常见场景](#common-scenarios)
 
 ---
@@ -722,161 +721,6 @@ Generated usernames:
 
 ---
 
-## API 端点
-
-### 创建模板
-
-**Endpoint:** `POST /api/user_template`
-
-**Authentication:** 需要 sudo 管理员
-
-**Request Body:**
-```json
-{
-  "name": "Premium Plan",
-  "data_limit": 1073741824,
-  "expire_duration": 2592000,
-  "username_prefix": "premium_",
-  "username_suffix": "_vip",
-  "group_ids": [1, 2],
-  "status": "active",
-  "data_limit_reset_strategy": "month",
-  "extra_settings": {
-    "flow": "xtls-rprx-vision",
-    "method": "aes-256-gcm"
-  },
-  "is_disabled": false
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Premium Plan",
-  "data_limit": 1073741824,
-  "expire_duration": 2592000,
-  "username_prefix": "premium_",
-  "username_suffix": "_vip",
-  "group_ids": [1, 2],
-  "status": "active",
-  "data_limit_reset_strategy": "month",
-  "extra_settings": {
-    "flow": "xtls-rprx-vision",
-    "method": "aes-256-gcm"
-  },
-  "is_disabled": false
-}
-```
-
-### 获取所有模板
-
-**Endpoint:** `GET /api/user_templates`
-
-**Authentication:** 需要管理员
-
-**Query Parameters:**
-- `offset`（可选）：分页偏移量
-- `limit`（可选）：分页限制
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "name": "Premium Plan",
-    "group_ids": [1, 2],
-    ...
-  }
-]
-```
-
-### 按 ID 获取模板
-
-**Endpoint:** `GET /api/user_template/{template_id}`
-
-**Authentication:** 需要管理员
-
-**Response:** 与创建模板响应相同
-
-### 修改模板
-
-**Endpoint:** `PUT /api/user_template/{template_id}`
-
-**Authentication:** 需要 sudo 管理员
-
-**Request Body:** 与创建相同的字段（全部可选）
-
-**Response:** 更新的模板
-
-### 删除模板
-
-**Endpoint:** `DELETE /api/user_template/{template_id}`
-
-**Authentication:** 需要 sudo 管理员
-
-**Response:** `204 No Content`
-
-### 从模板创建用户
-
-**Endpoint:** `POST /api/user/from_template`
-
-**Authentication:** 需要管理员
-
-**Request Body:**
-```json
-{
-  "user_template_id": 1,
-  "username": "john",
-  "note": "Premium customer"
-}
-```
-
-**Response:** 用户对象
-
-### 使用模板修改用户
-
-**Endpoint:** `PUT /api/user/{username}/from_template`
-
-**Authentication:** 需要管理员
-
-**Request Body:**
-```json
-{
-  "user_template_id": 2,
-  "note": "Upgraded to premium"
-}
-```
-
-**Response:** 更新的用户对象
-
-### 从模板批量创建用户
-
-**Endpoint:** `POST /api/users/bulk/from_template`
-
-**Authentication:** 需要管理员
-
-**Request Body:**
-```json
-{
-  "user_template_id": 1,
-  "count": 10,
-  "strategy": "random",
-  "username": null,
-  "note": "Bulk created"
-}
-```
-
-**Response:**
-```json
-{
-  "subscription_urls": ["..."],
-  "created": 10
-}
-```
-
----
-
 ## 常见场景
 
 <Tabs items={['基本模板', '用户名前缀', '额外设置', '暂停', '每月重置', '创建用户', '批量随机', '批量序列', '更新用户', '重置使用量', '禁用模板', '多个组', '无限制', '前缀和后缀']}>
@@ -1136,7 +980,6 @@ PUT /api/user_template/1
 - ✅ **重置使用量** - 修改用户时重置数据使用量的选项
 
 有关更多信息：
-- 组：请参阅 [groups.mdx](./groups.mdx)
-- 主机：请参阅 [hosts.mdx](./hosts.mdx)
-- XRay 配置：请参阅 [xray.mdx](./xray.mdx)
+- 组：请参阅 [groups](./groups)
+- 主机：请参阅 [host](./host)
 
