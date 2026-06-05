@@ -753,7 +753,8 @@ button,
 
 /* Responsive table styles */
 .prose table {
-  width: 100% !important;
+  width: max-content !important;
+  min-width: 100% !important;
   max-width: 100% !important;
   table-layout: auto !important;
   border-collapse: collapse !important;
@@ -762,24 +763,31 @@ button,
   white-space: nowrap !important;
 }
 
-.prose table thead,
-.prose table tbody,
+.prose table thead {
+  display: table-header-group !important;
+}
+
+.prose table tbody {
+  display: table-row-group !important;
+}
+
 .prose table tr {
-  display: table !important;
-  width: 100% !important;
-  table-layout: fixed !important;
+  display: table-row !important;
+  width: auto !important;
+  table-layout: auto !important;
 }
 
 .prose table th,
 .prose table td {
-  word-wrap: break-word !important;
-  word-break: break-word !important;
-  overflow-wrap: break-word !important;
+  word-wrap: normal !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
   hyphens: auto !important;
   padding: 0.75rem !important;
   border: 1px solid hsl(var(--border)) !important;
   vertical-align: top !important;
-  min-width: 0 !important;
+  min-width: max-content !important;
+  white-space: nowrap !important;
 }
 
 [dir="rtl"] .prose table th,[dir="rtl"] .prose table td {
@@ -795,7 +803,8 @@ button,
 .prose table {
   overflow-x: auto !important;
   display: block !important;
-  width: 100% !important;
+  width: max-content !important;
+  min-width: 100% !important;
   max-width: 100% !important;
 }
 
@@ -1016,12 +1025,16 @@ main::-webkit-scrollbar-thumb:hover,
 .prose table {
   margin: 1rem 0 !important;
   font-size: 0.875rem !important;
+  table-layout: auto !important;
 }
 
 /* Mobile-first table responsiveness */
 @media (max-width: 768px) {
   .prose table {
     font-size: 0.75rem !important;
+    width: max-content !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
   }
   
   .prose table th,

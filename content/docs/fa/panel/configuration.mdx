@@ -18,7 +18,7 @@ icon: Cog
 | `SUDO_PASSWORD` | string | - | رمز عبور ادمین اصلی برای حساب کاربری اولیه |
 
 <Callout type="warn">
-  `SUDO_USERNAME` و `SUDO_PASSWORD` فقط وقتی کار میکنن که حالت `DEBUG` فعال باشه. برای محیط واقعی (production)، از طریق TUI ادمین بسازید: `pasarguard tui`
+  `SUDO_USERNAME` و `SUDO_PASSWORD` فقط وقتی کار می‌کنند که حالت `DEBUG` فعال باشد. برای محیط production، حساب مالک را از فرم راه‌اندازی داشبورد و با دستور `pasarguard cli generate-temp-key` بسازید.
 </Callout>
 
 ### تنظیمات دیتابیس
@@ -46,8 +46,14 @@ SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
 |----------|------|---------|-------------|
 | `UVICORN_HOST` | string | `0.0.0.0` | آدرس هاستی که وب سرور بهش وصل میشه |
 | `UVICORN_PORT` | int | `8000` | شماره پورت برای وب سرور |
+| `UVICORN_UDS` | string | - | مسیر Unix socket؛ اگر تنظیم شود، Uvicorn به جای host/port به socket وصل می‌شود |
 | `UVICORN_SSL_CERTFILE` | string | - | مسیر فایل گواهینامه SSL |
 | `UVICORN_SSL_KEYFILE` | string | - | مسیر فایل کلید خصوصی SSL |
+| `UVICORN_SSL_CA_TYPE` | string | `public` | نوع مرجع گواهی برای اعتبارسنجی SSL |
+| `UVICORN_WORKERS` | int | `1` | تعداد workerهای Uvicorn |
+| `UVICORN_LOOP` | string | `auto` | تنظیم event loop در Uvicorn |
+| `UVICORN_PROXY_HEADERS` | bool | `false` | اعتماد به هدرهای پروکسی مثل IP فوروارد شده کاربر |
+| `UVICORN_FORWARDED_ALLOW_IPS` | string/list | `127.0.0.1` | IPهای پروکسی قابل اعتماد برای هدرهای forwarded؛ مقدار `*` را فقط در شبکه خصوصی قابل اعتماد استفاده کنید |
 
 **مثال:**
 
@@ -56,7 +62,13 @@ UVICORN_HOST = "0.0.0.0"
 UVICORN_PORT = 8000
 UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
 UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
+UVICORN_PROXY_HEADERS = true
+UVICORN_FORWARDED_ALLOW_IPS = "127.0.0.1"
 ```
+
+<Callout type="warn">
+`UVICORN_PROXY_HEADERS` را فقط وقتی فعال کنید که PasarGuard پشت reverse proxy قابل اعتماد است. در شبکه غیرقابل اعتماد از `UVICORN_FORWARDED_ALLOW_IPS = "*"` استفاده نکنید.
+</Callout>
 
 ### احراز هویت و امنیت
 
@@ -80,12 +92,52 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 10080
 |----------|------|---------|-------------|
 | `DOCS` | bool | `false` | فعال/غیرفعال کردن صفحه مستندات API |
 | `DEBUG` | bool | `false` | فعال کردن حالت دیباگ برای لاگ‌های کامل |
+| `ROLE` | string | `all-in-one` | نقش اجرایی: `backend`، `node`، `scheduler` یا `all-in-one` |
+| `DASHBOARD_PATH` | string | `/dashboard/` | مسیر URL که داشبورد از آن سرو می‌شود |
+| `VITE_BASE_API` | string | `/` | آدرس پایه API برای داشبورد |
+| `ALLOWED_ORIGINS` | string | `*` | originهای CORS جداشده با کاما |
 
 **مثال:**
 
 ```bash
 DOCS = true
 DEBUG = false
+```
+
+### WireGuard
+
+| متغیر | نوع | پیش‌فرض | توضیحات |
+|----------|------|---------|-------------|
+| `WIREGUARD_ENABLED` | bool | `true` | فعال کردن تخصیص IP همتای WireGuard و خروجی اشتراک WireGuard |
+| `WIREGUARD_GLOBAL_POOL` | CIDR | `10.0.0.0/8` | محدوده IPv4 برای تخصیص خودکار IP همتای کاربران و اعتبارسنجی IP دستی |
+| `WIREGUARD_RESERVED` | CIDR list | `10.0.0.0/31` | محدوده‌های IPv4 جداشده با کاما که هرگز نباید تخصیص داده شوند |
+
+**مثال:**
+
+```bash
+WIREGUARD_ENABLED = false
+WIREGUARD_GLOBAL_POOL = "10.66.0.0/16"
+WIREGUARD_RESERVED = "10.66.0.0/31,10.66.0.10/32"
+```
+
+<Callout type="info">
+وقتی `WIREGUARD_ENABLED = false` باشد، خروجی اشتراک WireGuard ساخته نمی‌شود و تخصیص خودکار IP همتا غیرفعال است.
+</Callout>
+
+### ثبت مصرف
+
+| متغیر | نوع | پیش‌فرض | توضیحات |
+|----------|------|---------|-------------|
+| `DISABLE_RECORDING_NODE_USAGE` | bool | `false` | غیرفعال کردن ثبت نمونه‌های مصرف گره |
+| `ENABLE_RECORDING_NODES_STATS` | bool | `false` | فعال کردن ثبت آمار دقیق گره‌ها؛ فقط برای PostgreSQL/TimescaleDB در دسترس است |
+| `RESET_USER_USAGE_CLEAN_CHART_DATA` | bool | `false` | حذف تاریخچه نمودار کاربر هنگام بازنشانی مصرف |
+
+**مثال:**
+
+```bash
+DISABLE_RECORDING_NODE_USAGE = false
+ENABLE_RECORDING_NODES_STATS = true
+RESET_USER_USAGE_CLEAN_CHART_DATA = false
 ```
 
 ---
@@ -95,10 +147,6 @@ DEBUG = false
 ### تنظیمات برای محیط واقعی (Production)
 
 ```bash
-# تنظیمات ادمین
-SUDO_USERNAME = "admin"
-SUDO_PASSWORD = "your-secure-password"
-
 # دیتابیس (TimescaleDB توصیه میشه)
 SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:password@localhost/pasarguard"
 
@@ -107,6 +155,8 @@ UVICORN_HOST = "0.0.0.0"
 UVICORN_PORT = 8000
 UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
 UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
+UVICORN_PROXY_HEADERS = true
+UVICORN_FORWARDED_ALLOW_IPS = "127.0.0.1"
 
 # امنیت
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
@@ -114,6 +164,11 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 # تنظیمات پنل
 DOCS = false
 DEBUG = false
+
+# WireGuard
+WIREGUARD_ENABLED = true
+WIREGUARD_GLOBAL_POOL = "10.0.0.0/8"
+WIREGUARD_RESERVED = "10.0.0.0/31"
 ```
 
 ### تنظیمات برای محیط توسعه/تست

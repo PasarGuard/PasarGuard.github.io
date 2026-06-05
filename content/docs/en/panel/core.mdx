@@ -1,12 +1,12 @@
 ---
 title: Core Configuration
-description: XRay configuration validation, default values, and API documentation
+description: XRay configuration validation, default values
 icon: Server
 ---
 
 # XRay Configuration Documentation
 
-This document explains how PasarGuard validates and processes XRay configuration files. It's designed to help beginners understand the validation process, default values, and API limitations.
+This document explains how PasarGuard validates and processes XRay configuration files, including the validation process, default values, and API limitations.
 
 ## Table of Contents
 
@@ -17,7 +17,6 @@ This document explains how PasarGuard validates and processes XRay configuration
 5. [Network Types](#network-types)
 6. [Security Settings](#security-settings)
 7. [Viewing Connected IPs](#viewing-connected-ips)
-8. [API Limits and Constraints](#api-limits-and-constraints)
 9. [Common Validation Errors](#common-validation-errors)
 
 ---
@@ -457,54 +456,6 @@ Here's a complete example configuration with the policy section enabled:
   ]
 }
 ```
-
----
-
-## API Limits and Constraints
-
-When creating or modifying core configurations through the API, these limits apply:
-
-### Field Limits
-
-| Field | Limit | Description |
-|-------|-------|-------------|
-| `name` | Max 256 characters | Core configuration name |
-| `exclude_inbound_tags` | Combined string length max 2048 chars | Tags to exclude from processing |
-| `fallbacks_inbound_tags` | Combined string length max 2048 chars | Tags used for fallback handling |
-| `config` | Cannot be empty | Must contain valid XRay configuration |
-
-### Special Rules
-
-1. **Default Core Protection**
-   - Core configuration with `id = 1` **cannot be deleted**
-   - This is the default/core system configuration
-
-2. **Tag String Length**
-   - When `exclude_inbound_tags` and `fallbacks_inbound_tags` are combined into a comma-separated string, the total length must not exceed 2048 characters
-   - Example: If you have 100 tags of 20 characters each, that's 2000 characters (plus 99 commas = 2099) which would exceed the limit
-
-3. **Config Validation**
-   - The `config` dictionary cannot be empty `{}`
-   - Must pass all XRay validation rules (inbounds, outbounds, tags, etc.)
-
-<Callout type="warning" title="Default Core Protection">
-Core configuration with `id = 1` **cannot be deleted**. This is the default/core system configuration.
-</Callout>
-
-### API Endpoints
-
-The following endpoints are available for core configuration management:
-
-- `POST /api/core` - Create new core configuration
-- `GET /api/core/{core_id}` - Get core configuration by ID
-- `PUT /api/core/{core_id}` - Modify existing core configuration
-- `DELETE /api/core/{core_id}` - Delete core configuration (except id=1)
-- `GET /api/cores` - List all core configurations
-- `POST /api/core/{core_id}/restart` - Restart nodes using this core
-
-<Callout type="info" title="Authentication">
-All endpoints require sudo admin privileges.
-</Callout>
 
 ---
 

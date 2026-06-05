@@ -6,7 +6,7 @@ icon: Globe
 
 # Host Configuration Documentation
 
-This document explains how PasarGuard processes and manages proxy hosts. It's designed to help beginners understand how host configurations work, what values override inbound defaults, and how hosts are displayed to users in subscriptions.
+This document explains how PasarGuard processes and manages proxy hosts, how host configurations work, what values override inbound defaults, and how hosts are displayed to users in subscriptions.
 
 ## Table of Contents
 
@@ -17,7 +17,6 @@ This document explains how PasarGuard processes and manages proxy hosts. It's de
 5. [Format Variables for User Display](#format-variables-for-user-display)
 6. [Transport Settings](#transport-settings)
 7. [Host Status and Filtering](#host-status-and-filtering)
-8. [API Limits and Constraints](#api-limits-and-constraints)
 9. [Common Scenarios](#common-scenarios)
 
 ---
@@ -689,52 +688,6 @@ Hosts are sorted by `priority` field (lower number = higher priority):
   "priority": 100  // Appears later in subscription
 }
 ```
-
----
-
-## API Limits and Constraints
-
-### Field Limits
-
-| Field | Limit | Description |
-|-------|-------|-------------|
-| `remark` | Must be valid format string | Supports format variables |
-| `address` | Combined string length max 256 chars | Set of address strings |
-| `sni` | Combined string length max 1000 chars | Set of SNI strings |
-| `host` | Combined string length max 1000 chars | Set of host strings |
-| `inbound_tag` | Must exist in core configs | Validated against XRay configs |
-
-### Validation Rules
-
-1. **Inbound Tag Validation**
-   - `inbound_tag` must exist in at least one XRay core configuration
-   - Validated when creating or modifying hosts
-
-2. **Download Settings Validation**
-   - If `xhttp_settings.download_settings` is set, it must reference a valid host ID
-   - Referenced host cannot be the same as the current host
-   - Referenced host cannot have its own download host (no nesting)
-
-3. **Format Variable Validation**
-   - `remark` must be a valid format string
-   - Invalid format variables will cause errors
-
-4. **ALPN Validation**
-   - ALPN list is automatically deduplicated
-   - ALPN list is automatically sorted by priority (h3 → h2 → http/1.1)
-
-### API Endpoints
-
-- `GET /api/host/{host_id}` - Get host by ID
-- `GET /api/hosts` - List all hosts (with pagination)
-- `POST /api/host/` - Create new host
-- `PUT /api/host/{host_id}` - Modify existing host
-- `DELETE /api/host/{host_id}` - Delete host
-- `PUT /api/hosts` - Bulk modify hosts
-
-<Callout type="info" title="Authentication">
-All endpoints require sudo admin privileges.
-</Callout>
 
 ---
 

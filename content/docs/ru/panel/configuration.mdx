@@ -18,7 +18,7 @@ icon: Cog
 | `SUDO_PASSWORD` | string | - | Пароль суперпользователя для начальной учетной записи администратора |
 
 <Callout type="warn">
-  `SUDO_USERNAME` и `SUDO_PASSWORD` работают только когда включен режим `DEBUG`. Для продакшена создавайте администраторов через TUI: `pasarguard tui`
+  `SUDO_USERNAME` и `SUDO_PASSWORD` работают только при включенном режиме `DEBUG`. Для production создайте учетную запись владельца через форму настройки в панели, используя `pasarguard cli generate-temp-key`.
 </Callout>
 
 ### Конфигурация базы данных
@@ -46,8 +46,14 @@ SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:////var/lib/pasarguard/db.sqlite3"
 |----------|------|---------|-------------|
 | `UVICORN_HOST` | string | `0.0.0.0` | Адрес хоста для привязки веб-сервера |
 | `UVICORN_PORT` | int | `8000` | Номер порта для веб-сервера |
+| `UVICORN_UDS` | string | - | Путь Unix socket; если задан, Uvicorn привязывается к socket вместо host/port |
 | `UVICORN_SSL_CERTFILE` | string | - | Путь к файлу SSL-сертификата |
 | `UVICORN_SSL_KEYFILE` | string | - | Путь к файлу приватного ключа SSL |
+| `UVICORN_SSL_CA_TYPE` | string | `public` | Тип центра сертификации для проверки SSL |
+| `UVICORN_WORKERS` | int | `1` | Количество worker-процессов Uvicorn |
+| `UVICORN_LOOP` | string | `auto` | Настройка event loop Uvicorn |
+| `UVICORN_PROXY_HEADERS` | bool | `false` | Доверять proxy headers, включая forwarded IP клиента |
+| `UVICORN_FORWARDED_ALLOW_IPS` | string/list | `127.0.0.1` | Доверенные IP прокси для forwarded headers; используйте `*` только в доверенной приватной сети |
 
 **Пример:**
 
@@ -56,7 +62,13 @@ UVICORN_HOST = "0.0.0.0"
 UVICORN_PORT = 8000
 UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
 UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
+UVICORN_PROXY_HEADERS = true
+UVICORN_FORWARDED_ALLOW_IPS = "127.0.0.1"
 ```
+
+<Callout type="warn">
+Включайте `UVICORN_PROXY_HEADERS` только если PasarGuard находится за доверенным reverse proxy. Не используйте `UVICORN_FORWARDED_ALLOW_IPS = "*"` в недоверенной сети.
+</Callout>
 
 ### Аутентификация и безопасность
 
@@ -80,12 +92,52 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 10080
 |----------|------|---------|-------------|
 | `DOCS` | bool | `false` | Включить/отключить конечную точку документации API |
 | `DEBUG` | bool | `false` | Включить режим отладки для подробного логирования |
+| `ROLE` | string | `all-in-one` | Runtime-роль: `backend`, `node`, `scheduler` или `all-in-one` |
+| `DASHBOARD_PATH` | string | `/dashboard/` | URL-путь, по которому доступна панель |
+| `VITE_BASE_API` | string | `/` | Базовый URL API для dashboard |
+| `ALLOWED_ORIGINS` | string | `*` | CORS origins, разделенные запятыми |
 
 **Пример:**
 
 ```bash
 DOCS = true
 DEBUG = false
+```
+
+### WireGuard
+
+| Переменная | Тип | По умолчанию | Описание |
+|----------|------|---------|-------------|
+| `WIREGUARD_ENABLED` | bool | `true` | Включить выделение WireGuard peer IP и вывод WireGuard в подписках |
+| `WIREGUARD_GLOBAL_POOL` | CIDR | `10.0.0.0/8` | IPv4 пул для автоматического выделения peer IP и проверки ручных peer IP |
+| `WIREGUARD_RESERVED` | CIDR list | `10.0.0.0/31` | IPv4 CIDR диапазоны через запятую, которые нельзя выделять |
+
+**Пример:**
+
+```bash
+WIREGUARD_ENABLED = false
+WIREGUARD_GLOBAL_POOL = "10.66.0.0/16"
+WIREGUARD_RESERVED = "10.66.0.0/31,10.66.0.10/32"
+```
+
+<Callout type="info">
+Когда `WIREGUARD_ENABLED = false`, вывод WireGuard в подписках пропускается, а автоматическое выделение peer IP отключается.
+</Callout>
+
+### Запись Использования
+
+| Переменная | Тип | По умолчанию | Описание |
+|----------|------|---------|-------------|
+| `DISABLE_RECORDING_NODE_USAGE` | bool | `false` | Отключить запись samples использования узлов |
+| `ENABLE_RECORDING_NODES_STATS` | bool | `false` | Включить подробную запись статистики узлов; доступно только для PostgreSQL/TimescaleDB |
+| `RESET_USER_USAGE_CLEAN_CHART_DATA` | bool | `false` | Удалять историю графиков пользователя при сбросе использования |
+
+**Пример:**
+
+```bash
+DISABLE_RECORDING_NODE_USAGE = false
+ENABLE_RECORDING_NODES_STATS = true
+RESET_USER_USAGE_CLEAN_CHART_DATA = false
 ```
 
 ---
@@ -95,10 +147,6 @@ DEBUG = false
 ### Настройка для продакшена
 
 ```bash
-# Конфигурация администратора
-SUDO_USERNAME = "admin"
-SUDO_PASSWORD = "your-secure-password"
-
 # База данных (рекомендуется TimescaleDB)
 SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://pasarguard:password@localhost/pasarguard"
 
@@ -107,6 +155,8 @@ UVICORN_HOST = "0.0.0.0"
 UVICORN_PORT = 8000
 UVICORN_SSL_CERTFILE = "/var/lib/pasarguard/cert.pem"
 UVICORN_SSL_KEYFILE = "/var/lib/pasarguard/key.pem"
+UVICORN_PROXY_HEADERS = true
+UVICORN_FORWARDED_ALLOW_IPS = "127.0.0.1"
 
 # Безопасность
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
@@ -114,6 +164,11 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 # Настройки панели
 DOCS = false
 DEBUG = false
+
+# WireGuard
+WIREGUARD_ENABLED = true
+WIREGUARD_GLOBAL_POOL = "10.0.0.0/8"
+WIREGUARD_RESERVED = "10.0.0.0/31"
 ```
 
 ### Настройка для разработки/тестирования

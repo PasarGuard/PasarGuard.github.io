@@ -6,81 +6,29 @@ icon: Terminal
 
 # PasarGuard CLI
 
-现代化的命令行工具，用于高效且优雅地管理 PasarGuard。
+CLI 会随 PasarGuard 一起安装，目前用于设置密钥和基础维护命令。
 
----
-
-## CLI - 命令行界面
-
-一个现代且安全的命令行界面，用于管理 PasarGuard，使用 Typer 构建。
-
-### 功能特性
-
-- 🎯 **安全的 CLI** 具有精美的输出格式
-- 📊 **精美的表格和面板** 用于数据显示
-- 🔒 **安全的管理员管理** 具有交互式提示
-- 📈 **系统状态监控** 和问题检测
-- ⌨️ **交互式提示** 具有确认功能以增强安全性
-
-### 安装
-
-CLI 随 PasarGuard 一起安装，可以直接使用：
+## 命令
 
 ```bash
-pasarguard cli --help
-
-# 或从项目根目录
-uv run pasarguard-cli.py --help
-```
-
-### 使用方法
-
-#### 常规命令
-
-```bash
-# 显示版本
-pasarguard cli version
-
 # 显示帮助
 pasarguard cli --help
+
+# 显示已安装版本
+pasarguard cli version
+
+# 生成一次性临时设置密钥
+pasarguard cli generate-temp-key
 ```
 
-#### 管理员管理
+## 所有者设置密钥
+
+打开仪表板 **Owner access** 表单前，请先运行 `generate-temp-key`：
 
 ```bash
-# 列出所有管理员
-pasarguard cli admins --list
-
-# 创建新管理员
-pasarguard cli admins --create username
-
-# 删除管理员
-pasarguard cli admins --delete username
-
-# 修改管理员（密码和 sudo 访问权限）
-pasarguard cli admins --modify username
-
-# 重置管理员使用统计
-pasarguard cli admins --reset-usage username
+pasarguard cli generate-temp-key
 ```
 
-#### 系统信息
+该命令会输出临时密钥及其过期时间。密钥有效期为 5 分钟，并且只能使用一次。
 
-```bash
-# 显示系统状态
-pasarguard cli system
-```
-
-### 示例
-
-**创建新管理员：**
-```bash
-pasarguard cli admins --create john_admin
-# 系统将提示您输入密码和 sudo 权限
-```
-
-**列出所有管理员并格式化输出：**
-```bash
-pasarguard cli admins --list
-# 显示一个包含管理员详细信息的精美表格
-```
+仪表板设置表单可以使用此密钥创建第一个所有者账号、重置所有者密码、删除所有者，或将现有管理员提升为所有者。

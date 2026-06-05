@@ -1,0 +1,45 @@
+---
+title: 批量操作
+description: 批量修改用户，包含 WireGuard Peer IP
+icon: ListChecks
+---
+
+批量操作用于一次修改多个用户。导入用户后、移动分组、修改限制或修复 WireGuard peer IP 时很有用。
+
+## 可用操作
+
+- **Create Users**：从用户模板创建多个用户。
+- **Groups**：给选中用户添加或移除分组。
+- **Expire Date**：给选中用户增加或减少到期时间。
+- **Data Limit**：增加或减少流量限制。
+- **Proxy Settings**：更新选中用户的代理设置。
+- **WireGuard Peer IPs**：分配或修复 WireGuard peer IP。
+
+## 安全流程
+
+1. 选择操作标签。
+2. 配置操作。
+3. 选择目标用户、管理员、分组或状态筛选。
+4. 先使用 **Preview**。
+5. 阅读操作摘要。
+6. 只有目标数量正确时才应用操作。
+
+在某些批量页面，如果没有选择目标，操作可能会应用到所有匹配用户。应用前一定要阅读警告。
+
+## WireGuard Peer IPs
+
+当用户需要 WireGuard peer IP 时，使用 **Bulk > WireGuard Peer IPs**。
+
+- 如果只想修复缺失或无效 IP，保持 **Replace all IPs** 关闭。
+- 如果希望所有目标用户都获得新的 IP，打开 **Replace all IPs**。
+- 测试时先使用状态筛选或较小的分组。
+- 应用前先 Preview，确认会影响多少用户和 WireGuard 入站。
+
+添加 WireGuard 核心、导入用户或修改 WireGuard 地址池后，可以运行这个操作。
+
+## 好习惯
+
+- 修改所有用户前，先用一个小分组测试。
+- 不要同时修改流量限制、到期时间和分组。
+- 记录你使用过的筛选条件。
+- 大规模修改后检查 [统计](./statistics) 和节点日志。

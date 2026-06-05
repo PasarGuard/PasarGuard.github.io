@@ -18,7 +18,6 @@ icon: Users
 6. [组管理](#group-management)
 7. [批量操作](#bulk-operations)
 8. [验证规则和约束](#validation-rules-and-constraints)
-9. [API 端点](#api-endpoints)
 10. [常见场景](#common-scenarios)
 
 ---
@@ -487,145 +486,6 @@ PasarGuard 支持批量操作，以高效管理组分配。
 
 ---
 
-## API 端点
-
-### 创建组
-
-**Endpoint:** `POST /api/group`
-
-**Authentication:** 需要 sudo 管理员
-
-**Request Body:**
-```json
-{
-  "name": "premium",
-  "inbound_tags": ["vless-443", "trojan-8443"],
-  "is_disabled": false
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "premium",
-  "inbound_tags": ["vless-443", "trojan-8443"],
-  "is_disabled": false,
-  "total_users": 0
-}
-```
-
-### 获取所有组
-
-**Endpoint:** `GET /api/groups`
-
-**Authentication:** 需要管理员
-
-**Query Parameters:**
-- `offset`（可选）：分页偏移量
-- `limit`（可选）：分页限制
-
-**Response:**
-```json
-{
-  "groups": [
-    {
-      "id": 1,
-      "name": "premium",
-      "inbound_tags": ["vless-443"],
-      "is_disabled": false,
-      "total_users": 5
-    }
-  ],
-  "total": 1
-}
-```
-
-### 按 ID 获取组
-
-**Endpoint:** `GET /api/group/{group_id}`
-
-**Authentication:** 需要管理员
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "premium",
-  "inbound_tags": ["vless-443", "trojan-8443"],
-  "is_disabled": false,
-  "total_users": 10
-}
-```
-
-### 修改组
-
-**Endpoint:** `PUT /api/group/{group_id}`
-
-**Authentication:** 需要 sudo 管理员
-
-**Request Body:**
-```json
-{
-  "name": "premium-v2",
-  "inbound_tags": ["vless-443", "trojan-8443", "vmess-8080"],
-  "is_disabled": false
-}
-```
-
-**Response:** 与按 ID 获取组相同
-
-<Callout type="info">
-此组中的所有活动用户和 on_hold 用户都会自动更新其节点配置。
-</Callout>
-
-### 删除组
-
-**Endpoint:** `DELETE /api/group/{group_id}`
-
-**Authentication:** 需要 sudo 管理员
-
-**Response:** `204 No Content`
-
-<Callout type="info">
-此组中的所有用户都会自动更新其节点配置。
-</Callout>
-
-### 批量添加组
-
-**Endpoint:** `POST /api/groups/bulk/add`
-
-**Authentication:** 需要管理员
-
-**Request Body:**
-```json
-{
-  "group_ids": [1, 2],
-  "users": [10, 11, 12],
-  "admins": [5],
-  "has_group_ids": [3]
-}
-```
-
-**Response:**
-```json
-{
-  "detail": "operation has been successfuly done on 15 users"
-}
-```
-
-### 批量删除组
-
-**Endpoint:** `POST /api/groups/bulk/remove`
-
-**Authentication:** 需要管理员
-
-**Request Body:** 与批量添加相同
-
-**Response:** 与批量添加相同
-
----
-
 ## 常见场景
 
 <Tabs items={['基本组', '分配给用户', '授予访问权限', '禁用组', '批量分配', '管理员用户', '分层访问', '删除入站', '清除入站', '迁移用户', '条件', '多个组']}>
@@ -844,6 +704,5 @@ PUT /api/user/john
 - ✅ **访问是累积的** - 用户获得其所有启用组中所有入站的访问权限
 
 有关更多信息：
-- 主机如何使用入站标签：请参阅 [hosts.md](./hosts.md)
-- XRay 配置：请参阅 [xray.md](./xray.md)
+- 主机如何使用入站标签：请参阅 [host](./host)
 

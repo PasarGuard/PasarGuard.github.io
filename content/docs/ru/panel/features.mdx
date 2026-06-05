@@ -94,24 +94,20 @@ PasarGuard генерирует ссылки на подписку, совмес
 - **Команды администратора**: Управление панелью через Telegram
 - **Уведомления в реальном времени**: Уведомления о состоянии системы
 
-### Инструменты CLI
+### CLI Tools
 
-Интерфейс командной строки для автоматизации:
+Интерфейс командной строки для настройки и обслуживания:
 
 ```bash
-# Терминальный интерфейс администратора
-pasarguard tui
+# Создать одноразовый ключ настройки владельца
+pasarguard cli generate-temp-key
 
-# Управление администраторами
-pasarguard cli admin create --sudo
-pasarguard cli admin list
+# Показать справку CLI
+pasarguard cli --help
 
-# Системные операции
-pasarguard status
-pasarguard restart
-pasarguard update
+# Показать установленную версию
+pasarguard cli version
 ```
-
 ## Функции безопасности
 
 ### Поддержка TLS

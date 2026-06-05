@@ -18,7 +18,6 @@ icon: Users
 6. [مدیریت گروه](#group-management)
 7. [عملیات دسته‌ای](#bulk-operations)
 8. [قوانین اعتبارسنجی و محدودیت‌ها](#validation-rules-and-constraints)
-9. [نقاط پایانی API](#api-endpoints)
 10. [سناریوهای رایج](#common-scenarios)
 
 ---
@@ -487,145 +486,6 @@ PasarGuard از عملیات دسته‌ای برای مدیریت کارآمد 
 
 ---
 
-## نقاط پایانی API
-
-### ایجاد گروه
-
-**Endpoint:** `POST /api/group`
-
-**Authentication:** ادمین Sudo الزامی است
-
-**Request Body:**
-```json
-{
-  "name": "premium",
-  "inbound_tags": ["vless-443", "trojan-8443"],
-  "is_disabled": false
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "premium",
-  "inbound_tags": ["vless-443", "trojan-8443"],
-  "is_disabled": false,
-  "total_users": 0
-}
-```
-
-### دریافت تمام گروه‌ها
-
-**Endpoint:** `GET /api/groups`
-
-**Authentication:** ادمین الزامی است
-
-**Query Parameters:**
-- `offset` (اختیاری): آفست صفحه‌بندی
-- `limit` (اختیاری): محدودیت صفحه‌بندی
-
-**Response:**
-```json
-{
-  "groups": [
-    {
-      "id": 1,
-      "name": "premium",
-      "inbound_tags": ["vless-443"],
-      "is_disabled": false,
-      "total_users": 5
-    }
-  ],
-  "total": 1
-}
-```
-
-### دریافت گروه بر اساس ID
-
-**Endpoint:** `GET /api/group/{group_id}`
-
-**Authentication:** ادمین الزامی است
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "premium",
-  "inbound_tags": ["vless-443", "trojan-8443"],
-  "is_disabled": false,
-  "total_users": 10
-}
-```
-
-### تغییر گروه
-
-**Endpoint:** `PUT /api/group/{group_id}`
-
-**Authentication:** ادمین Sudo الزامی است
-
-**Request Body:**
-```json
-{
-  "name": "premium-v2",
-  "inbound_tags": ["vless-443", "trojan-8443", "vmess-8080"],
-  "is_disabled": false
-}
-```
-
-**Response:** همانند دریافت گروه بر اساس ID
-
-<Callout type="info">
-تمام کاربران فعال و on_hold در این گروه پیکربندی‌های node خود را به طور خودکار به‌روزرسانی می‌کنند.
-</Callout>
-
-### حذف گروه
-
-**Endpoint:** `DELETE /api/group/{group_id}`
-
-**Authentication:** ادمین Sudo الزامی است
-
-**Response:** `204 No Content`
-
-<Callout type="info">
-تمام کاربران در این گروه پیکربندی‌های node خود را به طور خودکار به‌روزرسانی می‌کنند.
-</Callout>
-
-### افزودن دسته‌ای گروه‌ها
-
-**Endpoint:** `POST /api/groups/bulk/add`
-
-**Authentication:** ادمین الزامی است
-
-**Request Body:**
-```json
-{
-  "group_ids": [1, 2],
-  "users": [10, 11, 12],
-  "admins": [5],
-  "has_group_ids": [3]
-}
-```
-
-**Response:**
-```json
-{
-  "detail": "operation has been successfuly done on 15 users"
-}
-```
-
-### حذف دسته‌ای گروه‌ها
-
-**Endpoint:** `POST /api/groups/bulk/remove`
-
-**Authentication:** ادمین الزامی است
-
-**Request Body:** همانند افزودن دسته‌ای
-
-**Response:** همانند افزودن دسته‌ای
-
----
-
 ## سناریوهای رایج
 
 <Tabs items={['گروه پایه', 'اختصاص به کاربر', 'اعطای دسترسی', 'غیرفعال کردن گروه', 'اختصاص دسته‌ای', 'کاربران ادمین', 'دسترسی طبقه‌بندی شده', 'حذف Inbound', 'پاک کردن Inboundها', 'مهاجرت کاربران', 'شرطی', 'گروه‌های متعدد']}>
@@ -844,6 +704,5 @@ PUT /api/user/john
 - ✅ **دسترسی تجمعی است** - کاربران به inboundهای تمام گروه‌های فعال خود دسترسی دارند
 
 برای اطلاعات بیشتر درباره:
-- نحوه استفاده hostها از تگ‌های inbound: [hosts.md](./hosts.md) را ببینید
-- پیکربندی XRay: [xray.md](./xray.md) را ببینید
+- نحوه استفاده hostها از تگ‌های inbound: [host](./host) را ببینید
 

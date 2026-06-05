@@ -1,461 +1,199 @@
 ---
 title: API Reference
-description: Complete REST API and gRPC reference for PasarGuard Node
+description: Current REST API and gRPC reference for PasarGuard Node
 icon: Code
 ---
 
 ## API Overview
 
-PasarGuard Node provides both **REST API** and **gRPC** interfaces for managing the node, users, and retrieving statistics.
+PasarGuard Node exposes both **REST API** and **gRPC** interfaces. REST requests and responses use Protocol Buffers, except log streaming which uses Server-Sent Events.
 
 ### Authentication
 
-All API requests require authentication using the `API_KEY` configured in your `.env` file.
+All requests require the node `API_KEY`.
 
-**REST API:**
 ```http
 Authorization: Bearer <api_key>
 ```
 
-**gRPC:**
-```
+For gRPC, send the same value as metadata:
+
+```text
 authorization: Bearer <api_key>
 ```
 
 ### Base URL
 
-REST API requests should be sent to:
-```
+```text
 https://your-node-address:port/
 ```
 
 ### Content Type
 
-REST API uses Protocol Buffers for data serialization:
 ```http
 Content-Type: application/x-protobuf
 ```
 
----
-
 ## Data Structures
 
-### Backend
-
 ```protobuf
+enum BackendType {
+  XRAY = 0;
+  WIREGUARD = 1;
+}
+
 message Backend {
-  BackendType type;      // Backend type (XRAY = 0)
-  string config;         // Backend configuration
-  repeated User users;   // List of users
-  uint64 keepAlive;      // Keep alive duration in seconds
+  BackendType type = 1;
+  string config = 2;
+  repeated User users = 3;
+  uint64 keep_alive = 4;
+  repeated string exclude_inbounds = 5;
 }
-```
 
-### User
-
-```protobuf
 message User {
-  string email;           // User's unique email identifier
-  Proxy proxies;          // Proxy configurations
-  repeated string inbounds; // List of inbound tags
+  string email = 1;
+  Proxy proxies = 2;
+  repeated string inbounds = 3;
+}
+
+message Proxy {
+  Vmess vmess = 1;
+  Vless vless = 2;
+  Trojan trojan = 3;
+  Shadowsocks shadowsocks = 4;
+  Wireguard wireguard = 5;
+  Hysteria hysteria = 6;
+}
+
+message Wireguard {
+  string public_key = 1;
+  repeated string peer_ips = 2;
+}
+
+message Hysteria {
+  string auth = 1;
 }
 ```
 
-### StatRequest
+## Node Management
 
-```protobuf
-message StatRequest {
-  string name;      // User email or inbound/outbound tag
-  bool reset;       // Reset traffic stats after retrieval
-  StatType type;    // Type of stats to retrieve
-}
+| Operation | REST | gRPC | Body | Response |
+|---|---|---|---|---|
+| Start backend | `POST /start` | `Start(Backend)` | `Backend` | `BaseInfoResponse` |
+| Stop backend | `PUT /stop` | `Stop(Empty)` | none | `Empty` |
+| Get base info | `GET /info` | `GetBaseInfo(Empty)` | none | `BaseInfoResponse` |
 
-enum StatType {
-  Outbounds = 0;   // All outbound stats
-  Outbound = 1;    // Single outbound stats
-  Inbounds = 2;    // All inbound stats
-  Inbound = 3;     // Single inbound stats
-  UsersStat = 4;   // All users stats
-  UserStat = 5;    // Single user stats
-}
-```
-
----
-
-## API Methods
-
-### Node Management
-
-#### Start Backend
-
-Start the node backend with configuration.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    POST /start
-    Authorization: Bearer <api_key>
-    Content-Type: application/x-protobuf
-
-    Body: Backend (protobuf)
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc Start(Backend) returns (BaseInfoResponse)
-    ```
-  </Tab>
-</Tabs>
-
-<Callout type="info">
-  This is the only method called before creating a connection with the node.
-</Callout>
-
----
-
-#### Stop Backend
-
-Stop the backend and deactivate client connections.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    PUT /stop
-    Authorization: Bearer <api_key>
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc Stop(Empty) returns (Empty)
-    ```
-  </Tab>
-</Tabs>
-
----
-
-#### Get Base Info
-
-Retrieve basic node information and check connection status.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    GET /info
-    Authorization: Bearer <api_key>
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc GetBaseInfo(Empty) returns (BaseInfoResponse)
-    ```
-  </Tab>
-</Tabs>
-
-**Response:**
 ```protobuf
 message BaseInfoResponse {
-  string version;
-  string core_type;
-  bool running;
+  bool started = 1;
+  string core_version = 2;
+  string node_version = 3;
 }
 ```
 
----
+<Callout type="info">
+`/start` and `/info` are available before the backend is running. Other REST endpoints require an active backend connection.
+</Callout>
 
-### Logging
+## Logs
 
-#### Get Logs
+| Operation | REST | gRPC | Response |
+|---|---|---|---|
+| Stream backend logs | `GET /logs` | `GetLogs(Empty)` | stream of `Log` |
 
-Stream real-time logs from the backend.
+REST log streaming returns `text/event-stream`.
 
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    GET /logs
-    Authorization: Bearer <api_key>
-
-    // Returns Server-Sent Events (SSE) stream
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc GetLogs(Empty) returns (stream Log)
-    ```
-  </Tab>
-</Tabs>
-
-**Log Structure:**
 ```protobuf
 message Log {
-  string detail;  // Log message
+  string detail = 1;
 }
 ```
 
----
+## Statistics
 
-### Statistics
+| Operation | REST | gRPC | Body | Response |
+|---|---|---|---|---|
+| Traffic stats | `GET /stats/` | `GetStats(StatRequest)` | `StatRequest` | `StatResponse` |
+| Outbound latency | `GET /stats/latency` | `GetOutboundsLatency(LatencyRequest)` | `LatencyRequest` | `LatencyResponse` |
+| User online count | `GET /stats/user/online` | `GetUserOnlineStats(StatRequest)` | `StatRequest` | `OnlineStatResponse` |
+| User online IP list | `GET /stats/user/online_ip` | `GetUserOnlineIpListStats(StatRequest)` | `StatRequest` | `StatsOnlineIpListResponse` |
+| Backend runtime stats | `GET /stats/backend` | `GetBackendStats(Empty)` | none | `BackendStatsResponse` |
+| System stats | `GET /stats/system` | `GetSystemStats(Empty)` | none | `SystemStatsResponse` |
 
-#### Get System Stats
-
-Retrieve system-level statistics.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    GET /stats/system
-    Authorization: Bearer <api_key>
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc GetSystemStats(Empty) returns (SystemStatsResponse)
-    ```
-  </Tab>
-</Tabs>
-
-**Response:**
 ```protobuf
-message SystemStatsResponse {
-  uint64 mem_total;                  // Total memory
-  uint64 mem_used;                   // Used memory
-  uint64 cpu_cores;                  // CPU cores
-  double cpu_usage;                  // CPU usage %
-  uint64 incoming_bandwidth_speed;   // Download speed
-  uint64 outgoing_bandwidth_speed;   // Upload speed
+enum StatType {
+  Outbounds = 0;
+  Outbound = 1;
+  Inbounds = 2;
+  Inbound = 3;
+  UsersStat = 4;
+  UserStat = 5;
 }
-```
 
----
-
-#### Get Backend Stats
-
-Retrieve backend runtime statistics.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    GET /stats/backend
-    Authorization: Bearer <api_key>
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc GetBackendStats(Empty) returns (BackendStatsResponse)
-    ```
-  </Tab>
-</Tabs>
-
-**Response:**
-```protobuf
-message BackendStatsResponse {
-  uint32 num_goroutine;    // Active goroutines
-  uint32 num_gc;           // GC runs
-  uint64 alloc;            // Allocated memory
-  uint64 total_alloc;      // Total allocated
-  uint64 sys;              // System memory
-  uint64 mallocs;          // Malloc count
-  uint64 frees;            // Free count
-  uint64 live_objects;     // Live objects
-  uint64 pause_total_ns;   // Total GC pause
-  uint32 uptime;           // Uptime in seconds
-}
-```
-
----
-
-#### Get Traffic Stats
-
-Retrieve traffic statistics for users, inbounds, or outbounds.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    GET /stats
-    Authorization: Bearer <api_key>
-    Content-Type: application/x-protobuf
-
-    Body: StatRequest (protobuf)
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc GetStats(StatRequest) returns (StatResponse)
-    ```
-  </Tab>
-</Tabs>
-
-**Examples:**
-
-Get all users' stats:
-```protobuf
-StatRequest {
-  type: UsersStat,
-  reset: false
-}
-```
-
-Get specific user stats:
-```protobuf
-StatRequest {
-  name: "user@example.com",
-  type: UserStat,
-  reset: true  // Reset after retrieval
-}
-```
-
-**Response:**
-```protobuf
-message StatResponse {
-  repeated Stat stats;
+message StatRequest {
+  string name = 1;
+  bool reset = 2;
+  StatType type = 3;
 }
 
 message Stat {
-  string name;   // User email or tag
-  string type;   // Stat type
-  string link;   // Link identifier
-  int64 value;   // Traffic value in bytes
+  string name = 1;
+  string type = 2;
+  string link = 3;
+  int64 value = 4;
+}
+
+message LatencyRequest {
+  string name = 1;
+}
+
+message Latency {
+  string name = 1;
+  bool alive = 2;
+  int64 delay = 3;
+  string link = 4;
+  int64 last_seen_time = 5;
+  int64 last_try_time = 6;
+  string source = 7;
 }
 ```
 
----
+`StatRequest.name` is the target user email or inbound/outbound tag. Set `reset` to `true` when the caller should reset counters after reading them.
 
-#### Get User Online Stats
+## User Sync
 
-Get online connection count for a user.
+| Operation | REST | gRPC | Body |
+|---|---|---|---|
+| Sync one user | `PUT /user/sync` | `SyncUser(stream User)` | `User` |
+| Sync users | `PUT /users/sync` | `SyncUsers(Users)` | `Users` |
+| Sync users in chunks | `PUT /users/sync/chunked` | `SyncUsersChunked(stream UsersChunk)` | `UsersChunk` stream |
 
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    GET /stats/user/online
-    Authorization: Bearer <api_key>
-    Content-Type: application/x-protobuf
-
-    Body: StatRequest (protobuf)
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc GetUserOnlineStats(StatRequest) returns (OnlineStatResponse)
-    ```
-  </Tab>
-</Tabs>
-
-**Response:**
 ```protobuf
-message OnlineStatResponse {
-  string name;   // User email
-  int64 value;   // Online connection count
+message Users {
+  repeated User users = 1;
+}
+
+message UsersChunk {
+  repeated User users = 1;
+  uint64 index = 2;
+  bool last = 3;
 }
 ```
 
----
+For REST chunked sync, each `UsersChunk` protobuf message is sent with a uvarint length prefix followed by the protobuf payload. Chunks are reassembled by `index`; the chunk with `last = true` marks the end.
 
-#### Get User Online IP List
-
-Get list of IPs for online user connections.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    GET /stats/user/online_ip
-    Authorization: Bearer <api_key>
-    Content-Type: application/x-protobuf
-
-    Body: StatRequest (protobuf)
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc GetUserOnlineIpListStats(StatRequest) returns (StatsOnlineIpListResponse)
-    ```
-  </Tab>
-</Tabs>
-
----
-
-### User Management
-
-#### Sync User
-
-Add, update, or remove a single user.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    PUT /user/sync
-    Authorization: Bearer <api_key>
-    Content-Type: application/x-protobuf
-
-    Body: User (protobuf)
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc SyncUser(stream User) returns (Empty)
-    ```
-  </Tab>
-</Tabs>
-
-<Callout type="info">
-  To **remove** a user, send empty inbounds array. gRPC provides a stream interface, but REST requires individual calls per user.
+<Callout type="warning">
+`/users/sync` replaces the full user set. Chunked sync updates users from all chunks; large batches may restart the backend after updating in-memory users.
 </Callout>
 
----
+## Errors
 
-#### Sync Users
-
-Replace all users with a new set.
-
-<Tabs items={['REST', 'gRPC']}>
-  <Tab value="REST">
-    ```http
-    PUT /users/sync
-    Authorization: Bearer <api_key>
-    Content-Type: application/x-protobuf
-
-    Body: Users (protobuf)
-    ```
-  </Tab>
-  <Tab value="gRPC">
-    ```
-    rpc SyncUsers(Users) returns (Empty)
-    ```
-  </Tab>
-</Tabs>
-
-<Callout type="warn">
-  This method **removes all old users** and replaces them with the provided list.
-</Callout>
-
----
-
-## Error Responses
-
-### HTTP Status Codes
+REST errors are returned as plain HTTP errors with the appropriate status code. gRPC errors use standard gRPC status codes. Common REST statuses:
 
 | Code | Meaning |
-|------|---------|
-| 200 | Success |
-| 400 | Bad Request - Invalid data |
-| 401 | Unauthorized - Invalid API_KEY |
-| 404 | Not Found - Endpoint doesn't exist |
-| 500 | Internal Server Error |
-
-### Error Format
-
-```json
-{
-  "error": "Error description",
-  "code": "ERROR_CODE"
-}
-```
-
----
-
-## Rate Limiting
-
-There are currently no built-in rate limits, but it's recommended to:
-- Batch user updates when possible
-- Cache statistics locally
-- Avoid excessive polling
-
+|---|---|
+| `400` | Invalid protobuf body or invalid request data |
+| `401` | Missing or invalid `API_KEY` |
+| `404` | Requested stat target was not found |
+| `500` | Backend or server error |
+| `503` | Backend start or listener error |

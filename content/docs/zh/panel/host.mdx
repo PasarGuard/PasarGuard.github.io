@@ -17,7 +17,6 @@ icon: Globe
 5. [用户显示的格式变量](#format-variables-for-user-display)
 6. [传输设置](#transport-settings)
 7. [主机状态和过滤](#host-status-and-filtering)
-8. [API 限制和约束](#api-limits-and-constraints)
 9. [常见场景](#common-scenarios)
 
 ---
@@ -689,52 +688,6 @@ PasarGuard 中的主机是代理服务器配置，它们：
   "priority": 100  // 在订阅中稍后出现
 }
 ```
-
----
-
-## API 限制和约束
-
-### 字段限制
-
-| 字段 | 限制 | 描述 |
-|-------|-------|-------------|
-| `remark` | 必须是有效的格式字符串 | 支持格式变量 |
-| `address` | 组合字符串长度最大 256 个字符 | 地址字符串集合 |
-| `sni` | 组合字符串长度最大 1000 个字符 | SNI 字符串集合 |
-| `host` | 组合字符串长度最大 1000 个字符 | host 字符串集合 |
-| `inbound_tag` | 必须存在于核心配置中 | 针对 XRay 配置进行验证 |
-
-### 验证规则
-
-1. **入站标签验证**
-   - `inbound_tag` 必须至少存在于一个 XRay 核心配置中
-   - 创建或修改主机时进行验证
-
-2. **下载设置验证**
-   - 如果设置了 `xhttp_settings.download_settings`，它必须引用有效的主机 ID
-   - 引用的主机不能与当前主机相同
-   - 引用的主机不能有自己的下载主机（无嵌套）
-
-3. **格式变量验证**
-   - `remark` 必须是有效的格式字符串
-   - 无效的格式变量将导致错误
-
-4. **ALPN 验证**
-   - ALPN 列表自动去重
-   - ALPN 列表自动按优先级排序（h3 → h2 → http/1.1）
-
-### API 端点
-
-- `GET /api/host/{host_id}` - 按 ID 获取主机
-- `GET /api/hosts` - 列出所有主机（带分页）
-- `POST /api/host/` - 创建新主机
-- `PUT /api/host/{host_id}` - 修改现有主机
-- `DELETE /api/host/{host_id}` - 删除主机
-- `PUT /api/hosts` - 批量修改主机
-
-<Callout type="info" title="身份验证">
-所有端点都需要 sudo 管理员权限。
-</Callout>
 
 ---
 

@@ -17,7 +17,6 @@ icon: Server
 5. [网络类型](#network-types)
 6. [安全设置](#security-settings)
 7. [查看连接的 IP](#viewing-connected-ips)
-8. [API 限制和约束](#api-limits-and-constraints)
 9. [常见验证错误](#common-validation-errors)
 
 ---
@@ -457,54 +456,6 @@ PasarGuard 处理并验证以下协议：
   ]
 }
 ```
-
----
-
-## API 限制和约束
-
-通过 API 创建或修改核心配置时，适用以下限制：
-
-### 字段限制
-
-| 字段 | 限制 | 描述 |
-|-------|-------|-------------|
-| `name` | 最多 256 个字符 | 核心配置名称 |
-| `exclude_inbound_tags` | 组合字符串长度最多 2048 个字符 | 要从处理中排除的标签 |
-| `fallbacks_inbound_tags` | 组合字符串长度最多 2048 个字符 | 用于 fallback 处理的标签 |
-| `config` | 不能为空 | 必须包含有效的 XRay 配置 |
-
-### 特殊规则
-
-1. **默认核心保护**
-   - 不能删除 `id = 1` 的核心配置
-   - 这是默认/系统核心配置
-
-2. **标签字符串长度**
-   - 当 `exclude_inbound_tags` 和 `fallbacks_inbound_tags` 组合成逗号分隔的字符串时，总长度不得超过 2048 个字符
-   - 示例：如果您有 100 个标签，每个 20 个字符，那就是 2000 个字符（加上 99 个逗号 = 2099），这将超过限制
-
-3. **配置验证**
-   - `config` 字典不能为空 `{}`
-   - 必须通过所有 XRay 验证规则（inbounds、outbounds、标签等）
-
-<Callout type="warning" title="默认核心保护">
-不能删除 `id = 1` 的核心配置。这是默认/系统核心配置。
-</Callout>
-
-### API 端点
-
-以下端点可用于核心配置管理：
-
-- `POST /api/core` - 创建新的核心配置
-- `GET /api/core/{core_id}` - 按 ID 获取核心配置
-- `PUT /api/core/{core_id}` - 修改现有核心配置
-- `DELETE /api/core/{core_id}` - 删除核心配置（id=1 除外）
-- `GET /api/cores` - 列出所有核心配置
-- `POST /api/core/{core_id}/restart` - 重启使用此核心的节点
-
-<Callout type="info" title="身份验证">
-所有端点都需要 sudo 管理员权限。
-</Callout>
 
 ---
 
