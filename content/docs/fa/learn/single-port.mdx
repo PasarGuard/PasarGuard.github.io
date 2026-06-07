@@ -92,7 +92,7 @@ listen front
     # روتینگ امن
     use_backend panel if host_panel
     use_backend sub   if host_sub
-    http-request deny
+    default_backend deny_backend
 
 backend panel
     mode http
@@ -103,6 +103,10 @@ backend sub
     acl is_sub path_beg /sub/
     http-request deny if !is_sub
     server srv1 127.0.0.1:8000
+
+backend deny_backend
+    mode http
+    http-request deny deny_status 403
 ```
 
 #### توضیح پیکربندی
@@ -118,14 +122,15 @@ backend sub
 
 **ACL (Access Control List):**
 - بر اساس دامنه (`Host` header) تشخیص می‌ده که ترافیک باید به کجا بره
-- امنیت بیشتر با `http-request deny` در انتها که هر درخواست ناشناس رو رد می‌کنه
+- امنیت بیشتر با `default_backend deny_backend` که هر درخواست ناشناس رو رد می‌کنه
 
 **Backends:**
 - هر backend براساس دامنه، ترافیک رو به سرویس مربوطه می‌فرسته
 - backend `sub` یک لایه امنیتی اضافی داره که فقط pathهای `/sub/` رو قبول می‌کنه
+- backend `deny_backend` برای درخواست‌هایی که با هیچ قانون frontend مطابقت ندارند، 403 برمی‌گردونه
 
 <Alert type="info">
-با `http-request deny` در انتهای frontend، هر درخواستی که با دامنه‌های تعریف‌شده مطابقت نداره، مسدود می‌شه. این از سواستفاده از IP شما جلوگیری می‌کنه.
+با `default_backend deny_backend` در انتهای قوانین مسیریابی frontend، هر درخواستی که با دامنه‌های تعریف‌شده مطابقت نداره، مسدود می‌شه. این از سواستفاده از IP شما جلوگیری می‌کنه، بدون اینکه backendهای معتبر رد بشن.
 </Alert>
 
 بعد از ویرایش، فایل رو save کنید (Ctrl+X، سپس Y، سپس Enter) و HAProxy رو ریستارت کنید:

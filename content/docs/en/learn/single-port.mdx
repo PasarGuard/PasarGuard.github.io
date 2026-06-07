@@ -93,7 +93,7 @@ listen front
     # Secure routing
     use_backend panel if host_panel
     use_backend sub   if host_sub
-    http-request deny
+    default_backend deny_backend
 
 backend panel
     mode http
@@ -104,6 +104,10 @@ backend sub
     acl is_sub path_beg /sub/
     http-request deny if !is_sub
     server srv1 127.0.0.1:8000
+
+backend deny_backend
+    mode http
+    http-request deny deny_status 403
 ```
 
 #### Configuration Explanation
@@ -119,14 +123,15 @@ This professional configuration includes:
 
 **ACL (Access Control List):**
 - Detects where traffic should go based on domain (`Host` header)
-- More security with `http-request deny` at the end that rejects any unknown requests
+- More security with `default_backend deny_backend` that rejects any unknown requests
 
 **Backends:**
 - Each backend sends traffic to the corresponding service based on domain
 - `sub` backend has an additional security layer that only accepts `/sub/` paths
+- `deny_backend` returns 403 for requests that do not match any frontend routing rule
 
 <Callout type="info">
-With `http-request deny` at the end of the frontend, any request that does not match the defined domains is blocked. This prevents abuse of your IP.
+With `default_backend deny_backend` at the end of the frontend routing rules, any request that does not match the defined domains is blocked. This prevents abuse of your IP without denying valid backend matches.
 </Callout>
 
 After editing, save the file (Ctrl+X, then Y, then Enter) and restart HAProxy:
