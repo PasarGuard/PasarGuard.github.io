@@ -1,0 +1,56 @@
+---
+title: API Keys
+description: Manage API keys for programmatic access to the panel
+icon: Key
+---
+
+API keys allow external scripts, automation tools, or custom applications to communicate with the PasarGuard panel API. Each API key is bound to a specific admin account and can either inherit its permissions or use custom-defined permission limits.
+
+## Create an API Key
+
+1. Go to **API Keys** in the panel sidebar.
+2. Click **Create API Key**.
+3. Set a descriptive **Name** (e.g., `Billing System Sync`).
+4. Select the **Admin** account that this key will authenticate as.
+5. Provide an optional **Note** to document the key's purpose.
+6. Configure the permissions:
+   - **Inherit admin permissions**: Enable this switch to use the owning admin's current role permissions automatically.
+   - **Custom permissions**: Disable the switch to manually configure specific resource scopes and actions (read, create, update, delete) for this key.
+7. Set an optional **Expire Date** if the key should become invalid after a certain period.
+8. Click **Save**.
+9. **Copy the API Key**: The generated secret key will be shown **only once**. Copy it and store it in a secure password manager or configuration file. It cannot be recovered or displayed again.
+
+## Actions
+
+- **Edit**: Modify the key's name, note, permissions, expiration date, or toggle its status (Active/Disabled).
+- **Revoke & Reissue**: Invalidate the current secret key immediately and generate a new one for the same configuration. Use this if a key is leaked or needs rotation.
+- **Delete**: Permanently delete the API key entry. Any request using this key will immediately return an unauthorized error.
+- **Bulk Delete**: Select multiple API keys and delete them together to clean up inactive integration credentials.
+
+## Security Best Practices
+
+- **Principle of Least Privilege**: When possible, disable "Inherit admin permissions" and specify only the exact permission scopes the API key requires.
+- **Set Expiration Dates**: Use expiration dates for temporary integrations to minimize the window of opportunity in case of a credential leak.
+- **Monitor Key ID**: Each API key has a unique Key ID shown in the table. Use this ID to identify the key in server log files without exposing the actual secret key.
+- **Disable Inactive Keys**: If an API key is not currently in use, change its status to **Disabled** instead of deleting it, in case you need to re-enable it later.
+
+## Using the API Key
+
+You can authenticate your HTTP requests to the panel's REST API by sending the key in one of the following ways:
+
+### 1. Custom HTTP Header (Recommended)
+Include the key in the `X-Api-Key` header of your HTTP request:
+
+```bash
+curl -H "X-Api-Key: pg_key_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" \
+     https://your-panel-domain/api/admin/users
+```
+
+### 2. Authorization Header
+Alternatively, use the standard `Authorization` header with the `apikey` prefix:
+
+```bash
+curl -H "Authorization: apikey pg_key_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" \
+     https://your-panel-domain/api/admin/users
+```
+

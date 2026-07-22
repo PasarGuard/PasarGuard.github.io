@@ -13,6 +13,7 @@
     "bulk",
     "admins",
     "admin_roles",
+    "api_keys",
     "statistics",
     "core",
     "host",
