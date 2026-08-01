@@ -51,12 +51,14 @@ export const communityCategories: CommunityCategory[] = [
       {
         repo: 'MatinDehghanian/CNsubscribtion',
         name: 'CNsubscribtion',
-        description: 'Community subscription page template for PasarGuard.',
+        description:
+          'Custom subscription page template for PasarGuard with multi-panel support.',
       },
       {
         repo: 'MatinDehghanian/LightWaySub',
         name: 'LightWaySub',
-        description: 'Community subscription page template for PasarGuard.',
+        description:
+          'Lightweight and fast subscription page template built with React, shadcn/ui, and Tailwind CSS.',
       },
     ],
   },
