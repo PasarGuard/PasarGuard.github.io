@@ -79,7 +79,7 @@ export async function generateMetadata(props: {
   const canonicalUrl = `/${lang}${slug}`;
 
   return {
-    metadataBase: new URL('https://pasarguard.github.io'),
+    metadataBase: new URL('https://docs.pasarguard.org'),
     title: pageTitle,
     description: pageDescription,
     icons: {

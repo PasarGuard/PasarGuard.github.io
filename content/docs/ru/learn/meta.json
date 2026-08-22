@@ -1,6 +1,6 @@
 {
-  "title": "Learn",
-  "description": "Step-by-step guides for advanced configurations",
+  "title": "Руководства",
+  "description": "Пошаговые руководства по расширенной настройке",
   "pages": [
     "ssl-certificate-cli",
     "ssl-activation-cli",

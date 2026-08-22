@@ -58,7 +58,7 @@ export const communityCategories: CommunityCategory[] = [
         repo: 'MatinDehghanian/LightWaySub',
         name: 'LightWaySub',
         description:
-          'Lightweight and fast subscription page template built with React, shadcn/ui, and Tailwind CSS.',
+          'An optimized, high-performance subscription template leveraging modern web technologies for speed.',
       },
     ],
   },

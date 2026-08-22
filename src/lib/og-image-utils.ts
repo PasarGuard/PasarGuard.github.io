@@ -3,7 +3,7 @@
  */
 
 export function getOGImagePath(lang: string, slug?: string[]): string {
-  const baseUrl = 'https://pasarguard.github.io';
+  const baseUrl = 'https://docs.pasarguard.org';
   
   if (!slug || slug.length === 0) {
     // Home page
@@ -21,7 +21,7 @@ export function getOGImagePath(lang: string, slug?: string[]): string {
 }
 
 export function getOGImagePathForPage(lang: string, pageTitle: string, pageDescription?: string): string {
-  const baseUrl = 'https://pasarguard.github.io';
+  const baseUrl = 'https://docs.pasarguard.org';
   
   // For dynamic pages, we'll use a fallback to the logo
   // In a real implementation, you might want to generate images on-demand

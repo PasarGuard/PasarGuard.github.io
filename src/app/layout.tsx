@@ -2,7 +2,7 @@ import './global.css';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://pasarguard.github.io'),
+  metadataBase: new URL('https://docs.pasarguard.org'),
   title: {
     default: 'PasarGuard - Unified GUI Censorship Resistant Solution',
     template: '%s | PasarGuard Documentation'
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://pasarguard.github.io',
+    url: 'https://docs.pasarguard.org',
     siteName: 'PasarGuard',
     title: 'PasarGuard - Unified GUI Censorship Resistant Solution',
     description: 'PasarGuard is a proxy management tool that provides a simple and easy-to-use user interface for managing hundreds of proxy accounts powered by Xray-core.',
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     creator: '@pasarguard',
   },
   alternates: {
-    canonical: 'https://pasarguard.github.io',
+    canonical: 'https://docs.pasarguard.org',
     languages: {
       'en': '/en',
       'fa': '/fa',
