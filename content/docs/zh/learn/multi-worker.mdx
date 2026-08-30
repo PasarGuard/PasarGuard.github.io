@@ -4,34 +4,36 @@ navigation: 多 Worker 模式
 icon: Server
 ---
 
-Multi-Worker 模式将 PasarGuard Panel 拆分为独立服务，使 API 流量与后台任务各自运行。这样可以提升吞吐量，并避免长时间任务阻塞面板。
+Multi-Worker 模式运行多个 PasarGuard 进程，使 API 流量与后台任务共同扩展，而不是争抢同一个事件循环。
+
+<Callout type="info">
+自 PasarGuard v5.3.0 起，推荐的 Multi-Worker 运行方式是使用单个 `all-in-one` 服务，并将 `UVICORN_WORKERS` 设置为大于 1，通过 NATS 进行协调。旧的拆分角色方案（`ROLE=backend` / `node` / `scheduler`）已被弃用，将在 v7.0.0 中移除——如果你仍在使用该方案，请参见下方的「旧版拆分角色配置（v5.3.0 之前）」部分。
+</Callout>
 
 <Callout type="info">
 以下示例中，`docker-compose.yml` 与 `.env` 位于 `/opt/pasarguard`，数据存放在 `/var/lib/pasarguard`。
 </Callout>
 
-## Multi-Worker 运行内容
+## 工作原理
 
-| 角色 | 作用 |
-|------|------|
-| `backend` | HTTP API + 面板 + 数据库迁移 |
-| `node` | 节点操作、日志与节点相关任务 |
-| `scheduler` | 定时任务、通知与队列处理 |
+- `ROLE=all-in-one`（默认值）会在同一进程中运行 HTTP API、面板、节点 worker 与定时任务。
+- 设置 `UVICORN_WORKERS` 可在 Uvicorn 的进程管理器下运行多个该 `all-in-one` 应用的操作系统进程，而无需运行独立的服务。
+- 当有多个进程需要共享状态时——即 `UVICORN_WORKERS > 1`，或使用已弃用的拆分 `ROLE`——NATS 会负责协调 leader 选举（用于定时任务）以及跨进程的节点/用户同步。此时如果没有 NATS，PasarGuard 将拒绝启动。
 
 ## 何时使用
 
-- 节点/用户数量较多，需要更高的响应速度。
-- 需要将定时任务与 API 流量隔离。
-- 希望单独扩展 API worker 数量。
+- 节点/用户数量较多，需要比单进程更高的吞吐量。
+- 只需提高 `UVICORN_WORKERS` 即可扩展 API/worker 容量。
+- 需要定时任务与节点同步在多个进程之间也能正确工作。
 
 ## 要求
 
-- Worker 之间的协作需要 NATS。
-- 所有服务必须共享同一数据库。
-- 所有 worker 必须共享 `/var/lib/pasarguard`（模板、证书、运行时文件）。
+- 当 `UVICORN_WORKERS > 1` 时，需要 NATS。
+- 所有 worker 进程必须共享 `/var/lib/pasarguard`（模板、证书、运行时文件）。
+- 数据库连接池设置是**按每个 worker 计算的，而非全局**——例如 4 个 worker、每个连接池大小为 10，最多可打开 40 个基础连接。
 
 <Callout type="warn">
-Multi-Worker 模式要求 `NATS_ENABLED=True`。如果 NATS 未启用，node/scheduler worker 无法与 backend 协同。
+只要 `UVICORN_WORKERS` 大于 1，Multi-Worker 模式就要求 `NATS_ENABLED=True`。如果 NATS 未启用，PasarGuard 将无法启动。
 </Callout>
 
 ## 步骤 1：准备 `.env`
@@ -39,28 +41,27 @@ Multi-Worker 模式要求 `NATS_ENABLED=True`。如果 NATS 未启用，node/sch
 以下为最小配置，请根据所选数据库补充对应的数据库配置块。
 
 ```bash
-# NATS
+# Process role — keep the default (all-in-one runs API + node worker + scheduler)
+# ROLE = "all-in-one"
+
+# Uvicorn worker processes
+# Set this to the number of CPU cores on your server for best performance
+UVICORN_WORKERS = 4
+
+# NATS — required when UVICORN_WORKERS > 1
 NATS_ENABLED = True
 NATS_URL = "nats://127.0.0.1:4222"
 
 # Web server
 # UVICORN_PORT = 8000
 
-# Uvicorn processes inside the backend container
-# Set this to the number of CPU cores on your server for best performance
-# UVICORN_WORKERS = 4
-
 # Database connection (set per database section)
 # SQLALCHEMY_DATABASE_URL = "..."
 
-# Pooling (per worker process)
+# Pooling (per worker process — see Requirements above)
 # SQLALCHEMY_POOL_SIZE = 10
 # SQLALCHEMY_MAX_OVERFLOW = 30
 ```
-
-<Callout type="info">
-`ROLE` 在 `docker-compose.yml` 中按服务定义。使用下面的 Multi-Worker compose 时请不要在 `.env` 中设置它。
-</Callout>
 
 ## 步骤 2：选择数据库
 
@@ -91,8 +92,6 @@ NATS_URL = "nats://127.0.0.1:4222"
             restart: unless-stopped
             env_file: .env
             network_mode: host
-            environment:
-                ROLE: backend
             depends_on:
                 nats:
                     condition: service_healthy
@@ -106,34 +105,6 @@ NATS_URL = "nats://127.0.0.1:4222"
                 timeout: 5s
                 retries: 10
                 start_period: 60s
-
-        node-worker:
-            container_name: node-worker
-            image: pasarguard/panel:latest
-            restart: unless-stopped
-            env_file: .env
-            network_mode: host
-            environment:
-                ROLE: node
-            depends_on:
-                pasarguard:
-                    condition: service_healthy
-            volumes:
-                - /var/lib/pasarguard:/var/lib/pasarguard
-
-        scheduler:
-            container_name: scheduler
-            image: pasarguard/panel:latest
-            restart: unless-stopped
-            env_file: .env
-            network_mode: host
-            environment:
-                ROLE: scheduler
-            depends_on:
-                pasarguard:
-                    condition: service_healthy
-            volumes:
-                - /var/lib/pasarguard:/var/lib/pasarguard
 
         timescaledb:
             image: timescale/timescaledb:latest-pg17
@@ -240,8 +211,6 @@ NATS_URL = "nats://127.0.0.1:4222"
             restart: unless-stopped
             env_file: .env
             network_mode: host
-            environment:
-                ROLE: backend
             depends_on:
                 nats:
                     condition: service_healthy
@@ -255,34 +224,6 @@ NATS_URL = "nats://127.0.0.1:4222"
                 timeout: 5s
                 retries: 10
                 start_period: 60s
-
-        node-worker:
-            container_name: node-worker
-            image: pasarguard/panel:latest
-            restart: unless-stopped
-            env_file: .env
-            network_mode: host
-            environment:
-                ROLE: node
-            depends_on:
-                pasarguard:
-                    condition: service_healthy
-            volumes:
-                - /var/lib/pasarguard:/var/lib/pasarguard
-
-        scheduler:
-            container_name: scheduler
-            image: pasarguard/panel:latest
-            restart: unless-stopped
-            env_file: .env
-            network_mode: host
-            environment:
-                ROLE: scheduler
-            depends_on:
-                pasarguard:
-                    condition: service_healthy
-            volumes:
-                - /var/lib/pasarguard:/var/lib/pasarguard
 
         postgresql:
             image: postgres:latest
@@ -386,11 +327,9 @@ NATS_URL = "nats://127.0.0.1:4222"
         pasarguard:
             container_name: pasarguard
             image: pasarguard/panel:latest
-            restart: unless-stopped
+            restart: always
             env_file: .env
             network_mode: host
-            environment:
-                ROLE: backend
             depends_on:
                 nats:
                     condition: service_healthy
@@ -404,34 +343,6 @@ NATS_URL = "nats://127.0.0.1:4222"
                 timeout: 5s
                 retries: 10
                 start_period: 60s
-
-        node-worker:
-            container_name: node-worker
-            image: pasarguard/panel:latest
-            restart: unless-stopped
-            env_file: .env
-            network_mode: host
-            environment:
-                ROLE: node
-            depends_on:
-                pasarguard:
-                    condition: service_healthy
-            volumes:
-                - /var/lib/pasarguard:/var/lib/pasarguard
-
-        scheduler:
-            container_name: scheduler
-            image: pasarguard/panel:latest
-            restart: unless-stopped
-            env_file: .env
-            network_mode: host
-            environment:
-                ROLE: scheduler
-            depends_on:
-                pasarguard:
-                    condition: service_healthy
-            volumes:
-                - /var/lib/pasarguard:/var/lib/pasarguard
 
         mysql:
             image: mysql:lts
@@ -519,8 +430,6 @@ NATS_URL = "nats://127.0.0.1:4222"
             restart: unless-stopped
             env_file: .env
             network_mode: host
-            environment:
-                ROLE: backend
             depends_on:
                 nats:
                     condition: service_healthy
@@ -534,34 +443,6 @@ NATS_URL = "nats://127.0.0.1:4222"
                 timeout: 5s
                 retries: 10
                 start_period: 60s
-
-        node-worker:
-            container_name: node-worker
-            image: pasarguard/panel:latest
-            restart: unless-stopped
-            env_file: .env
-            network_mode: host
-            environment:
-                ROLE: node
-            depends_on:
-                pasarguard:
-                    condition: service_healthy
-            volumes:
-                - /var/lib/pasarguard:/var/lib/pasarguard
-
-        scheduler:
-            container_name: scheduler
-            image: pasarguard/panel:latest
-            restart: unless-stopped
-            env_file: .env
-            network_mode: host
-            environment:
-                ROLE: scheduler
-            depends_on:
-                pasarguard:
-                    condition: service_healthy
-            volumes:
-                - /var/lib/pasarguard:/var/lib/pasarguard
 
         mariadb:
             image: mariadb:lts
@@ -624,4 +505,180 @@ sudo docker compose ps
 sudo docker compose logs -f pasarguard
 ```
 
+## 旧版拆分角色配置（v5.3.0 之前）
 
+<Callout type="warn">
+将 `ROLE=backend` / `node` / `scheduler` 拆分为多个独立服务的方式自 v5.3.0 起已被弃用，将在 PasarGuard v7.0.0 中移除。新部署请使用上方的「工作原理」中介绍的 all-in-one 方案；如果你仍在使用拆分角色，请规划迁移。
+</Callout>
+
+在 v5.3.0 之前，Multi-Worker 意味着将 PasarGuard 拆分为三个独立服务，每个服务运行相同的镜像，但使用不同的 `ROLE`：
+
+| 角色 | 作用 |
+|------|------|
+| `backend` | HTTP API + 面板 + 数据库迁移 |
+| `node` | 节点操作、日志与节点相关任务 |
+| `scheduler` | 定时任务、通知与队列处理 |
+
+在这种模式下始终需要 NATS（与 `UVICORN_WORKERS` 无关），并且必须为每个服务单独设置 `ROLE`。
+
+<Accordions>
+<Accordion title="显示旧版 backend / node / scheduler 配置">
+
+### `.env`
+
+```bash
+# NATS
+NATS_ENABLED = True
+NATS_URL = "nats://127.0.0.1:4222"
+
+# Web server
+# UVICORN_PORT = 8000
+
+# Uvicorn processes inside the backend container
+# UVICORN_WORKERS = 4
+
+# Database connection (set per database section)
+# SQLALCHEMY_DATABASE_URL = "..."
+
+# Pooling (per worker process)
+# SQLALCHEMY_POOL_SIZE = 10
+# SQLALCHEMY_MAX_OVERFLOW = 30
+```
+
+`ROLE` 在 `docker-compose.yml` 中按服务定义（`backend`、`node` 或 `scheduler`）。请不要在 `.env` 中设置它。
+
+### docker-compose.yml（TimescaleDB 示例）
+
+```yml
+services:
+    nats:
+        image: nats:2.10-alpine
+        restart: unless-stopped
+        command: ["-js"]
+        ports:
+            - "4222:4222"
+        volumes:
+            - nats-data:/data
+        healthcheck:
+            test: ["CMD", "nc", "-z", "localhost", "4222"]
+            interval: 2s
+            timeout: 2s
+            retries: 10
+            start_period: 30s
+
+    pasarguard:
+        container_name: pasarguard
+        image: pasarguard/panel:latest
+        restart: unless-stopped
+        env_file: .env
+        network_mode: host
+        environment:
+            ROLE: backend
+        depends_on:
+            nats:
+                condition: service_healthy
+            pgbouncer:
+                condition: service_healthy
+        volumes:
+            - /var/lib/pasarguard:/var/lib/pasarguard
+        healthcheck:
+            test: ["CMD", "/code/healthcheck.sh"]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+            start_period: 60s
+
+    node-worker:
+        container_name: node-worker
+        image: pasarguard/panel:latest
+        restart: unless-stopped
+        env_file: .env
+        network_mode: host
+        environment:
+            ROLE: node
+        depends_on:
+            pasarguard:
+                condition: service_healthy
+        volumes:
+            - /var/lib/pasarguard:/var/lib/pasarguard
+
+    scheduler:
+        container_name: scheduler
+        image: pasarguard/panel:latest
+        restart: unless-stopped
+        env_file: .env
+        network_mode: host
+        environment:
+            ROLE: scheduler
+        depends_on:
+            pasarguard:
+                condition: service_healthy
+        volumes:
+            - /var/lib/pasarguard:/var/lib/pasarguard
+
+    timescaledb:
+        image: timescale/timescaledb:latest-pg17
+        restart: always
+        command: >
+            postgres -c max_connections=${PG_MAX_CONNECTIONS:-400}
+                     -c shared_buffers=${PG_SHARED_BUFFERS:-512MB}
+                     -c work_mem=${PG_WORK_MEM:-32MB}
+        environment:
+            POSTGRES_DB: ${DB_NAME}
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+        ports:
+            - "127.0.0.1:5432:5432"
+        volumes:
+            - /var/lib/postgresql/pasarguard:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -q -d ${DB_NAME} -U ${DB_USER}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        networks:
+            - pg_backend
+    pgbouncer:
+        image: edoburu/pgbouncer:latest
+        restart: always
+        environment:
+            DB_HOST: timescaledb
+            DB_PORT: 5432
+            DB_USER: ${DB_USER}
+            DB_PASSWORD: ${DB_PASSWORD}
+            DB_NAME: ${DB_NAME}
+            LISTEN_PORT: 6432
+            POOL_MODE: transaction
+            MAX_CLIENT_CONN: ${PG_MAX_CLIENT_CONN:-700}
+            DEFAULT_POOL_SIZE: ${PG_DEFAULT_POOL_SIZE:-50}
+            RESERVE_POOL_SIZE: ${PG_RESERVE_POOL_SIZE:-50}
+            AUTH_TYPE: scram-sha-256
+            LOG_CONNECTIONS: 0
+            LOG_DISCONNECTIONS: 0
+            LOG_POOLER_ERRORS: 0
+            VERBOSE: 0
+        ports:
+            - "127.0.0.1:6432:6432"
+        depends_on:
+            timescaledb:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD-SHELL", "pgrep -f pgbouncer > /dev/null"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+        networks:
+            - pg_backend
+
+volumes:
+    nats-data:
+networks:
+    pg_backend:
+        driver: bridge
+```
+
+将 `timescaledb`/`pgbouncer` 块替换为 PostgreSQL、MySQL 或 MariaDB 的方式，与当前方案「步骤 2：选择数据库」中的做法相同，只需在三个 PasarGuard 服务上保留 `ROLE: backend` / `ROLE: node` / `ROLE: scheduler`，并在 MySQL/MariaDB 场景下去掉 `pgbouncer` 服务。
+
+</Accordion>
+</Accordions>
