@@ -1,0 +1,97 @@
+---
+title: Backup & Restore
+description: Complete guide to backing up, restoring, and managing PasarGuard data using the management script.
+---
+
+# Backup & Restore Guide
+
+PasarGuard includes a comprehensive management script (`pasarguard.sh`) that automates database backups, restoration, service updates, and system maintenance.
+
+---
+
+## 💾 Backing Up PasarGuard
+
+Regular backups ensure your user accounts, inbound configurations, and admin settings remain safe during server migrations or system failures.
+
+### 1. Manual Backup Command
+
+To trigger an immediate backup of your PasarGuard installation:
+
+```bash
+sudo pasarguard backup
+```
+
+This command creates a compressed archive containing:
+- **Database Dump**: Complete export of your database (SQLite, MySQL, MariaDB, PostgreSQL, or TimescaleDB).
+- **Environment Settings**: Copy of your `/opt/pasarguard/.env` configuration.
+- **SSL Certificates & Keys**: Relevant security credentials.
+
+Backups are saved locally under:
+```
+/var/lib/pasarguard/backups/
+```
+
+### 2. Automated Backups
+
+You can automate daily or weekly backups using `cron`. To schedule a daily backup at 3:00 AM:
+
+```bash
+(crontab -l 2>/dev/null; echo "0 3 * * * sudo pasarguard backup > /dev/null 2>&1") | crontab -
+```
+
+---
+
+## 🔄 Restoring PasarGuard
+
+To restore a PasarGuard database from a previously generated backup file:
+
+```bash
+sudo pasarguard restore /path/to/backup-file.tar.gz
+```
+
+### Restoration Workflow
+
+1. **Stop Panel Services**:
+   ```bash
+   sudo pasarguard down
+   ```
+2. **Execute Restoration**:
+   ```bash
+   sudo pasarguard restore /var/lib/pasarguard/backups/pasarguard-backup-YYYY-MM-DD.tar.gz
+   ```
+3. **Restart Panel Services**:
+   ```bash
+   sudo pasarguard restart
+   ```
+4. **Verify System Health**:
+   ```bash
+   sudo pasarguard status
+   ```
+
+---
+
+## 🛠️ Management Script Reference (`pasarguard.sh`)
+
+The `pasarguard` command provides administrative tools for managing your server.
+
+### Primary Service Commands
+
+| Command | Description |
+| :--- | :--- |
+| `pasarguard up` | Starts all PasarGuard Docker containers |
+| `pasarguard down` | Stops all PasarGuard Docker containers |
+| `pasarguard restart` | Restarts all PasarGuard services |
+| `pasarguard status` | Displays container status and resource usage |
+| `pasarguard logs` | View live system logs (`-f` to follow) |
+| `pasarguard update` | Updates PasarGuard panel to the latest version |
+| `pasarguard tui` | Opens the interactive terminal user interface |
+
+### Interactive TUI Menu
+
+For an easy-to-use menu-driven experience, launch the TUI interface:
+
+```bash
+sudo pasarguard tui
+```
+
+The TUI allows you to perform backups, restorations, SSL configurations, and database switches without remembering individual shell commands.
