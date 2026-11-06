@@ -24,7 +24,7 @@ If many users should share the same defaults, create a [User Template](./user_te
 - **Data limit** controls the traffic quota.
 - **Expire date** controls account validity.
 - **Status** controls whether the user can connect.
-- **Proxy settings** can override defaults for protocols such as WireGuard.
+- **Proxy settings** can override defaults for specific protocols.
 - **Subscription** gives the user a link or generated configs.
 
 ## Status Meaning
@@ -44,5 +44,5 @@ Open the user's subscription view to copy the subscription link, copy individual
 - Use groups instead of manually changing host access per user.
 - Use templates for repeated plans.
 - Use [Bulk Operations](./bulk) for large changes.
-- After changing WireGuard settings, verify peer IPs are unique.
+- WireGuard peer IPs are automatically assigned and kept unique by the panel.
 - If one user cannot connect, compare their groups, status, expiry, and subscription output with a working user.

@@ -1,6 +1,6 @@
 ---
 title: WireGuard 设置
-description: WireGuard 核心、Peer IP 和用户访问
+description: WireGuard 核心和用户访问
 icon: Network
 ---
 
@@ -29,11 +29,11 @@ PasarGuard 里的 WireGuard 分两部分配置：节点核心负责服务端，�
 
 ## 给用户启用 WireGuard
 
-每个 WireGuard 用户都需要唯一的 peer IP。如果两个用户拿到同一个 peer IP，其中一个连接可能会失效。
+WireGuard 的 Peer IP 分配和客户端配置完全由面板自动处理：
 
-单个用户时，打开用户表单并检查代理设置。如果用户还没有密钥，使用 **Generate WireGuard Key Pair**，然后从 WireGuard 地址段里分配一个 peer IP。
-
-多个用户时，使用 [批量操作](./bulk)，打开 **WireGuard Peer IPs**。它可以修复缺失或无效的 peer IP，也可以为选中的用户重新分配全部 peer IP。
+- 每个用户会自动从 WireGuard 核心的子网中获得唯一的 Peer IP。
+- 无需在用户代理设置中手动配置 Peer IP 或生成密钥。
+- 要授予用户 WireGuard 访问权限，只需将其添加到具有 WireGuard 主机或入站访问权限的分组中即可。
 
 ## 连接到主机和分组
 
@@ -49,5 +49,5 @@ WireGuard 仍然使用普通的访问模型：
 
 - **用户没有 WireGuard 配置**：检查用户分组、主机访问和订阅模板。
 - **配置能导入但没有流量**：检查 UDP 防火墙、监听端口和节点日志。
-- **只有部分用户可用**：检查重复 peer IP，并运行 WireGuard 批量操作。
-- **公钥看起来不对**：在面板重新生成 WireGuard 密钥对并保存。
+- **只有部分用户可用**：检查 WireGuard 地址池中是否有足够的可用 IP，并查看节点日志。
+- **公钥看起来不对**：在面板的核心设置中重新生成 WireGuard 密钥对并保存。

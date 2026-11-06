@@ -104,26 +104,6 @@ DOCS = true
 DEBUG = false
 ```
 
-### WireGuard
-
-| Переменная | Тип | По умолчанию | Описание |
-|----------|------|---------|-------------|
-| `WIREGUARD_ENABLED` | bool | `true` | Включить выделение WireGuard peer IP и вывод WireGuard в подписках |
-| `WIREGUARD_GLOBAL_POOL` | CIDR | `10.0.0.0/8` | IPv4 пул для автоматического выделения peer IP и проверки ручных peer IP |
-| `WIREGUARD_RESERVED` | CIDR list | `10.0.0.0/31` | IPv4 CIDR диапазоны через запятую, которые нельзя выделять |
-
-**Пример:**
-
-```bash
-WIREGUARD_ENABLED = false
-WIREGUARD_GLOBAL_POOL = "10.66.0.0/16"
-WIREGUARD_RESERVED = "10.66.0.0/31,10.66.0.10/32"
-```
-
-<Callout type="info">
-Когда `WIREGUARD_ENABLED = false`, вывод WireGuard в подписках пропускается, а автоматическое выделение peer IP отключается.
-</Callout>
-
 ### Запись Использования
 
 | Переменная | Тип | По умолчанию | Описание |
@@ -164,11 +144,6 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 # Настройки панели
 DOCS = false
 DEBUG = false
-
-# WireGuard
-WIREGUARD_ENABLED = true
-WIREGUARD_GLOBAL_POOL = "10.0.0.0/8"
-WIREGUARD_RESERVED = "10.0.0.0/31"
 ```
 
 ### Настройка для разработки/тестирования

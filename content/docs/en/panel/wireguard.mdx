@@ -1,6 +1,6 @@
 ---
 title: WireGuard Setup
-description: WireGuard cores, peer IPs, and user access in the panel
+description: WireGuard cores and user access in the panel
 icon: Network
 ---
 
@@ -29,11 +29,11 @@ WireGuard in PasarGuard is configured in two places: the node core defines the s
 
 ## Give Users WireGuard Access
 
-Each WireGuard user needs unique peer IPs. If two users get the same peer IP, one of them can stop working.
+WireGuard peer IP allocation and client credentials are fully handled automatically by the panel:
 
-For one user, open the user form and check the proxy settings. Use **Generate WireGuard Key Pair** when the user does not already have keys, then assign a peer IP from your WireGuard range.
-
-For many users, use [Bulk Operations](./bulk) and open **WireGuard Peer IPs**. That page can repair missing or invalid peer IPs, or replace all peer IPs for the selected users.
+- Each user automatically receives a unique peer IP allocated from the WireGuard core's subnet.
+- Manual peer IP configuration and key pair generation in user proxy settings are not required.
+- To grant WireGuard access, simply add users to a group that has access to the WireGuard host or inbound.
 
 ## Connect It To Hosts And Groups
 
@@ -49,5 +49,5 @@ After creating the core, make sure the users are in a group that can reach the W
 
 - **The user has no WireGuard config**: check the user's groups, host access, and subscription template.
 - **The app imports the config but no traffic passes**: check UDP firewall rules, the listen port, and node logs.
-- **Only some users work**: check for duplicate peer IPs and run the bulk WireGuard peer IP operation.
-- **The public key looks wrong**: regenerate the WireGuard keypair from the panel and save again.
+- **Only some users work**: check that the WireGuard address pool has sufficient available IPs and check node logs.
+- **The public key looks wrong**: regenerate the WireGuard keypair for the core in the panel and save again.

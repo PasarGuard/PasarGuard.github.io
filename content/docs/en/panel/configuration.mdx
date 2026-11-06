@@ -104,29 +104,6 @@ DOCS = true
 DEBUG = false
 ```
 
-### WireGuard
-
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `WIREGUARD_ENABLED` | bool | `true` | Enable WireGuard peer allocation and WireGuard subscription output |
-| `WIREGUARD_GLOBAL_POOL` | CIDR | `10.0.0.0/8` | IPv4 pool used to auto-allocate WireGuard user peer IPs and validate manual peer IPs |
-| `WIREGUARD_RESERVED` | CIDR list | `10.0.0.0/31` | Comma-separated IPv4 CIDR ranges that must never be allocated |
-
-**Example:**
-
-```bash
-# Disable WireGuard output and automatic peer allocation
-WIREGUARD_ENABLED = false
-
-# Custom allocation pool
-WIREGUARD_GLOBAL_POOL = "10.66.0.0/16"
-WIREGUARD_RESERVED = "10.66.0.0/31,10.66.0.10/32"
-```
-
-<Callout type="info">
-When `WIREGUARD_ENABLED = false`, WireGuard subscription output is skipped and automatic WireGuard peer IP allocation is disabled.
-</Callout>
-
 ### Usage Recording
 
 | Variable | Type | Default | Description |
@@ -167,11 +144,6 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 # Panel Settings
 DOCS = false
 DEBUG = false
-
-# WireGuard
-WIREGUARD_ENABLED = true
-WIREGUARD_GLOBAL_POOL = "10.0.0.0/8"
-WIREGUARD_RESERVED = "10.0.0.0/31"
 ```
 
 ### Development/Testing Setup
