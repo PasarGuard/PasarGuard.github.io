@@ -32,3 +32,18 @@ pasarguard cli generate-temp-key
 The command prints a temporary key and its expiration time. The key is valid for 5 minutes and can only be used once.
 
 The dashboard setup form can use this key to create the first owner account, reset the owner password, delete the owner, or promote an existing admin to owner.
+
+## System Maintenance & Backups
+
+For database backup and restoration commands, refer to the [Backup & Restore Guide](/en/panel/backup-restore).
+
+```bash
+# Manual database backup
+sudo pasarguard backup
+
+# Restore database from backup
+sudo pasarguard restore /path/to/backup.tar.gz
+
+# Start interactive TUI menu
+sudo pasarguard tui
+```

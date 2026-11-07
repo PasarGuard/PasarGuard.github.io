@@ -1,0 +1,75 @@
+---
+title: 备份与恢复
+description: 使用管理脚本备份、恢复和管理 PasarGuard 数据的完整指南。
+---
+
+# 备份与恢复指南
+
+PasarGuard 包含一个全面的管理脚本 (`pasarguard.sh`)，可自动执行数据库备份、恢复、服务更新和系统维护。
+
+---
+
+## 💾 备份 PasarGuard
+
+定期备份可确保您的用户帐户、入站配置和管理员设置在服务器迁移或系统故障期间保持安全。
+
+### 1. 手动备份命令
+
+要立即触发 PasarGuard 安装的备份：
+
+```bash
+sudo pasarguard backup
+```
+
+此命令将创建一个压缩包，其中包含：
+- **数据库转储**：导出您的完整数据库（SQLite、MySQL、MariaDB、PostgreSQL 或 TimescaleDB）。
+- **环境设置**：`/opt/pasarguard/.env` 配置文件的副本。
+- **SSL 证书和密钥**：相关的安全凭据。
+
+备份文件保存在本地：
+```
+/var/lib/pasarguard/backups/
+```
+
+---
+
+## 🔄 恢复 PasarGuard
+
+要从先前生成的备份文件恢复 PasarGuard 数据库：
+
+```bash
+sudo pasarguard restore /path/to/backup-file.tar.gz
+```
+
+### 恢复步骤
+
+1. **停止面板服务**：
+   ```bash
+   sudo pasarguard down
+   ```
+2. **执行恢复**：
+   ```bash
+   sudo pasarguard restore /var/lib/pasarguard/backups/pasarguard-backup-YYYY-MM-DD.tar.gz
+   ```
+3. **重启面板服务**：
+   ```bash
+   sudo pasarguard restart
+   ```
+4. **检查系统状态**：
+   ```bash
+   sudo pasarguard status
+   ```
+
+---
+
+## 🛠️ 管理脚本参考 (`pasarguard.sh`)
+
+| 命令 | 描述 |
+| :--- | :--- |
+| `pasarguard up` | 启动所有 PasarGuard Docker 容器 |
+| `pasarguard down` | 停止所有 PasarGuard Docker 容器 |
+| `pasarguard restart` | 重启所有 PasarGuard 服务 |
+| `pasarguard status` | 显示容器状态和资源使用情况 |
+| `pasarguard logs` | 查看实时系统日志 |
+| `pasarguard update` | 将 PasarGuard 面板更新至最新版本 |
+| `pasarguard tui` | 打开交互式终端用户界面 (TUI) |
