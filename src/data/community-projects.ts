@@ -1,6 +1,7 @@
 export type CommunityCategoryId =
   | 'subscriptionTemplates'
   | 'databaseTools'
+  | 'panelTools'
   | 'clients';
 
 export type CommunityProject = {
@@ -76,6 +77,17 @@ export const communityCategories: CommunityCategory[] = [
         repo: 'Mrclocks/PGClockMG',
         name: 'PGClockMG',
         description: 'Community migration tools for PasarGuard.',
+      },
+    ],
+  },
+  {
+    id: 'panelTools',
+    projects: [
+      {
+        repo: 'l8PYGIT/pgbulkhosteditor',
+        name: 'pgbulkhosteditor',
+        description:
+          'Zero-dependency browser UI for bulk editing, cloning, searching/replacing, and backing up PasarGuard panel hosts.',
       },
     ],
   },

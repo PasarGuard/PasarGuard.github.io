@@ -15,6 +15,7 @@ const labels: Record<
   en: {
     subscriptionTemplates: 'Subscription Templates',
     databaseTools: 'Database Tools',
+    panelTools: 'Panel Tools',
     clients: 'Clients',
     official: 'Official',
     stars: 'stars',
@@ -22,6 +23,7 @@ const labels: Record<
   fa: {
     subscriptionTemplates: 'قالب‌های سابسکریپشن',
     databaseTools: 'ابزارهای دیتابیس',
+    panelTools: 'ابزارهای پنل',
     clients: 'کلاینت‌ها',
     official: 'رسمی',
     stars: 'ستاره',
@@ -29,6 +31,7 @@ const labels: Record<
   ru: {
     subscriptionTemplates: 'Шаблоны подписки',
     databaseTools: 'Инструменты БД',
+    panelTools: 'Инструменты панели',
     clients: 'Клиенты',
     official: 'Официальный',
     stars: 'звёзд',
@@ -36,6 +39,7 @@ const labels: Record<
   zh: {
     subscriptionTemplates: '订阅模板',
     databaseTools: '数据库工具',
+    panelTools: '面板工具',
     clients: '客户端',
     official: '官方',
     stars: '星标',
