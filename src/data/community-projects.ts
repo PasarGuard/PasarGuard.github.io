@@ -87,7 +87,7 @@ export const communityCategories: CommunityCategory[] = [
         repo: 'l8PYGIT/pgbulkhosteditor',
         name: 'pgbulkhosteditor',
         description:
-          'Zero-dependency browser UI for bulk editing, cloning, searching/replacing, and backing up PasarGuard panel hosts.',
+          'Browser-based bulk host editor & cloner for PasarGuard with Before/After diffs, JSON backups, and optional local CORS/Cloudflare proxy.',
       },
     ],
   },
